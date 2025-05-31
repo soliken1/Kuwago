@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 
 interface Sample {
   name: string;
@@ -19,7 +19,8 @@ function useSample() {
           "/api/sample/dr94pyNBCdMxkPnlsgrn"
         );
         setData(response.data);
-      } catch (err: any) {
+      } catch (error: unknown) {
+        const err = error as AxiosError<{ message: string }>;
         setError(
           err.response?.data?.message || err.message || "Something went wrong"
         );
