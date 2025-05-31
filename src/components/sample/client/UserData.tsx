@@ -3,7 +3,6 @@ import useSample from "../../../hooks/fetchSample";
 
 export default function SampleScreen() {
   const { data, loading, error } = useSample();
-  console.log(data);
 
   if (loading) return <p>Loading...</p>;
   if (error) return <p>Error: {error}</p>;

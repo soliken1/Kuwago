@@ -16,7 +16,7 @@ function useSample() {
     const fetchSample = async () => {
       try {
         const response = await axios.get<Sample>(
-          "/api/sample/dr94pyNBCdMxkPnlsgrn"
+          "/proxy/sample/dr94pyNBCdMxkPnlsgrn"
         );
         setData(response.data);
       } catch (error: unknown) {
