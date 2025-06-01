@@ -13,7 +13,7 @@ export default function RegisterForm() {
     username: "",
     phoneNumber: "",
     password: "",
-    role: 0, // Default role value
+    role: 2,
   });
   const [validationErrors, setValidationErrors] = useState<
     Record<string, string>
