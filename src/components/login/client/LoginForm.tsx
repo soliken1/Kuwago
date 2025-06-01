@@ -59,7 +59,9 @@ export default function LoginForm() {
 
       {error && <p className="text-sm text-red-500 text-center">{error}</p>}
       {loginData && (
-        <p className="text-sm text-green-600 text-center">Success!</p>
+        <p className="text-sm text-green-600 text-center">
+          {loginData.message}
+        </p>
       )}
     </form>
   );
