@@ -1,1 +1,10 @@
 @import "tailwindcss";
+
+html,
+body {
+  background-color: #f9f9f9;
+}
+
+.debug {
+  border: 1px solid red;
+}
