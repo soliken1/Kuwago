@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import axios, { AxiosError } from "axios";
-
 //Defining the expected payload to be sent on the API
 interface LoginPayload {
   email: string;
@@ -23,7 +22,7 @@ export default function useLoginRequest() {
   const [error, setError] = useState<string | null>(null);
 
   //Prepare payload to be sent when user presses login (e.g email and password to be handled on the backend if it exists or not)
-  const login = async (payload: LoginPayload) => {
+  const login = async (payload: LoginPayload, onSuccess?: () => void) => {
     setLoading(true);
     setError(null);
 
@@ -34,6 +33,7 @@ export default function useLoginRequest() {
         payload
       );
       setLoginData(response.data);
+      onSuccess?.();
     } catch (error: unknown) {
       const err = error as AxiosError<{ message: string }>;
       setError(err.response?.data?.message || err.message || "Login failed");
