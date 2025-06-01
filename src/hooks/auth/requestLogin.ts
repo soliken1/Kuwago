@@ -14,7 +14,6 @@ interface LoginResponse {
   // Update this based on actual API response structure
   token?: string;
   message?: string;
-  [key: string]: any;
 }
 
 export default function useLoginRequest() {
