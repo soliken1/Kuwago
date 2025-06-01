@@ -3,21 +3,21 @@
 
 "use client";
 
-import { useState } from "react";
-import axios, { AxiosError } from "axios";
+// import { useState } from "react";
+// import axios, { AxiosError } from "axios";
 
-interface RegisterPayload {
-  firstName: string;
-  lastName: string;
-  email: string;
-  username: string;
-  phoneNumber: string;
-  password: string;
-}
+// interface RegisterPayload {
+//   firstName: string;
+//   lastName: string;
+//   email: string;
+//   username: string;
+//   phoneNumber: string;
+//   password: string;
+// }
 
-interface RegisterResponse {
-  // Update this based on actual API response structure
-  token?: string;
-  message?: string;
-  [key: string]: any;
-}
+// interface RegisterResponse {
+//   // Update this based on actual API response structure
+//   token?: string;
+//   message?: string;
+//   [key: string]: any;
+// }
