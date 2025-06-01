@@ -1,9 +1,11 @@
 "use client";
-import React, { useState } from "react";
+import React from "react";
 import useLogoutRequest from "@/hooks/auth/requestLogout";
 
 export default function LogoutBtn() {
-  const { logout, loading, error, logoutData } = useLogoutRequest();
+  // const { logout, loading, error, logoutData } = useLogoutRequest();
+
+  const { logout } = useLogoutRequest();
 
   return (
     <button
