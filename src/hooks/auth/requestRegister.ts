@@ -10,6 +10,7 @@ interface RegisterPayload {
   username: string;
   phoneNumber: string;
   password: string;
+  role: number;
 }
 
 interface RegisterResponse {
