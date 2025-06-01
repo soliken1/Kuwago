@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import useLogoutRequest from "@/hooks/auth/requestLogout";
 import { IoMdArrowDropdown } from "react-icons/io";
@@ -10,9 +10,14 @@ export default function Navbar() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const { logout } = useLogoutRequest();
   const router = useRouter();
+  const [storedUser, setStoredUser] = useState<{ fullName?: string }>({});
 
-  const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
-  console.log(storedUser.fullName);
+  useEffect(() => {
+    const user = localStorage.getItem("user");
+    if (user) {
+      setStoredUser(JSON.parse(user));
+    }
+  }, []);
 
   const handleLogout = async () => {
     await logout();
