@@ -11,6 +11,9 @@ export default function Navbar() {
   const { logout } = useLogoutRequest();
   const router = useRouter();
 
+  const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
+  console.log(storedUser.fullName);
+
   const handleLogout = async () => {
     await logout();
     router.push("/login");
@@ -39,7 +42,7 @@ export default function Navbar() {
           onClick={() => setIsDropdownOpen(!isDropdownOpen)}
         >
           <div className="w-8 h-8 rounded-full bg-gradient-to-br to-green-300 from-green-200"></div>
-          <label>Kenneth James Macas</label>
+          <label>{storedUser.fullName}</label>
           <IoMdArrowDropdown size={24} />
 
           {/* Dropdown */}

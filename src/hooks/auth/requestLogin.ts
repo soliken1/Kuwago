@@ -15,9 +15,29 @@ interface LoginResponse {
   message?: string;
 }
 
+interface UserData {
+  uid: string;
+  fullName?: string;
+  email?: string;
+  phoneNumber?: string;
+  username?: string;
+  profilePicture?: string;
+  role?: string;
+  createdAt?: string;
+  // Add other properties as needed
+}
+
+interface UserResponse {
+  success?: string;
+  message?: string;
+  statusCode?: string;
+  data?: UserData;
+}
+
 export default function useLoginRequest() {
   //Store the response and use the interface to expect what response object is it receiving
   const [loginData, setLoginData] = useState<LoginResponse | null>(null);
+  const [userData, setUserData] = useState<UserResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -28,11 +48,19 @@ export default function useLoginRequest() {
 
     //Await the actual response based on the payload (e.g message: "Success", "Failed", etc)
     try {
-      const response = await axios.post<LoginResponse>(
+      const loginResponse = await axios.post<LoginResponse>(
         "/proxy/Auth/login",
         payload
       );
-      setLoginData(response.data);
+      setLoginData(loginResponse.data);
+      const userResponse = await axios.get<UserResponse>("/proxy/Auth/GetUser");
+      setUserData(userResponse.data);
+
+      const userData = userResponse.data?.data;
+      if (userData) {
+        localStorage.setItem("user", JSON.stringify(userData));
+      }
+
       onSuccess?.();
     } catch (error: unknown) {
       const err = error as AxiosError<{ message: string }>;
@@ -42,5 +70,5 @@ export default function useLoginRequest() {
     }
   };
 
-  return { login, loginData, loading, error };
+  return { login, loginData, userData, loading, error };
 }
