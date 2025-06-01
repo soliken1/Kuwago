@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import useLogoutRequest from "@/hooks/auth/requestLogout";
 import { IoMdArrowDropdown } from "react-icons/io";
@@ -10,6 +10,14 @@ export default function Navbar() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const { logout } = useLogoutRequest();
   const router = useRouter();
+  const [storedUser, setStoredUser] = useState<{ fullName?: string }>({});
+
+  useEffect(() => {
+    const user = localStorage.getItem("user");
+    if (user) {
+      setStoredUser(JSON.parse(user));
+    }
+  }, []);
 
   const handleLogout = async () => {
     await logout();
@@ -39,7 +47,7 @@ export default function Navbar() {
           onClick={() => setIsDropdownOpen(!isDropdownOpen)}
         >
           <div className="w-8 h-8 rounded-full bg-gradient-to-br to-green-300 from-green-200"></div>
-          <label>Kenneth James Macas</label>
+          <label>{storedUser.fullName}</label>
           <IoMdArrowDropdown size={24} />
 
           {/* Dropdown */}
