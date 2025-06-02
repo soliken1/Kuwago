@@ -35,7 +35,7 @@ export default function RegisterForm() {
       className="flex flex-col w-80 sm:w-96 p-8 bg-white border border-gray-300 rounded-xl shadow-md space-y-4"
     >
       <h2 className="text-2xl font-semibold text-center text-gray-700 mb-4">
-        Register
+        Create an Account
       </h2>
 
       <div className="grid grid-cols-2 gap-4">

@@ -19,7 +19,7 @@ export default function LoginForm() {
       onSubmit={handleSubmit}
       className="flex flex-col w-80 sm:w-96 p-8 bg-white border border-gray-300 rounded-xl shadow-md space-y-6"
     >
-      <h2 className="text-2xl font-semibold text-center text-gray-700">
+      <h2 className="text-2xl font-semibold text-center text-gray-800">
         Login
       </h2>
 
