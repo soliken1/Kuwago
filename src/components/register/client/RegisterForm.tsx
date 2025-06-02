@@ -52,10 +52,10 @@ export default function RegisterForm() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-white p-4">
+    <div className="flex flex-col items-center justify-center min-h-screen p-4">
       <form
         onSubmit={handleSubmit}
-        className="flex flex-col w-80 sm:w-96 p-8 bg-white border border-gray-300 rounded-xl shadow-md space-y-4 relative"
+        className="flex flex-col w-80 sm:w-xl p-8 bg-white border border-gray-300 rounded-xl shadow-md space-y-4 relative"
       >
         <h2 className="text-2xl font-semibold text-center text-gray-700 mb-4">
           Create Account

@@ -74,7 +74,6 @@ export default function useLoginRequest() {
         );
 
         setUserData(userResponse.data);
-        console.log(userResponse.data);
         const userData = userResponse.data?.data;
         if (userData) {
           localStorage.setItem("user", JSON.stringify(userData));

@@ -19,7 +19,6 @@ export default function useLogoutRequest() {
 
     try {
       const token = getCookie("session_token");
-      console.log(token);
       if (token) {
         const response = await axios.post<LogoutResponse>(
           "/proxy/Auth/logout",
