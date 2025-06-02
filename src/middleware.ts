@@ -10,6 +10,7 @@ export default function middleware(request: NextRequest) {
     pathname.startsWith("/static") ||
     pathname.startsWith("/login") ||
     pathname.startsWith("/register") ||
+    pathname.startsWith("/forgotPassword") ||
     pathname.startsWith("/proxy")
   ) {
     return NextResponse.next();
