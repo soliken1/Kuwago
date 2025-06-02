@@ -8,7 +8,7 @@ interface PasswordPayload {
 interface PasswordResponse {
   success?: boolean;
   message?: string;
-  statusCode?: Int32Array;
+  statusCode?: number;
   data?: null;
 }
 

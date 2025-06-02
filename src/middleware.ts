@@ -5,9 +5,6 @@ export async function middleware(request: NextRequest) {
   const token = request.cookies.get("session_token")?.value;
   const { pathname } = request.nextUrl;
 
-  console.log("👉 Pathname:", pathname);
-  console.log("👉 Session Token:", token ?? "No token");
-
   // Allow public and static routes
   if (
     pathname.startsWith("/_next") ||
@@ -38,7 +35,6 @@ export async function middleware(request: NextRequest) {
       );
 
       const data = await checkRes.json();
-      console.log(data);
       if (!checkRes.status || data.statusCode !== 200) {
         const res = NextResponse.redirect(new URL("/", request.url));
         res.cookies.delete("session_token");
