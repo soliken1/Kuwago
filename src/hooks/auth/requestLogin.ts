@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import axios, { AxiosError } from "axios";
+import { setCookie } from "cookies-next";
 //Defining the expected payload to be sent on the API
 interface LoginPayload {
   email: string;
@@ -9,10 +10,15 @@ interface LoginPayload {
 }
 
 //Defining what datatype is the fields on the response within the object from the API (e.g message: "Success", token: "sampletoken123")
+interface Token {
+  token?: string;
+}
+
 interface LoginResponse {
   // Update this based on actual API response structure
   token?: string;
   message?: string;
+  data?: Token;
 }
 
 interface UserData {
@@ -53,15 +59,31 @@ export default function useLoginRequest() {
         payload
       );
       setLoginData(loginResponse.data);
-      const userResponse = await axios.get<UserResponse>("/proxy/Auth/GetUser");
-      setUserData(userResponse.data);
 
-      const userData = userResponse.data?.data;
-      if (userData) {
-        localStorage.setItem("user", JSON.stringify(userData));
+      const token = loginResponse.data.data?.token;
+      if (token) {
+        setCookie("session_token", token);
+
+        const userResponse = await axios.get<UserResponse>(
+          "/proxy/Auth/GetUser",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        setUserData(userResponse.data);
+        console.log(userResponse.data);
+        const userData = userResponse.data?.data;
+        if (userData) {
+          localStorage.setItem("user", JSON.stringify(userData));
+        }
+
+        onSuccess?.();
+      } else {
+        throw new Error("Token missing in login response.");
       }
-
-      onSuccess?.();
     } catch (error: unknown) {
       const err = error as AxiosError<{ message: string }>;
       setError(err.response?.data?.message || err.message || "Login failed");
