@@ -15,7 +15,8 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith("/login") ||
     pathname.startsWith("/register") ||
     pathname.startsWith("/forgotPassword") ||
-    pathname.startsWith("/proxy")
+    pathname.startsWith("/proxy") ||
+    pathname.startsWith("/admindashboard") // Bypass admin dashboard route
   ) {
     return NextResponse.next();
   }
