@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import axios, { AxiosError } from "axios";
-import { getCookie } from "cookies-next";
+import { getCookie, deleteCookie } from "cookies-next";
 interface LogoutResponse {
   // Update this based on actual API response structure
   message?: string;
@@ -18,6 +18,7 @@ export default function useLogoutRequest() {
     setError(null);
 
     try {
+      deleteCookie("session_token");
       const token = getCookie("session_token");
       if (token) {
         const response = await axios.post<LogoutResponse>(
