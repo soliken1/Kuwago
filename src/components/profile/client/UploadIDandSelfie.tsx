@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import useIDSelfieUploadRequest from "@/hooks/auth/requestIDSelfieUpload";
-
+import Image from "next/image";
 export default function UploadIDandSelfie() {
   const [idPhoto, setIdPhoto] = useState<File | null>(null);
   const [selfiePhoto, setSelfiePhoto] = useState<File | null>(null);
@@ -82,7 +82,7 @@ export default function UploadIDandSelfie() {
               className="w-full border p-2"
             />
             {idPreview && (
-              <img
+              <Image
                 src={idPreview}
                 alt="ID Preview"
                 className="mt-2 w-full h-40 object-contain rounded-md border"
@@ -101,9 +101,9 @@ export default function UploadIDandSelfie() {
               className="w-full border p-2"
             />
             {selfiePreview && (
-              <img
-                src={selfiePreview}
+              <Image
                 alt="Selfie Preview"
+                src={selfiePreview}
                 className="mt-2 w-full h-40 object-contain rounded-md border"
               />
             )}
