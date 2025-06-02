@@ -61,7 +61,7 @@ export default function UploadIDandSelfie() {
         }
       );
     } catch (err) {
-      alert("Failed to upload images.");
+      alert(`${err}`);
     }
   };
 
