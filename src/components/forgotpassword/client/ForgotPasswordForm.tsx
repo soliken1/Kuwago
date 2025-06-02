@@ -21,7 +21,7 @@ export default function ForgotPasswordForm() {
       >
         <h2 className="text-2xl font-semibold  text-center">Forgot Password</h2>
         <p className="text-sm text-gray-600 text-center">
-          Enter your email and we'll send you reset instructions.
+          Enter your email and we&apos;ll send you reset instructions.
         </p>
 
         <input
