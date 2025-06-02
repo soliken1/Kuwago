@@ -1,10 +1,14 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-export default function middleware(request: NextRequest) {
-  const session_token = request.cookies.get("session_token")?.value;
+export async function middleware(request: NextRequest) {
+  const token = request.cookies.get("session_token")?.value;
   const { pathname } = request.nextUrl;
 
+  console.log("👉 Pathname:", pathname);
+  console.log("👉 Session Token:", token ?? "No token");
+
+  // Allow public and static routes
   if (
     pathname.startsWith("/_next") ||
     pathname.startsWith("/static") ||
@@ -16,12 +20,41 @@ export default function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  if (session_token && pathname === "/") {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
+  // Redirect if no token on protected routes
+  if (!token && pathname !== "/") {
+    return NextResponse.redirect(new URL("/", request.url));
   }
 
-  if (!session_token && pathname !== "/") {
-    return NextResponse.redirect(new URL("/", request.url));
+  if (token) {
+    try {
+      const checkRes = await fetch(
+        "http://kuwagoapi.somee.com/api/Auth/CheckTokenStatus",
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const data = await checkRes.json();
+      console.log(data);
+      if (!checkRes.status || data.statusCode !== 200) {
+        const res = NextResponse.redirect(new URL("/", request.url));
+        res.cookies.delete("session_token");
+        return res;
+      }
+    } catch (error) {
+      console.error("Token check failed:", error);
+      const res = NextResponse.redirect(new URL("/", request.url));
+      res.cookies.delete("session_token");
+      return res;
+    }
+
+    // Redirect from `/` to `/dashboard` if authenticated
+    if (pathname === "/") {
+      return NextResponse.redirect(new URL("/dashboard", request.url));
+    }
   }
 
   return NextResponse.next();

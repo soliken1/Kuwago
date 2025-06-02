@@ -1,22 +1,40 @@
 "use client";
 import Link from "next/link";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import useLogoutRequest from "@/hooks/auth/requestLogout";
 import { IoMdArrowDropdown } from "react-icons/io";
 import { IoNotificationsOutline } from "react-icons/io5";
+import Image from "next/image";
 
 export default function Navbar() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const { logout } = useLogoutRequest();
   const router = useRouter();
-  const [storedUser, setStoredUser] = useState<{ fullName?: string }>({});
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const [storedUser, setStoredUser] = useState<{
+    fullName?: string;
+    profilePicture?: string;
+  }>({});
 
   useEffect(() => {
     const user = localStorage.getItem("user");
     if (user) {
       setStoredUser(JSON.parse(user));
     }
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const handleLogout = async () => {
@@ -43,10 +61,19 @@ export default function Navbar() {
 
         {/* Profile dropdown */}
         <div
+          ref={dropdownRef}
           className="flex flex-row gap-4 items-center cursor-pointer relative"
           onClick={() => setIsDropdownOpen(!isDropdownOpen)}
         >
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br to-green-300 from-green-200"></div>
+          <div className="w-8 h-8">
+            <Image
+              className="w-full h-full rounded-full"
+              width={1920}
+              height={1080}
+              src={storedUser.profilePicture || "/Images/User.jpg"}
+              alt="Profile Picture"
+            />
+          </div>
           <label>{storedUser.fullName}</label>
           <IoMdArrowDropdown size={24} />
 
