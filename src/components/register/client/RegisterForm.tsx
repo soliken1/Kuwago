@@ -15,42 +15,6 @@ export default function RegisterForm() {
     password: "",
     role: 2,
   });
-  const [validationErrors, setValidationErrors] = useState<
-    Record<string, string>
-  >({});
-
-  const validateForm = () => {
-    const errors: Record<string, string> = {};
-
-    // Check if any field is empty (except role since it has a default value)
-    Object.entries(formData).forEach(([key, value]) => {
-      if (key !== "role" && !value.toString().trim()) {
-        errors[key] = `${
-          key.charAt(0).toUpperCase() + key.slice(1)
-        } is required`;
-      }
-    });
-
-    // Password validation
-    if (formData.password.length < 6) {
-      errors.password = "Password must be at least 6 characters long";
-    }
-
-    // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (formData.email && !emailRegex.test(formData.email)) {
-      errors.email = "Please enter a valid email address";
-    }
-
-    // Phone number validation (basic)
-    const phoneRegex = /^\+?[\d\s-]{10,}$/;
-    if (formData.phoneNumber && !phoneRegex.test(formData.phoneNumber)) {
-      errors.phoneNumber = "Please enter a valid phone number";
-    }
-
-    setValidationErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -58,20 +22,11 @@ export default function RegisterForm() {
       ...prev,
       [name]: value,
     }));
-    // Clear validation error when user starts typing
-    if (validationErrors[name]) {
-      setValidationErrors((prev) => ({
-        ...prev,
-        [name]: "",
-      }));
-    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (validateForm()) {
-      await register(formData, () => router.push("/login"));
-    }
+    await register(formData, () => router.push("/login"));
   };
 
   return (
@@ -92,16 +47,11 @@ export default function RegisterForm() {
             type="text"
             id="firstName"
             name="firstName"
-            className={`px-4 py-2 border ${
-              validationErrors.firstName ? "border-red-500" : "border-gray-300"
-            } rounded-md`}
+            className="px-4 py-2 border border-gray-300 rounded-md"
             value={formData.firstName}
             onChange={handleChange}
             required
           />
-          {validationErrors.firstName && (
-            <p className="text-xs text-red-500">{validationErrors.firstName}</p>
-          )}
         </div>
 
         <div className="flex flex-col space-y-1">
@@ -112,16 +62,11 @@ export default function RegisterForm() {
             type="text"
             id="lastName"
             name="lastName"
-            className={`px-4 py-2 border ${
-              validationErrors.lastName ? "border-red-500" : "border-gray-300"
-            } rounded-md`}
+            className="px-4 py-2 border border-gray-300 rounded-md"
             value={formData.lastName}
             onChange={handleChange}
             required
           />
-          {validationErrors.lastName && (
-            <p className="text-xs text-red-500">{validationErrors.lastName}</p>
-          )}
         </div>
       </div>
 
@@ -133,16 +78,11 @@ export default function RegisterForm() {
           type="email"
           id="email"
           name="email"
-          className={`px-4 py-2 border ${
-            validationErrors.email ? "border-red-500" : "border-gray-300"
-          } rounded-md`}
+          className="px-4 py-2 border border-gray-300 rounded-md"
           value={formData.email}
           onChange={handleChange}
           required
         />
-        {validationErrors.email && (
-          <p className="text-xs text-red-500">{validationErrors.email}</p>
-        )}
       </div>
 
       <div className="flex flex-col space-y-1">
@@ -153,16 +93,11 @@ export default function RegisterForm() {
           type="text"
           id="username"
           name="username"
-          className={`px-4 py-2 border ${
-            validationErrors.username ? "border-red-500" : "border-gray-300"
-          } rounded-md`}
+          className="px-4 py-2 border border-gray-300 rounded-md"
           value={formData.username}
           onChange={handleChange}
           required
         />
-        {validationErrors.username && (
-          <p className="text-xs text-red-500">{validationErrors.username}</p>
-        )}
       </div>
 
       <div className="flex flex-col space-y-1">
@@ -173,16 +108,11 @@ export default function RegisterForm() {
           type="tel"
           id="phoneNumber"
           name="phoneNumber"
-          className={`px-4 py-2 border ${
-            validationErrors.phoneNumber ? "border-red-500" : "border-gray-300"
-          } rounded-md`}
+          className="px-4 py-2 border border-gray-300 rounded-md"
           value={formData.phoneNumber}
           onChange={handleChange}
           required
         />
-        {validationErrors.phoneNumber && (
-          <p className="text-xs text-red-500">{validationErrors.phoneNumber}</p>
-        )}
       </div>
 
       <div className="flex flex-col space-y-1">
@@ -193,17 +123,11 @@ export default function RegisterForm() {
           type="password"
           id="password"
           name="password"
-          className={`px-4 py-2 border ${
-            validationErrors.password ? "border-red-500" : "border-gray-300"
-          } rounded-md`}
+          className="px-4 py-2 border border-gray-300 rounded-md"
           value={formData.password}
           onChange={handleChange}
           required
-          minLength={6}
         />
-        {validationErrors.password && (
-          <p className="text-xs text-red-500">{validationErrors.password}</p>
-        )}
       </div>
 
       <button

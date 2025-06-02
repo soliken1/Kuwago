@@ -16,6 +16,7 @@ interface RegisterPayload {
 interface RegisterResponse {
   token?: string;
   message?: string;
+  errors?: Record<string, string[]>;
 }
 
 export default function useRegisterRequest() {
@@ -37,10 +38,18 @@ export default function useRegisterRequest() {
       setRegisterData(response.data);
       onSuccess?.();
     } catch (error: unknown) {
-      const err = error as AxiosError<{ message: string }>;
-      setError(
-        err.response?.data?.message || err.message || "Registration failed"
-      );
+      const err = error as AxiosError<RegisterResponse>;
+      if (err.response?.data?.errors) {
+        // Handle validation errors from backend
+        const errorMessages = Object.values(err.response.data.errors)
+          .flat()
+          .join(", ");
+        setError(errorMessages);
+      } else {
+        setError(
+          err.response?.data?.message || err.message || "Registration failed"
+        );
+      }
     } finally {
       setLoading(false);
     }
