@@ -14,11 +14,14 @@ export default function LoginForm() {
     e.preventDefault();
     await login({ email, password }, () => {
       const userRole = userData?.data?.role;
-      userRole === "Admin"
-        ? router.push("/admindashboard")
-        : userRole === "Lender"
-        ? router.push("/lenderdashboard")
-        : router.push("/dashboard");
+
+      if (userRole === "Admin") {
+        router.push("/admindashboard");
+      } else if (userRole === "Lender") {
+        router.push("/lenderdashboard");
+      } else {
+        router.push("/dashboard");
+      }
     });
   };
 
