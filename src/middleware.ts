@@ -27,7 +27,7 @@ export async function middleware(request: NextRequest) {
   if (token) {
     try {
       const checkRes = await fetch(
-        "http://kuwagoapi.somee.com/api/Auth/CheckTokenStatus",
+        "http://kuwagoapi.somee.com/api/Auth/CheckToken",
         {
           method: "GET",
           headers: {
