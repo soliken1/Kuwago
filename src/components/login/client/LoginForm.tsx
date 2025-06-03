@@ -1,18 +1,37 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import useLoginRequest from "@/hooks/auth/requestLogin";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 export default function LoginForm() {
   const router = useRouter();
-  const { login, loading, error, loginData } = useLoginRequest();
+  const { login, loginData, loading, error } = useLoginRequest();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [storedUser, setStoredUser] = useState<{
+    role?: string;
+  }>({});
+
+  useEffect(() => {
+    const user = localStorage.getItem("user");
+    if (user) {
+      setStoredUser(JSON.parse(user));
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await login({ email, password }, () => router.push("/dashboard"));
+    await login({ email, password }, () => {
+      const userRole = storedUser.role;
+      if (userRole === "Admin") {
+        router.push("/admindashboard");
+      } else if (userRole === "Lender") {
+        router.push("/lenderdashboard");
+      } else {
+        router.push("/dashboard");
+      }
+    });
   };
 
   return (

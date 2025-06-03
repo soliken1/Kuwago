@@ -65,7 +65,7 @@ export default function useLoginRequest() {
         setCookie("session_token", token);
 
         const userResponse = await axios.get<UserResponse>(
-          "/proxy/Auth/GetUser",
+          "/proxy/Auth/GetUserLoggedInInfo",
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -73,13 +73,14 @@ export default function useLoginRequest() {
           }
         );
 
-        setUserData(userResponse.data);
         const userData = userResponse.data?.data;
         if (userData) {
           localStorage.setItem("user", JSON.stringify(userData));
+          setCookie("user_role", userData.role);
         }
 
         onSuccess?.();
+        setUserData(userResponse.data);
       } else {
         throw new Error("Token missing in login response.");
       }

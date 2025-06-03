@@ -3,6 +3,8 @@ import type { NextRequest } from "next/server";
 
 export async function middleware(request: NextRequest) {
   const token = request.cookies.get("session_token")?.value;
+  const role = request.cookies.get("user_role")?.value;
+
   const { pathname } = request.nextUrl;
 
   // Allow public and static routes
@@ -12,8 +14,7 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith("/login") ||
     pathname.startsWith("/register") ||
     pathname.startsWith("/forgotPassword") ||
-    pathname.startsWith("/proxy") ||
-    pathname.startsWith("/admindashboard") // Bypass admin dashboard route
+    pathname.startsWith("/proxy")
   ) {
     return NextResponse.next();
   }
@@ -48,9 +49,28 @@ export async function middleware(request: NextRequest) {
       return res;
     }
 
-    // Redirect from `/` to `/dashboard` if authenticated
-    if (pathname === "/") {
+    if (pathname === "/" && role === "Admin") {
+      return NextResponse.redirect(new URL("/admindashboard", request.url));
+    }
+
+    if (pathname === "/" && role === "Lender") {
+      return NextResponse.redirect(new URL("/lenderdashboard", request.url));
+    }
+
+    if (pathname === "/" && role === "Borrower") {
       return NextResponse.redirect(new URL("/dashboard", request.url));
+    }
+
+    if (pathname.startsWith("/admindashboard") && role !== "Admin") {
+      return NextResponse.redirect(new URL("/", request.url));
+    }
+
+    if (pathname.startsWith("/lenderdashboard") && role !== "Lender") {
+      return NextResponse.redirect(new URL("/", request.url));
+    }
+
+    if (pathname.startsWith("/dashboard") && role !== "Borrower") {
+      return NextResponse.redirect(new URL("/", request.url));
     }
   }
 
