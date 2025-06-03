@@ -6,13 +6,20 @@ import Link from "next/link";
 
 export default function LoginForm() {
   const router = useRouter();
-  const { login, loading, error, loginData } = useLoginRequest();
+  const { login, loading, error, loginData, userData } = useLoginRequest();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await login({ email, password }, () => router.push("/dashboard"));
+    await login({ email, password }, () => {
+      const userRole = userData?.data?.role;
+      userRole === "Admin"
+        ? router.push("/admindashboard")
+        : userRole === "Lender"
+        ? router.push("/lenderdashboard")
+        : router.push("/dashboard");
+    });
   };
 
   return (

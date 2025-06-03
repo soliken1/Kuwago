@@ -65,7 +65,7 @@ export default function useLoginRequest() {
         setCookie("session_token", token);
 
         const userResponse = await axios.get<UserResponse>(
-          "/proxy/Auth/GetUser",
+          "/proxy/Auth/GetUserLoggedInInfo",
           {
             headers: {
               Authorization: `Bearer ${token}`,
