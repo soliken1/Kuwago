@@ -59,7 +59,6 @@ export default function useLoginRequest() {
         payload
       );
       setLoginData(loginResponse.data);
-
       const token = loginResponse.data.data?.token;
       if (token) {
         setCookie("session_token", token);
@@ -74,23 +73,31 @@ export default function useLoginRequest() {
         );
 
         const userData = userResponse.data?.data;
+
         if (userData) {
           localStorage.setItem("user", JSON.stringify(userData));
           setCookie("user_role", userData.role);
         }
+        setUserData(userResponse.data);
 
         onSuccess?.();
-        setUserData(userResponse.data);
       } else {
         throw new Error("Token missing in login response.");
       }
     } catch (error: unknown) {
       const err = error as AxiosError<{ message: string }>;
+
       setError(err.response?.data?.message || err.message || "Login failed");
     } finally {
       setLoading(false);
     }
   };
 
-  return { login, loginData, userData, loading, error };
+  return {
+    login,
+    loginData,
+    userData,
+    loading,
+    error,
+  };
 }
