@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import useIDSelfieUploadRequest from "@/hooks/auth/requestIDSelfieUpload";
 import Image from "next/image";
+
 export default function UploadIDandSelfie() {
   const [idPhoto, setIdPhoto] = useState<File | null>(null);
   const [selfiePhoto, setSelfiePhoto] = useState<File | null>(null);
@@ -25,43 +26,28 @@ export default function UploadIDandSelfie() {
     }
   };
 
-  const fileToBase64 = (file: File): Promise<string> =>
-    new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => {
-        const result = reader.result as string;
-        // Strip "data:image/png;base64," etc.
-        const base64 = result.split(",")[1];
-        resolve(base64);
-      };
-      reader.onerror = reject;
-    });
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
     if (!idPhoto || !selfiePhoto) {
       alert("Please select both ID and Selfie photos.");
       return;
     }
 
     try {
-      const [idBase64, selfieBase64] = await Promise.all([
-        fileToBase64(idPhoto),
-        fileToBase64(selfiePhoto),
-      ]);
+      const formData = new FormData();
+      formData.append("idPhoto", idPhoto);
+      formData.append("selfiePhoto", selfiePhoto);
 
-      await idSelfieUpload(
-        {
-          idPhoto: idBase64,
-          selfiePhoto: selfieBase64,
-        },
-        () => {
-          alert("Upload successful!");
-        }
-      );
+      await idSelfieUpload(formData, () => {
+        alert("Upload successful!");
+        setIdPhoto(null);
+        setSelfiePhoto(null);
+        setIdPreview(null);
+        setSelfiePreview(null);
+      });
     } catch (err) {
-      alert(`${err}`);
+      alert(`Upload failed: ${err}`);
     }
   };
 
@@ -85,6 +71,8 @@ export default function UploadIDandSelfie() {
               <Image
                 src={idPreview}
                 alt="ID Preview"
+                width={1920}
+                height={1080}
                 className="mt-2 w-full h-40 object-contain rounded-md border"
               />
             )}
@@ -104,6 +92,8 @@ export default function UploadIDandSelfie() {
               <Image
                 alt="Selfie Preview"
                 src={selfiePreview}
+                width={1920}
+                height={1080}
                 className="mt-2 w-full h-40 object-contain rounded-md border"
               />
             )}

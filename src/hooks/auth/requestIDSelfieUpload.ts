@@ -2,10 +2,6 @@
 import axios, { AxiosError } from "axios";
 import { useState } from "react";
 import { getCookie } from "cookies-next";
-interface IDSelfieUploadPayload {
-  idPhoto: string;
-  selfiePhoto: string;
-}
 
 interface IDSelfieUploadResponse {
   success: boolean;
@@ -15,15 +11,11 @@ interface IDSelfieUploadResponse {
 }
 
 export default function useIDSelfieUploadRequest() {
-  const [idSelfieData, setIDSelfieData] =
-    useState<IDSelfieUploadResponse | null>(null);
+  useState<IDSelfieUploadResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  const idSelfieUpload = async (
-    payload: IDSelfieUploadPayload,
-    onSuccess?: () => void
-  ) => {
+  const idSelfieUpload = async (formData: FormData, onSuccess: () => void) => {
     setLoading(true);
     setError(null);
 
@@ -31,19 +23,17 @@ export default function useIDSelfieUploadRequest() {
       const token = getCookie("session_token");
 
       if (token) {
-        const response = await axios.post<IDSelfieUploadResponse>(
+        await axios.post(
           "/proxy/IdentityVerification/UploadIDAndSelfie",
+          formData,
           {
             headers: {
               Authorization: `Bearer ${token}`,
+              "Content-Type": "multipart/form-data",
             },
-            payload,
           }
         );
-
-        setIDSelfieData(response.data);
-
-        onSuccess?.();
+        onSuccess();
       } else {
         throw new Error("Token missing in upload response.");
       }
@@ -55,5 +45,5 @@ export default function useIDSelfieUploadRequest() {
     }
   };
 
-  return { idSelfieUpload, idSelfieData, loading, error };
+  return { idSelfieUpload, loading, error };
 }
