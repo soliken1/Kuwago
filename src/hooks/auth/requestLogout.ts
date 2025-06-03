@@ -30,6 +30,8 @@ export default function useLogoutRequest() {
           }
         );
         setLogoutData(response.data);
+      } else {
+        throw new Error("Token missing in login response.");
       }
     } catch (error: unknown) {
       const err = error as AxiosError<{ message: string }>;
