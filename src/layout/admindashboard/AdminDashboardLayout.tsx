@@ -57,7 +57,7 @@ export default function AdminDashboardLayout({
                 Settings
               </button>
               <Link
-                href="/dashboard"
+                href="/admindashboard"
                 className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
               >
                 Back to Dashboard
