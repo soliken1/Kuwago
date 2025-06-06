@@ -11,7 +11,6 @@ export default function ProfileForm() {
     fullName: "",
     email: "",
     phoneNumber: "",
-    address: "",
     profilePicture: "/Images/User.jpg",
   });
 
@@ -150,20 +149,6 @@ export default function ProfileForm() {
                 type="tel"
                 name="phoneNumber"
                 value={formData.phoneNumber}
-                onChange={handleInputChange}
-                disabled={!isEditing}
-                className="w-full px-4 py-2 rounded-md border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:bg-gray-100"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">
-                Address
-              </label>
-              <input
-                type="text"
-                name="address"
-                value={formData.address}
                 onChange={handleInputChange}
                 disabled={!isEditing}
                 className="w-full px-4 py-2 rounded-md border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:bg-gray-100"

@@ -6,7 +6,6 @@ export interface UserProfile {
   fullName: string;
   email: string;
   phoneNumber: string;
-  address: string;
   profilePicture: string;
 }
 
@@ -29,7 +28,6 @@ export const useProfile = () => {
     fullName: "",
     email: "",
     phoneNumber: "",
-    address: "",
     profilePicture: DEFAULT_PROFILE_PICTURE,
   });
   const [isLoading, setIsLoading] = useState(false);
@@ -50,7 +48,6 @@ export const useProfile = () => {
             fullName: parsedData.fullName || "",
             email: parsedData.email || "",
             phoneNumber: parsedData.phoneNumber || "",
-            address: parsedData.address || "",
             profilePicture:
               parsedData.profilePicture || DEFAULT_PROFILE_PICTURE,
           });
