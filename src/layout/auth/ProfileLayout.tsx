@@ -1,9 +1,15 @@
-import React from "react";
+import React, { ReactNode } from "react";
 import Navbar from "@/components/dashboard/client/Navbar";
-export default function ProfileLayout() {
+
+interface ProfileLayoutProps {
+  children: ReactNode;
+}
+
+export default function ProfileLayout({ children }: ProfileLayoutProps) {
   return (
-    <div className="w-screen h-screen flex flex-col">
+    <div className="min-h-screen bg-gray-50">
       <Navbar />
+      <main className="container mx-auto px-4 py-8">{children}</main>
     </div>
   );
 }
