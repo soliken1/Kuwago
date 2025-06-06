@@ -1,19 +1,13 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Image from "next/image";
 import { FiEdit2, FiSave, FiX } from "react-icons/fi";
-
-interface UserProfile {
-  fullName: string;
-  email: string;
-  phoneNumber: string;
-  address: string;
-  profilePicture: string;
-}
+import { useProfile, UserProfile } from "@/hooks/users/useProfile";
 
 export default function ProfileForm() {
   const [isEditing, setIsEditing] = useState(false);
-  const [profile, setProfile] = useState<UserProfile>({
+  const { profile, isLoading, error, updateProfile } = useProfile();
+  const [formData, setFormData] = useState<UserProfile>({
     fullName: "",
     email: "",
     phoneNumber: "",
@@ -21,27 +15,21 @@ export default function ProfileForm() {
     profilePicture: "/Images/User.jpg",
   });
 
-  useEffect(() => {
-    // TODO: Fetch user profile data from API
-    // For now using localStorage data
-    const user = localStorage.getItem("user");
-    if (user) {
-      const userData = JSON.parse(user);
-      setProfile({
-        fullName: userData.fullName || "",
-        email: userData.email || "",
-        phoneNumber: userData.phoneNumber || "",
-        address: userData.address || "",
-        profilePicture: userData.profilePicture || "/Images/User.jpg",
+  // Update form data when profile changes
+  React.useEffect(() => {
+    if (profile) {
+      setFormData({
+        ...profile,
+        profilePicture: profile.profilePicture || "/Images/User.jpg",
       });
     }
-  }, []);
+  }, [profile]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
-    setProfile((prev) => ({
+    setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
@@ -49,9 +37,35 @@ export default function ProfileForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement API call to update profile
-    setIsEditing(false);
+    const success = await updateProfile(formData);
+    if (success) {
+      setIsEditing(false);
+    }
   };
+
+  if (isLoading) {
+    return (
+      <div className="max-w-4xl mx-auto p-6">
+        <div className="bg-white rounded-lg shadow-lg p-8">
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-4xl mx-auto p-6">
+        <div className="bg-white rounded-lg shadow-lg p-8">
+          <div className="text-red-500 text-center">
+            <p>Error: {error}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto p-6">
@@ -82,10 +96,11 @@ export default function ProfileForm() {
           <div className="flex flex-col items-center mb-8">
             <div className="relative w-32 h-32 mb-4">
               <Image
-                src={profile.profilePicture}
+                src={formData.profilePicture || "/Images/User.jpg"}
                 alt="Profile"
                 fill
                 className="rounded-full object-cover"
+                priority
               />
               {isEditing && (
                 <button
@@ -106,7 +121,7 @@ export default function ProfileForm() {
               <input
                 type="text"
                 name="fullName"
-                value={profile.fullName}
+                value={formData.fullName}
                 onChange={handleInputChange}
                 disabled={!isEditing}
                 className="w-full px-4 py-2 rounded-md border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:bg-gray-100"
@@ -120,7 +135,7 @@ export default function ProfileForm() {
               <input
                 type="email"
                 name="email"
-                value={profile.email}
+                value={formData.email}
                 onChange={handleInputChange}
                 disabled={!isEditing}
                 className="w-full px-4 py-2 rounded-md border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:bg-gray-100"
@@ -134,7 +149,7 @@ export default function ProfileForm() {
               <input
                 type="tel"
                 name="phoneNumber"
-                value={profile.phoneNumber}
+                value={formData.phoneNumber}
                 onChange={handleInputChange}
                 disabled={!isEditing}
                 className="w-full px-4 py-2 rounded-md border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:bg-gray-100"
@@ -148,7 +163,7 @@ export default function ProfileForm() {
               <input
                 type="text"
                 name="address"
-                value={profile.address}
+                value={formData.address}
                 onChange={handleInputChange}
                 disabled={!isEditing}
                 className="w-full px-4 py-2 rounded-md border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:bg-gray-100"
