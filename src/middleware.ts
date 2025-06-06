@@ -72,6 +72,10 @@ export async function middleware(request: NextRequest) {
     if (pathname.startsWith("/dashboard") && role !== "Borrower") {
       return NextResponse.redirect(new URL("/", request.url));
     }
+
+    if (pathname.startsWith("/profile") && role !== "Borrower") {
+      return NextResponse.redirect(new URL("/", request.url));
+    }
   }
 
   return NextResponse.next();

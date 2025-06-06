@@ -7,5 +7,10 @@ interface ProfileLayoutProps {
 }
 
 export default function ProfileLayout({ children }: ProfileLayoutProps) {
-  return <div className="min-h-screen bg-gray-50">{children}</div>;
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Navbar />
+      <main className="container mx-auto px-4 py-8">{children}</main>
+    </div>
+  );
 }
