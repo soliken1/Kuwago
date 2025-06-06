@@ -1,6 +1,5 @@
 import React, { ReactNode } from "react";
 import Navbar from "@/components/dashboard/client/Navbar";
-import ProfileForm from "@/components/profile/client/ProfileForm";
 
 interface ProfileLayoutProps {
   children: ReactNode;
