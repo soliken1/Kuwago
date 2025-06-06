@@ -11,16 +11,13 @@ export default function ProfileForm() {
     fullName: "",
     email: "",
     phoneNumber: "",
-    profilePicture: "/Images/User.jpg",
+    profilePicture: "",
   });
 
   // Update form data when profile changes
   React.useEffect(() => {
     if (profile) {
-      setFormData({
-        ...profile,
-        profilePicture: profile.profilePicture || "/Images/User.jpg",
-      });
+      setFormData(profile);
     }
   }, [profile]);
 
@@ -94,13 +91,21 @@ export default function ProfileForm() {
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="flex flex-col items-center mb-8">
             <div className="relative w-32 h-32 mb-4">
-              <Image
-                src={formData.profilePicture || "/Images/User.jpg"}
-                alt="Profile"
-                fill
-                className="rounded-full object-cover"
-                priority
-              />
+              {formData.profilePicture ? (
+                <Image
+                  src={formData.profilePicture}
+                  alt="Profile"
+                  fill
+                  className="rounded-full object-cover"
+                  priority
+                />
+              ) : (
+                <div className="w-full h-full rounded-full bg-gray-200 flex items-center justify-center">
+                  <span className="text-4xl text-gray-400">
+                    {formData.fullName?.charAt(0)?.toUpperCase() || "U"}
+                  </span>
+                </div>
+              )}
               {isEditing && (
                 <button
                   type="button"

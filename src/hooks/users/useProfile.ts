@@ -20,15 +20,12 @@ interface ProfileError {
   statusCode: number;
 }
 
-// Default profile picture
-const DEFAULT_PROFILE_PICTURE = "/Images/User.jpg";
-
 export const useProfile = () => {
   const [profile, setProfile] = useState<UserProfile>({
     fullName: "",
     email: "",
     phoneNumber: "",
-    profilePicture: DEFAULT_PROFILE_PICTURE,
+    profilePicture: "",
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -48,8 +45,7 @@ export const useProfile = () => {
             fullName: parsedData.fullName || "",
             email: parsedData.email || "",
             phoneNumber: parsedData.phoneNumber || "",
-            profilePicture:
-              parsedData.profilePicture || DEFAULT_PROFILE_PICTURE,
+            profilePicture: parsedData.profilePicture || "",
           });
         } catch (error) {
           console.error("Error parsing user data:", error);
@@ -82,7 +78,7 @@ export const useProfile = () => {
       const data: ProfileResponse = await response.json();
       setProfile({
         ...data.data,
-        profilePicture: data.data.profilePicture || DEFAULT_PROFILE_PICTURE,
+        profilePicture: data.data.profilePicture || "",
       });
     } catch (err) {
       setError(
