@@ -34,48 +34,6 @@ export const useProfile = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchProfile = async () => {
-    try {
-      const token = getCookie("session_token");
-      if (!token) throw new Error("No authentication token found");
-
-      const userData = localStorage.getItem("user");
-      if (!userData) throw new Error("No user data in localStorage");
-
-      const response = await axios.get<ProfileResponse>(
-        `/proxy/Auth/GetUserLoggedInInfo`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (response.data?.data) {
-        const updatedProfile = response.data.data;
-
-        setProfile((prev) => ({
-          ...prev,
-          ...updatedProfile,
-        }));
-
-        localStorage.setItem(
-          "user",
-          JSON.stringify({
-            ...JSON.parse(userData),
-            ...updatedProfile,
-          })
-        );
-      }
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        console.error("Failed to fetch profile:", err.message);
-      } else {
-        console.error("Failed to fetch profile:", err);
-      }
-    }
-  };
-
   const updateProfile = async (updatedProfile: Partial<UserProfile>) => {
     setIsLoading(true);
     setError(null);
@@ -89,7 +47,7 @@ export const useProfile = () => {
 
       const { uid } = JSON.parse(userData);
 
-      let didUpdate = false;
+      console.log(updatedProfile);
 
       if (
         updatedProfile.firstName ||
@@ -104,7 +62,7 @@ export const useProfile = () => {
           status: 0,
         };
 
-        const infoResponse = await axios.put<ProfileResponse>(
+        await axios.put<ProfileResponse>(
           "/proxy/Auth/EditUserInfoRequest",
           userInfoBody,
           {
@@ -114,10 +72,6 @@ export const useProfile = () => {
             },
           }
         );
-
-        if (infoResponse.data?.data) {
-          didUpdate = true;
-        }
       }
 
       if (updatedProfile.newPassword && updatedProfile.confirmPassword) {
@@ -142,7 +96,6 @@ export const useProfile = () => {
         );
 
         alert(passwordResponse.data.message);
-        didUpdate = true;
       }
 
       if (updatedProfile.email) {
@@ -163,7 +116,6 @@ export const useProfile = () => {
         );
 
         alert(emailResponse.data.message);
-        didUpdate = true;
       }
 
       if (
@@ -187,20 +139,14 @@ export const useProfile = () => {
         alert(profileResponse.data.message);
 
         const newProfilePicUrl = profileResponse.data.data.profilePicUrl;
-
-        const storedUser = localStorage.getItem("user");
-        if (storedUser) {
-          const parsedUser = JSON.parse(storedUser);
+        if (userData) {
+          const parsedUser = JSON.parse(userData);
           parsedUser.profilePicture = newProfilePicUrl;
 
           localStorage.setItem("user", JSON.stringify(parsedUser));
         }
 
-        didUpdate = true;
-      }
-
-      if (didUpdate) {
-        await fetchProfile();
+        window.location.reload();
       }
 
       return true;
@@ -230,6 +176,5 @@ export const useProfile = () => {
     error,
     updateProfile,
     setProfile,
-    fetchProfile,
   };
 };
