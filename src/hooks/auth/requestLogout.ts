@@ -19,6 +19,7 @@ export default function useLogoutRequest() {
 
     try {
       deleteCookie("session_token");
+      deleteCookie("user_role");
       const token = getCookie("session_token");
       if (token) {
         const response = await axios.post<LogoutResponse>(
