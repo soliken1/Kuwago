@@ -6,8 +6,7 @@ import { useProfile, UserProfile } from "@/hooks/users/useProfile";
 
 export default function ProfileForm() {
   const [isEditing, setIsEditing] = useState(false);
-  const { profile, fetchProfile, isLoading, updateProfile, error } =
-    useProfile();
+  const { profile, isLoading, updateProfile, error } = useProfile();
   const [formData, setFormData] = useState<UserProfile>({
     firstName: "",
     lastName: "",
@@ -23,10 +22,6 @@ export default function ProfileForm() {
     email?: string;
     phoneNumber?: string;
   }>({});
-
-  useEffect(() => {
-    fetchProfile();
-  }, []);
 
   React.useEffect(() => {
     if (profile) {
@@ -53,6 +48,21 @@ export default function ProfileForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const { newPassword, confirmPassword } = formData;
+
+    if (newPassword || confirmPassword) {
+      if (newPassword.length < 6) {
+        alert("Password must be at least 6 characters long.");
+        return;
+      }
+
+      if (newPassword !== confirmPassword) {
+        alert("Passwords do not match.");
+        return;
+      }
+    }
+
     const success = await updateProfile(formData);
     if (success) {
       setIsEditing(false);
