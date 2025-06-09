@@ -62,7 +62,7 @@ export const useProfile = () => {
           status: 0,
         };
 
-        const infoResponse = await axios.put<ProfileResponse>(
+        await axios.put<ProfileResponse>(
           "/proxy/Auth/EditUserInfoRequest",
           userInfoBody,
           {
