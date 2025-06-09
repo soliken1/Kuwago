@@ -67,8 +67,12 @@ export const useProfile = () => {
           })
         );
       }
-    } catch (err: any) {
-      console.error("Failed to fetch profile:", err);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        console.error("Failed to fetch profile:", err.message);
+      } else {
+        console.error("Failed to fetch profile:", err);
+      }
     }
   };
 
@@ -200,9 +204,19 @@ export const useProfile = () => {
       }
 
       return true;
-    } catch (err: any) {
-      const message =
-        err?.response?.data?.message || err?.message || "Update failed";
+    } catch (err: unknown) {
+      let message = "Update failed";
+
+      if (err && typeof err === "object" && "response" in err) {
+        const error = err as {
+          response?: { data?: { message?: string } };
+          message?: string;
+        };
+        message = error.response?.data?.message || error.message || message;
+      } else if (err instanceof Error) {
+        message = err.message;
+      }
+
       setError(message);
       return false;
     } finally {
