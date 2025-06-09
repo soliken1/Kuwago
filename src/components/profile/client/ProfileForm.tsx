@@ -1,25 +1,45 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { FiEdit2, FiSave, FiX } from "react-icons/fi";
 import { useProfile, UserProfile } from "@/hooks/users/useProfile";
 
 export default function ProfileForm() {
   const [isEditing, setIsEditing] = useState(false);
-  const { profile, isLoading, error, updateProfile } = useProfile();
+  const { profile, fetchProfile, isLoading, updateProfile, error } =
+    useProfile();
   const [formData, setFormData] = useState<UserProfile>({
-    fullName: "",
+    firstName: "",
+    lastName: "",
     email: "",
     phoneNumber: "",
     profilePicture: "",
+    newPassword: "",
+    confirmPassword: "",
   });
+  const [storedUser, setStoredUser] = useState<{
+    fullName?: string;
+    profilePicture?: string;
+    email?: string;
+    phoneNumber?: string;
+  }>({});
 
-  // Update form data when profile changes
+  useEffect(() => {
+    fetchProfile();
+  }, []);
+
   React.useEffect(() => {
     if (profile) {
       setFormData(profile);
     }
   }, [profile]);
+
+  useEffect(() => {
+    const user = localStorage.getItem("user");
+    if (user) {
+      setStoredUser(JSON.parse(user));
+    }
+  }, []);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -91,46 +111,124 @@ export default function ProfileForm() {
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="flex flex-col items-center mb-8">
             <div className="relative w-32 h-32 mb-4">
-              {formData.profilePicture ? (
+              {formData.profilePicture instanceof File ? (
                 <Image
-                  src={formData.profilePicture}
+                  src={URL.createObjectURL(formData.profilePicture)}
                   alt="Profile"
                   fill
                   className="rounded-full object-cover"
-                  priority
+                />
+              ) : storedUser.profilePicture ? (
+                <Image
+                  src={storedUser.profilePicture}
+                  alt="Profile"
+                  fill
+                  className="rounded-full object-cover"
                 />
               ) : (
                 <div className="w-full h-full rounded-full bg-gray-200 flex items-center justify-center">
                   <span className="text-4xl text-gray-400">
-                    {formData.fullName?.charAt(0)?.toUpperCase() || "U"}
+                    {storedUser.fullName?.charAt(0)?.toUpperCase() || "U"}
                   </span>
                 </div>
               )}
               {isEditing && (
-                <button
-                  type="button"
-                  className="absolute bottom-0 right-0 bg-green-500 text-white p-2 rounded-full hover:bg-green-600"
-                >
-                  <FiEdit2 size={20} />
-                </button>
+                <>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    id="profilePictureInput"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        setFormData((prev) => ({
+                          ...prev,
+                          profilePicture: file,
+                        }));
+                      }
+                    }}
+                  />
+                  <label
+                    htmlFor="profilePictureInput"
+                    className="absolute bottom-0 right-0 bg-green-500 text-white p-2 rounded-full hover:bg-green-600 cursor-pointer"
+                  >
+                    <FiEdit2 size={20} />
+                  </label>
+                </>
               )}
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">
-                Full Name
-              </label>
-              <input
-                type="text"
-                name="fullName"
-                value={formData.fullName}
-                onChange={handleInputChange}
-                disabled={!isEditing}
-                className="w-full px-4 py-2 rounded-md border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:bg-gray-100"
-              />
-            </div>
+            {isEditing ? (
+              <>
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    First Name
+                  </label>
+                  <input
+                    type="text"
+                    name="firstName"
+                    placeholder="John"
+                    onChange={handleInputChange}
+                    disabled={!isEditing}
+                    className="w-full px-4 py-2 rounded-md border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:bg-gray-100"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Last Name
+                  </label>
+                  <input
+                    type="text"
+                    name="lastName"
+                    placeholder="Doe"
+                    onChange={handleInputChange}
+                    disabled={!isEditing}
+                    className="w-full px-4 py-2 rounded-md border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:bg-gray-100"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Password
+                  </label>
+                  <input
+                    type="password"
+                    name="newPassword"
+                    onChange={handleInputChange}
+                    disabled={!isEditing}
+                    className="w-full px-4 py-2 rounded-md border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:bg-gray-100"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Confirm Password
+                  </label>
+                  <input
+                    type="password"
+                    name="confirmPassword"
+                    onChange={handleInputChange}
+                    disabled={!isEditing}
+                    className="w-full px-4 py-2 rounded-md border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:bg-gray-100"
+                  />
+                </div>
+              </>
+            ) : (
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Full Name
+                </label>
+                <input
+                  type="text"
+                  value={storedUser.fullName || ""}
+                  disabled={!isEditing}
+                  className="w-full px-4 py-2 rounded-md border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:bg-gray-100"
+                />
+              </div>
+            )}
 
             <div className="space-y-2">
               <label className="block text-sm font-medium text-gray-700">
@@ -139,10 +237,12 @@ export default function ProfileForm() {
               <input
                 type="email"
                 name="email"
-                value={formData.email}
+                placeholder={storedUser.email || ""}
                 onChange={handleInputChange}
                 disabled={!isEditing}
-                className="w-full px-4 py-2 rounded-md border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:bg-gray-100"
+                className={`w-full px-4 py-2 rounded-md border ${
+                  isEditing ? "" : "placeholder:text-black"
+                } border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:bg-gray-100`}
               />
             </div>
 
@@ -153,10 +253,12 @@ export default function ProfileForm() {
               <input
                 type="tel"
                 name="phoneNumber"
-                value={formData.phoneNumber}
+                placeholder={storedUser.phoneNumber || ""}
                 onChange={handleInputChange}
                 disabled={!isEditing}
-                className="w-full px-4 py-2 rounded-md border border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:bg-gray-100"
+                className={`w-full px-4 py-2 rounded-md border ${
+                  isEditing ? "" : "placeholder:text-black"
+                } border-gray-300 focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:bg-gray-100`}
               />
             </div>
           </div>

@@ -2,7 +2,8 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
-    domains: ["i.pinimg.com"], // ✅ Add the domain here
+    domains: ["i.pinimg.com"],
+    remotePatterns: [new URL("https://res.cloudinary.com/**")],
   },
   async rewrites() {
     return [

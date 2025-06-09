@@ -1,12 +1,17 @@
 "use client";
-import { useState, useEffect } from "react";
+import { getCookie } from "cookies-next";
+import { useState } from "react";
+import axios from "axios";
 
 // Types
 export interface UserProfile {
-  fullName: string;
+  firstName: string;
+  lastName: string;
   email: string;
   phoneNumber: string;
-  profilePicture: string;
+  profilePicture: string | File;
+  newPassword: string;
+  confirmPassword: string;
 }
 
 interface ProfileResponse {
@@ -15,157 +20,216 @@ interface ProfileResponse {
   data: UserProfile;
 }
 
-interface ProfileError {
-  message: string;
-  statusCode: number;
-}
-
 export const useProfile = () => {
   const [profile, setProfile] = useState<UserProfile>({
-    fullName: "",
+    firstName: "",
+    lastName: "",
     email: "",
     phoneNumber: "",
     profilePicture: "",
+    newPassword: "",
+    confirmPassword: "",
   });
+
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch profile data
   const fetchProfile = async () => {
-    setIsLoading(true);
-    setError(null);
-
     try {
-      // First try to get user data from localStorage
+      const token = getCookie("session_token");
+      if (!token) throw new Error("No authentication token found");
+
       const userData = localStorage.getItem("user");
-      if (userData) {
-        try {
-          const parsedData = JSON.parse(userData);
-          setProfile({
-            fullName: parsedData.fullName || "",
-            email: parsedData.email || "",
-            phoneNumber: parsedData.phoneNumber || "",
-            profilePicture: parsedData.profilePicture || "",
-          });
-        } catch (error) {
-          console.error("Error parsing user data:", error);
-        }
-      }
+      if (!userData) throw new Error("No user data in localStorage");
 
-      // Then try to fetch from API
-      const token = localStorage.getItem("session_token");
-      if (!token) {
-        console.warn("No authentication token found");
-        return;
-      }
-
-      const response = await fetch(
-        "http://kuwagoapi.somee.com/api/User/Profile",
+      const response = await axios.get<ProfileResponse>(
+        `/proxy/Auth/GetUserLoggedInInfo`,
         {
-          method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
           },
         }
       );
 
-      if (!response.ok) {
-        const errorData: ProfileError = await response.json();
-        throw new Error(errorData.message || "Failed to fetch profile");
-      }
+      if (response.data?.data) {
+        const updatedProfile = response.data.data;
 
-      const data: ProfileResponse = await response.json();
-      setProfile({
-        ...data.data,
-        profilePicture: data.data.profilePicture || "",
-      });
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "An error occurred while fetching profile"
-      );
-    } finally {
-      setIsLoading(false);
+        setProfile((prev) => ({
+          ...prev,
+          ...updatedProfile,
+        }));
+
+        localStorage.setItem(
+          "user",
+          JSON.stringify({
+            ...JSON.parse(userData),
+            ...updatedProfile,
+          })
+        );
+      }
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        console.error("Failed to fetch profile:", err.message);
+      } else {
+        console.error("Failed to fetch profile:", err);
+      }
     }
   };
 
-  // Update profile data
   const updateProfile = async (updatedProfile: Partial<UserProfile>) => {
     setIsLoading(true);
     setError(null);
 
     try {
-      const token = localStorage.getItem("session_token");
-      if (!token) {
-        throw new Error("No authentication token found");
-      }
+      const token = getCookie("session_token");
+      if (!token) throw new Error("No authentication token found");
 
-      const response = await fetch(
-        "http://kuwagoapi.somee.com/api/User/UpdateProfile",
-        {
-          method: "PUT",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(updatedProfile),
-        }
-      );
-
-      if (!response.ok) {
-        const errorData: ProfileError = await response.json();
-        throw new Error(errorData.message || "Failed to update profile");
-      }
-
-      const data: ProfileResponse = await response.json();
-      setProfile((prev) => ({
-        ...prev,
-        ...data.data,
-        profilePicture: data.data.profilePicture || prev.profilePicture,
-      }));
-
-      // Update localStorage with new data
       const userData = localStorage.getItem("user");
-      if (userData) {
-        try {
-          const parsedData = JSON.parse(userData);
-          localStorage.setItem(
-            "user",
-            JSON.stringify({
-              ...parsedData,
-              ...data.data,
-            })
-          );
-        } catch (error) {
-          console.error("Error updating localStorage:", error);
+      if (!userData) throw new Error("No user data in localStorage");
+
+      const { uid } = JSON.parse(userData);
+
+      let didUpdate = false;
+
+      if (
+        updatedProfile.firstName ||
+        updatedProfile.lastName ||
+        updatedProfile.phoneNumber
+      ) {
+        const userInfoBody = {
+          uid,
+          firstName: updatedProfile.firstName || "",
+          lastName: updatedProfile.lastName || "",
+          phoneNumber: updatedProfile.phoneNumber || "",
+          status: 0,
+        };
+
+        const infoResponse = await axios.put<ProfileResponse>(
+          "/proxy/Auth/EditUserInfoRequest",
+          userInfoBody,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        if (infoResponse.data?.data) {
+          didUpdate = true;
         }
+      }
+
+      if (updatedProfile.newPassword && updatedProfile.confirmPassword) {
+        if (updatedProfile.newPassword !== updatedProfile.confirmPassword) {
+          throw new Error("New password and confirmation do not match.");
+        }
+
+        const passwordBody = {
+          uid,
+          newPassword: updatedProfile.newPassword,
+        };
+
+        const passwordResponse = await axios.put<ProfileResponse>(
+          "/proxy/Auth/ChangePassword",
+          passwordBody,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        alert(passwordResponse.data.message);
+        didUpdate = true;
+      }
+
+      if (updatedProfile.email) {
+        const emailBody = {
+          uid,
+          email: updatedProfile.email,
+        };
+
+        const emailResponse = await axios.put<ProfileResponse>(
+          "/proxy/Auth/ChangeEmail",
+          emailBody,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        alert(emailResponse.data.message);
+        didUpdate = true;
+      }
+
+      if (
+        updatedProfile.profilePicture &&
+        typeof updatedProfile.profilePicture !== "string"
+      ) {
+        const formData = new FormData();
+        formData.append("profilePicture", updatedProfile.profilePicture);
+
+        const profileResponse = await axios.post(
+          "/proxy/Auth/UploadProfilePicture",
+          formData,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        );
+
+        alert(profileResponse.data.message);
+
+        const newProfilePicUrl = profileResponse.data.data.profilePicUrl;
+
+        const storedUser = localStorage.getItem("user");
+        if (storedUser) {
+          const parsedUser = JSON.parse(storedUser);
+          parsedUser.profilePicture = newProfilePicUrl;
+
+          localStorage.setItem("user", JSON.stringify(parsedUser));
+        }
+
+        didUpdate = true;
+      }
+
+      if (didUpdate) {
+        await fetchProfile();
       }
 
       return true;
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "An error occurred while updating profile"
-      );
+    } catch (err: unknown) {
+      let message = "Update failed";
+
+      if (err && typeof err === "object" && "response" in err) {
+        const error = err as {
+          response?: { data?: { message?: string } };
+          message?: string;
+        };
+        message = error.response?.data?.message || error.message || message;
+      } else if (err instanceof Error) {
+        message = err.message;
+      }
+
+      setError(message);
       return false;
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Load profile data on mount
-  useEffect(() => {
-    fetchProfile();
-  }, []);
-
   return {
     profile,
     isLoading,
     error,
     updateProfile,
-    refreshProfile: fetchProfile,
+    setProfile,
+    fetchProfile,
   };
 };
