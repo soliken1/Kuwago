@@ -1,6 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  env: {
+    STREAM_API_KEY: process.env.STREAM_API_KEY,
+    STREAM_SECRET_KEY: process.env.STREAM_SECRET_KEY,
+  },
   images: {
     domains: ["i.pinimg.com"],
     remotePatterns: [new URL("https://res.cloudinary.com/**")],

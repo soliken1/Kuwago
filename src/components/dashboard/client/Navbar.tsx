@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import useLogoutRequest from "@/hooks/auth/requestLogout";
 import { IoMdArrowDropdown } from "react-icons/io";
 import { IoNotificationsOutline } from "react-icons/io5";
+import { BiMessage } from "react-icons/bi";
 import Image from "next/image";
 
 export default function Navbar() {
@@ -56,7 +57,10 @@ export default function Navbar() {
         </div>
       </div>
 
-      <div className="flex flex-row items-center gap-5 h-full px-12 relative">
+      <div className="flex flex-row justify-center items-center gap-5 h-full px-12 relative">
+        <Link href="/messaging">
+          <BiMessage size={24} />
+        </Link>
         <IoNotificationsOutline size={24} />
 
         {/* Profile dropdown */}
