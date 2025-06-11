@@ -3,6 +3,18 @@
 import { useState } from "react";
 import axios, { AxiosError } from "axios";
 
+interface UserData {
+  uid: string;
+  fullName?: string;
+  email?: string;
+  phoneNumber?: string;
+  username?: string;
+  profilePicture?: string;
+  role?: string;
+  createdAt?: string;
+  // Add other properties as needed
+}
+
 interface RegisterPayload {
   firstName: string;
   lastName: string;
@@ -17,6 +29,7 @@ interface RegisterResponse {
   token?: string;
   message?: string;
   errors?: Record<string, string[]>;
+  data?: UserData;
 }
 
 export default function useRegisterRequest() {
@@ -36,6 +49,7 @@ export default function useRegisterRequest() {
         payload
       );
       setRegisterData(response.data);
+
       onSuccess?.();
     } catch (error: unknown) {
       const err = error as AxiosError<RegisterResponse>;
