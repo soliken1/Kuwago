@@ -76,9 +76,14 @@ export default function useLoginRequest() {
 
         const uid = userData?.uid;
         const username = userData?.username;
+        const userProfile = userData?.profilePicture;
 
         if (uid && username) {
-          await axios.post("/api/createUser", { userId: uid, username });
+          await axios.post("/api/createUser", {
+            userId: uid,
+            username,
+            avatarUrl: userProfile,
+          });
         }
 
         if (userData) {

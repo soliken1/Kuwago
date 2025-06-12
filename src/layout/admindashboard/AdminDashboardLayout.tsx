@@ -5,7 +5,7 @@ import Overview from "@/components/admindashboard/client/Overview";
 import Users from "@/components/admindashboard/client/Users";
 import Analytics from "@/components/admindashboard/client/Analytics";
 import Settings from "@/components/admindashboard/client/Settings";
-
+import { BiMessage } from "react-icons/bi";
 interface AdminDashboardLayoutProps {
   children?: React.ReactNode;
 }
@@ -56,11 +56,9 @@ export default function AdminDashboardLayout({
               >
                 Settings
               </button>
-              <Link
-                href="/admindashboard"
-                className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
-              >
-                Back to Dashboard
+
+              <Link href="/messaging">
+                <BiMessage color="gray" size={24} />
               </Link>
             </div>
           </div>

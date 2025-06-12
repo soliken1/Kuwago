@@ -16,6 +16,7 @@ export default function Navbar() {
   const [storedUser, setStoredUser] = useState<{
     fullName?: string;
     profilePicture?: string;
+    role?: string;
   }>({});
 
   useEffect(() => {
@@ -49,12 +50,16 @@ export default function Navbar() {
         <label className="text-xl font-semibold">
           Kuwa<span className="text-green-500">Go</span>
         </label>
-        <div className="flex flex-row gap-5">
-          <Link href="/dashboard">Dashboard</Link>
-          <Link href="/sample">Lend</Link>
-          <Link href="/sample">Sample</Link>
-          <Link href="/sample">Sample</Link>
-        </div>
+        {storedUser.role === "Admin" ? (
+          <Link href="/admindashboard">Dashboard</Link>
+        ) : (
+          <div className="flex flex-row gap-5">
+            <Link href="/dashboard">Dashboard</Link>
+            <Link href="/sample">Lend</Link>
+            <Link href="/sample">Sample</Link>
+            <Link href="/sample">Sample</Link>
+          </div>
+        )}
       </div>
 
       <div className="flex flex-row justify-center items-center gap-5 h-full px-12 relative">

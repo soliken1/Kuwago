@@ -1,31 +1,30 @@
+// app/api/createUser/route.ts
+import { NextRequest, NextResponse } from "next/server";
 import { StreamChat } from "stream-chat";
-import type { NextRequest } from "next/server";
-import { NextResponse } from "next/server";
 
-export async function POST(request: NextRequest) {
-  const api_key = process.env.STREAM_API_KEY!;
-  const api_secret = process.env.STREAM_SECRET_KEY!;
-  const { userId, username } = (await request.json()) as {
-    userId: string;
-    username: string;
-  };
-
-  if (!userId || !username) {
-    return NextResponse.json(
-      { error: "Missing userId or username" },
-      { status: 400 }
-    );
+export async function POST(req: NextRequest) {
+  const { userId, username, avatarUrl } = await req.json();
+  if (!userId || !username || !avatarUrl) {
+    return NextResponse.json({ error: "Missing fields" }, { status: 400 });
   }
 
-  const serverClient = StreamChat.getInstance(api_key, api_secret);
+  const serverClient = StreamChat.getInstance(
+    process.env.STREAM_API_KEY!,
+    process.env.STREAM_SECRET_KEY!
+  );
 
   try {
     await serverClient.upsertUsers([
-      { id: userId, name: username, role: "user" },
+      {
+        id: userId,
+        name: username,
+        image: avatarUrl,
+        role: "user",
+      },
     ]);
-    return NextResponse.json({ message: "User created successfully" });
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Unknown error";
-    return NextResponse.json({ error: message }, { status: 500 });
+
+    return NextResponse.json({ message: "User created" });
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
