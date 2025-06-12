@@ -58,11 +58,9 @@ export default function UserListChat() {
         );
 
         // Create a channel for each user (or use existing ones)
-        const { users } = await chatClient.queryUsers(
-          { id: { $ne: storedUser.uid } },
-          { id: 1 },
-          { presence: false, state: true }
-        );
+        const { users } = await chatClient.queryUsers({
+          id: { $ne: storedUser.uid },
+        } as any);
 
         // Create or get channels for each user
         const userChannels = await Promise.all(
