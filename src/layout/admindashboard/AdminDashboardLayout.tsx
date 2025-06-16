@@ -6,6 +6,7 @@ import Users from "@/components/admindashboard/client/Users";
 import Analytics from "@/components/admindashboard/client/Analytics";
 import Settings from "@/components/admindashboard/client/Settings";
 import { BiMessage } from "react-icons/bi";
+import UserListChat from "@/components/messaging/client/UserListChat";
 interface AdminDashboardLayoutProps {
   children?: React.ReactNode;
 }
@@ -57,9 +58,7 @@ export default function AdminDashboardLayout({
                 Settings
               </button>
 
-              <Link href="/messaging">
-                <BiMessage color="gray" size={24} />
-              </Link>
+              <UserListChat />
             </div>
           </div>
         </div>
