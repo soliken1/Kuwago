@@ -1,4 +1,3 @@
-// app/api/createUser/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { StreamChat } from "stream-chat";
 

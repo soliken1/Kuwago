@@ -13,6 +13,7 @@
     "@stream-io/video-styling": "^1.2.0",
     "axios": "^1.9.0",
     "cookies-next": "^6.0.0",
+    "docusign-esign": "^8.2.0",
     "next": "15.3.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
@@ -23,7 +24,8 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
+    "@types/docusign-esign": "^5.19.9",
+    "@types/node": "^20.19.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
