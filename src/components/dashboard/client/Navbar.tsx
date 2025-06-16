@@ -15,9 +15,11 @@ export default function Navbar() {
   const router = useRouter();
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [storedUser, setStoredUser] = useState<{
+    uid?: string;
     fullName?: string;
     profilePicture?: string;
     role?: string;
+    email?: string;
   }>({});
 
   useEffect(() => {
@@ -103,9 +105,9 @@ export default function Navbar() {
         <LendModal
           onClose={() => setLendOpen(false)}
           currentUser={{
-            id: "",
-            name: "",
-            email: "",
+            id: storedUser?.uid || "No ID",
+            name: storedUser?.fullName || "Unknown User",
+            email: storedUser?.email || "No Email",
           }}
         />
       )}

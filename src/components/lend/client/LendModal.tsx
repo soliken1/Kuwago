@@ -37,7 +37,6 @@ export default function LendModal({ onClose, currentUser }: LendModalProps) {
   const initiateDocuSign = async () => {
     setIsSigning(true);
     try {
-      // Call your backend API to create DocuSign envelope
       const response = await fetch("/api/createDocusign", {
         method: "POST",
         headers: {
@@ -53,11 +52,20 @@ export default function LendModal({ onClose, currentUser }: LendModalProps) {
         }),
       });
 
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to initiate signing");
+      }
+
       const { url } = await response.json();
       setDocuSignUrl(url);
     } catch (error) {
-      console.error("Error initiating DocuSign:", error);
-      alert("Failed to initiate signing process");
+      console.error("DocuSign Error:", error);
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Failed to initiate signing process"
+      );
     } finally {
       setIsSigning(false);
     }
