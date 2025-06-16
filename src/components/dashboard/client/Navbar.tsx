@@ -5,38 +5,35 @@ import { useRouter } from "next/navigation";
 import useLogoutRequest from "@/hooks/auth/requestLogout";
 import { IoMdArrowDropdown } from "react-icons/io";
 import { IoNotificationsOutline } from "react-icons/io5";
-import { BiMessage } from "react-icons/bi";
 import Image from "next/image";
+import LendModal from "@/components/lend/client/LendModal";
 
 export default function Navbar() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [lendOpen, setLendOpen] = useState(false);
   const { logout } = useLogoutRequest();
   const router = useRouter();
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [storedUser, setStoredUser] = useState<{
+    uid?: string;
     fullName?: string;
     profilePicture?: string;
     role?: string;
+    email?: string;
   }>({});
 
   useEffect(() => {
     const user = localStorage.getItem("user");
-    if (user) {
-      setStoredUser(JSON.parse(user));
-    }
+    if (user) setStoredUser(JSON.parse(user));
   }, []);
 
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
+    const handler = (evt: MouseEvent) => {
+      !dropdownRef.current?.contains(evt.target as Node) &&
         setIsDropdownOpen(false);
-      }
     };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
   }, []);
 
   const handleLogout = async () => {
@@ -45,56 +42,57 @@ export default function Navbar() {
   };
 
   return (
-    <div className="w-full flex flex-row h-16 px-6 items-center justify-between">
-      <div className="flex flex-row items-center gap-12">
-        <label className="text-xl font-semibold">
-          Kuwa<span className="text-green-500">Go</span>
-        </label>
-        {storedUser.role === "Admin" ? (
-          <Link href="/admindashboard">Dashboard</Link>
-        ) : (
-          <div className="flex flex-row gap-5">
-            <Link href="/dashboard">Dashboard</Link>
-            <Link href="/sample">Lend</Link>
-            <Link href="/sample">Sample</Link>
-            <Link href="/sample">Sample</Link>
-          </div>
-        )}
-      </div>
+    <>
+      <div className="w-full flex items-center h-16 px-6 justify-between">
+        <div className="flex items-center gap-12">
+          <span className="text-xl font-semibold">
+            Kuwa<span className="text-green-500">Go</span>
+          </span>
 
-      <div className="flex flex-row justify-center items-center gap-5 h-full px-12 relative">
-        <IoNotificationsOutline size={24} />
+          {storedUser.role === "Admin" ? (
+            <Link href="/admindashboard">Dashboard</Link>
+          ) : (
+            <div className="flex items-center gap-5">
+              <Link href="/dashboard">Dashboard</Link>
+              <button
+                className="cursor-pointer"
+                onClick={() => setLendOpen(true)}
+              >
+                Lend
+              </button>
+            </div>
+          )}
+        </div>
 
-        {/* Profile dropdown */}
-        <div
-          ref={dropdownRef}
-          className="flex flex-row gap-4 items-center cursor-pointer relative"
-          onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-        >
-          <div className="w-8 h-8">
+        <div className="flex items-center gap-5 relative">
+          <IoNotificationsOutline size={24} />
+          <div
+            ref={dropdownRef}
+            className="flex items-center gap-2 cursor-pointer"
+            onClick={() => setIsDropdownOpen((v) => !v)}
+          >
             <Image
-              className="w-full h-full rounded-full"
-              width={1920}
-              height={1080}
               src={storedUser.profilePicture || "/Images/User.jpg"}
-              alt="Profile Picture"
+              alt="Profile"
+              width={32}
+              height={32}
+              className="rounded-full"
             />
+            <span>{storedUser.fullName}</span>
+            <IoMdArrowDropdown size={20} />
           </div>
-          <label>{storedUser.fullName}</label>
-          <IoMdArrowDropdown size={24} />
 
-          {/* Dropdown */}
           {isDropdownOpen && (
-            <div className="absolute right-0 top-8 bg-white border border-gray-300 rounded-md shadow-md py-2 w-36 z-50">
+            <div className="absolute right-0 top-full bg-white border rounded-md shadow-md mt-2 w-36 z-50">
               <Link
                 href="/profile"
-                className="block px-4 py-2 hover:bg-gray-100 text-sm"
+                className="block px-4 py-2 hover:bg-gray-100"
               >
                 Profile
               </Link>
               <button
                 onClick={handleLogout}
-                className="w-full text-left px-4 py-2 hover:bg-gray-100 text-sm"
+                className="w-full text-left px-4 py-2 hover:bg-gray-100"
               >
                 Logout
               </button>
@@ -102,6 +100,17 @@ export default function Navbar() {
           )}
         </div>
       </div>
-    </div>
+
+      {lendOpen && (
+        <LendModal
+          onClose={() => setLendOpen(false)}
+          currentUser={{
+            id: storedUser?.uid || "No ID",
+            name: storedUser?.fullName || "Unknown User",
+            email: storedUser?.email || "No Email",
+          }}
+        />
+      )}
+    </>
   );
 }
