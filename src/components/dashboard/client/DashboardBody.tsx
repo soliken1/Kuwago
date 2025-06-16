@@ -7,6 +7,7 @@ import AppliedLendings, {
 import useIDSelfieUploaded from "@/hooks/auth/requestIDSelfieUploaded";
 import UploadIDandSelfieModal from "@/components/profile/client/UploadIDandSelfie";
 import { getCookie } from "cookies-next";
+import UserListChat from "@/components/messaging/client/UserListChat";
 export default function DashboardBody() {
   const { forceVerificationModal } = useIDSelfieUploaded();
   const [selectedApp, setSelectedApp] = useState<Application | null>(null);
@@ -20,13 +21,15 @@ export default function DashboardBody() {
 
   return (
     <div
-      className={`flex w-full h-full ${
+      className={`flex w-full relative h-full ${
         showModal ? "opacity-90" : ""
       } flex-row gap-5 px-6 pb-6`}
     >
       {showModal && (
         <UploadIDandSelfieModal onClose={() => setShowModal(false)} />
       )}
+
+      <UserListChat />
 
       <div className="w-4/12 flex flex-col gap-5">
         <CreditScore />

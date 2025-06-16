@@ -63,9 +63,6 @@ export default function Navbar() {
       </div>
 
       <div className="flex flex-row justify-center items-center gap-5 h-full px-12 relative">
-        <Link href="/messaging">
-          <BiMessage size={24} />
-        </Link>
         <IoNotificationsOutline size={24} />
 
         {/* Profile dropdown */}
