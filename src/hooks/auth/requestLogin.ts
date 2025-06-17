@@ -60,6 +60,9 @@ export default function useLoginRequest() {
       );
       setLoginData(loginResponse.data);
       const token = loginResponse.data.data?.token;
+
+      console.log(loginResponse?.data);
+
       if (token) {
         setCookie("session_token", token);
 
@@ -73,7 +76,6 @@ export default function useLoginRequest() {
         );
 
         const userData = userResponse.data?.data;
-
         const uid = userData?.uid;
         const username = userData?.username;
         const userProfile = userData?.profilePicture;

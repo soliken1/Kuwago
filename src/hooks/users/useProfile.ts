@@ -14,10 +14,21 @@ export interface UserProfile {
   confirmPassword: string;
 }
 
+interface TokenData {
+  firebase_token: string;
+}
+
 interface ProfileResponse {
   statusCode: number;
   message: string;
   data: UserProfile;
+}
+
+interface TokenResponse {
+  statusCode: number;
+  message: string;
+  data: TokenData;
+  status: boolean;
 }
 
 export const useProfile = () => {
@@ -46,8 +57,6 @@ export const useProfile = () => {
       if (!userData) throw new Error("No user data in localStorage");
 
       const { uid } = JSON.parse(userData);
-
-      console.log(updatedProfile);
 
       if (
         updatedProfile.firstName ||
@@ -104,6 +113,21 @@ export const useProfile = () => {
           email: updatedProfile.email,
         };
 
+        const tokenResponse = await axios.get<TokenResponse>(
+          "/proxy/Auth/CheckToken",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        const firebaseToken = tokenResponse?.data.data.firebase_token;
+        console.log(firebaseToken);
+
+        console.log(emailBody);
+
         const emailResponse = await axios.put<ProfileResponse>(
           "/proxy/Auth/ChangeEmail",
           emailBody,
@@ -111,6 +135,7 @@ export const useProfile = () => {
             headers: {
               Authorization: `Bearer ${token}`,
               "Content-Type": "application/json",
+              FirebaseIdToken: firebaseToken,
             },
           }
         );
