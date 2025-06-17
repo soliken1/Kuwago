@@ -8,3 +8,14 @@ body {
 .debug {
   border: 1px solid red;
 }
+
+@font-face {
+  font-family: "Lexend-SemiBold";
+  src: url("../fonts/Lexend/LexendGiga-SemiBold.ttf") format("truetype");
+  font-weight: bold;
+  font-style: normal;
+}
+
+.lexend-semibold {
+  font-family: "Lexend-SemiBold", sans-serif;
+}
