@@ -1,9 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import * as pd_api from "pandadoc-node-client";
 
-const PDF_URL =
-  "https://app.pandadoc.com/a/#/templates/ZJkiQmxXSU9YKBdDTQjr59/content";
-
 const config = pd_api.createConfiguration({
   authMethods: { apiKey: `API-Key ${process.env.PANDADOC_API_KEY}` },
 });
@@ -16,16 +13,18 @@ export default async function handler(
   if (req.method !== "POST")
     return res.status(405).json({ error: "Method not allowed" });
 
-  const { borrowerEmail, lenderEmail } = req.body;
+  const { borrowerEmail, lenderEmail, loanAmount, lenderName, borrowerName } =
+    req.body;
   if (typeof borrowerEmail !== "string" || typeof lenderEmail !== "string") {
     return res.status(400).json({ error: "Both emails must be strings" });
   }
 
   try {
+    // Update your createDocument call
     const docRes = await apiInstance.createDocument({
       documentCreateRequest: {
-        name: "Test PDF",
-        url: PDF_URL,
+        name: "Loan Agreement",
+        templateUuid: "ZJkiQmxXSU9YKBdDTQjr59",
         recipients: [
           {
             email: borrowerEmail,
@@ -42,8 +41,18 @@ export default async function handler(
             signingOrder: 2,
           },
         ],
-
-        parseFormFields: false,
+        fields: {
+          loanAmount: {
+            value: loanAmount,
+          },
+          borrowerName: {
+            value: lenderName || "",
+          },
+          lenderName: {
+            value: borrowerName || "",
+          },
+        },
+        tags: ["loan-agreement"],
       },
     });
     const documentId = docRes.id as string;
