@@ -4,11 +4,7 @@ const nextConfig: NextConfig = {
   env: {
     STREAM_API_KEY: process.env.STREAM_API_KEY,
     STREAM_SECRET_KEY: process.env.STREAM_SECRET_KEY,
-    DOCUSIGN_INTEGRATION_KEY: process.env.DOCUSIGN_INTEGRATION_KEY,
-    DOCUSIGN_USER_ID: process.env.DOCUSIGN_USER_ID,
-    DOCUSIGN_ACCOUNT_ID: process.env.DOCUSIGN_ACCOUNT_ID,
-    DOCUSIGN_BASE_PATH: process.env.DOCUSIGN_BASE_PATH,
-    DOCUSIGN_PRIVATE_KEY_FILE: process.env.DOCUSIGN_PRIVATE_KEY_FILE,
+    PANDADOC_API_KEY: process.env.PANDADOC_API_KEY,
   },
   images: {
     domains: ["i.pinimg.com"],

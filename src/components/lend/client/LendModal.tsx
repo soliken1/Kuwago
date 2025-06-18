@@ -31,24 +31,20 @@ export default function LendModal({ onClose, currentUser }: LendModalProps) {
 
   const handleLoanSubmit = () => {
     setStep(3);
-    initiateDocuSign();
+    initiateCreateDoc();
   };
 
-  const initiateDocuSign = async () => {
+  const initiateCreateDoc = async () => {
     setIsSigning(true);
     try {
-      const response = await fetch("/api/createDocusign", {
+      const response = await fetch("/api/createDoc", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          borrowerName: currentUser.name,
           borrowerEmail: currentUser.email,
-          lenderName: selectedLender?.name,
           lenderEmail: selectedLender?.email,
-          loanAmount: loanAmount,
-          loanDate: new Date().toISOString().split("T")[0],
         }),
       });
 
@@ -58,9 +54,9 @@ export default function LendModal({ onClose, currentUser }: LendModalProps) {
       }
 
       const { url } = await response.json();
-      setDocuSignUrl(url);
+      setDocuSignUrl(url); // You can iframe this if needed
     } catch (error) {
-      console.error("DocuSign Error:", error);
+      console.error("PandaDoc Error:", error);
       alert(
         error instanceof Error
           ? error.message
@@ -163,7 +159,7 @@ export default function LendModal({ onClose, currentUser }: LendModalProps) {
         <div className="text-center py-8">
           <p>Error loading signing document. Please try again.</p>
           <button
-            onClick={initiateDocuSign}
+            onClick={initiateCreateDoc}
             className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
           >
             Retry
