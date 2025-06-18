@@ -8,8 +8,8 @@
           "value": "$x_pandadoc_signature"
         },
         {
-          "key": "X-PandaDoc-Signature",
-          "value": "$x_pandadoc_signature"
+          "key": "Access-Control-Expose-Headers",
+          "value": "x-pandadoc-signature"
         }
       ]
     }

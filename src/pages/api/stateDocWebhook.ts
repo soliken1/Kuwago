@@ -3,55 +3,40 @@ import crypto from "crypto";
 
 export const config = { api: { bodyParser: false } };
 
-function getSignatureFromHeaders(req: NextApiRequest): string | null {
-  // Helper function to safely get a string header
-  const getHeaderString = (headerName: string): string | null => {
-    const headerValue = req.headers[headerName];
-    if (!headerValue) return null;
-    return Array.isArray(headerValue) ? headerValue[0] : headerValue;
-  };
-
-  // Try all possible header variations
-  const potentialHeaders = [
-    "x-pandadoc-signature",
-    "x-panda-signature",
-    "X-PandaDoc-Signature",
-    "X-Panda-Signature",
-  ];
-
-  for (const headerName of potentialHeaders) {
-    const headerValue = getHeaderString(headerName);
-    if (headerValue) {
-      return headerValue;
-    }
-  }
-
-  // Try extracting from Vercel's special headers
-  try {
-    const scHeaders = getHeaderString("x-vercel-sc-headers");
-    if (scHeaders) {
-      const headers = JSON.parse(scHeaders);
-      for (const headerName of potentialHeaders) {
-        if (headers[headerName]) {
-          return Array.isArray(headers[headerName])
-            ? headers[headerName][0]
-            : headers[headerName];
-        }
-      }
-    }
-  } catch (e) {
-    console.error("Error parsing x-vercel-sc-headers:", e);
-  }
-
-  return null;
-}
-
 async function getRawBody(req: NextApiRequest): Promise<Buffer> {
   const chunks: Buffer[] = [];
   for await (const chunk of req) {
     chunks.push(Buffer.from(chunk));
   }
   return Buffer.concat(chunks);
+}
+
+function getNormalizedSignature(req: NextApiRequest): string | null {
+  // Try all possible header variations
+  const potentialHeaders = [
+    "x-pandadoc-signature",
+    "x-panda-signature",
+    "X-PandaDoc-Signature",
+    "X-Panda-Signature",
+    "$x_pandadoc_signature", // Vercel's transformed version
+  ];
+
+  for (const headerName of potentialHeaders) {
+    const headerValue =
+      req.headers[headerName.toLowerCase()] || req.headers[headerName];
+    if (!headerValue) continue;
+
+    // Handle both string and string[] cases
+    const value = Array.isArray(headerValue) ? headerValue[0] : headerValue;
+
+    // Handle Vercel's $x_ prefix if present
+    if (headerName.startsWith("$x_") && value.startsWith("$x_")) {
+      return value.slice(3);
+    }
+    return value;
+  }
+
+  return null;
 }
 
 export default async function handler(
@@ -65,10 +50,10 @@ export default async function handler(
   try {
     const rawBody = await getRawBody(req);
     const bodyString = rawBody.toString("utf8");
-    const signature = getSignatureFromHeaders(req);
+    const signature = getNormalizedSignature(req);
 
     if (!signature) {
-      console.error("All headers received:", req.headers);
+      console.error("Missing signature header. Received headers:", req.headers);
       return res.status(400).json({
         error: "Missing signature header",
         receivedHeaders: Object.keys(req.headers),
@@ -80,32 +65,46 @@ export default async function handler(
       return res.status(500).json({ error: "Webhook key not configured" });
     }
 
-    const computedSignature = crypto
+    // Compute signatures for comparison
+    const computedHex = crypto
       .createHmac("sha256", webhookKey)
       .update(rawBody)
       .digest("hex");
 
-    if (computedSignature !== signature) {
-      // Try base64 as fallback
-      const computedBase64 = crypto
-        .createHmac("sha256", webhookKey)
-        .update(rawBody)
-        .digest("base64");
+    const computedBase64 = crypto
+      .createHmac("sha256", webhookKey)
+      .update(rawBody)
+      .digest("base64");
 
-      if (computedBase64 !== signature) {
-        return res.status(401).json({
-          error: "Invalid signature",
-          details: {
-            computedHex: computedSignature,
-            computedBase64: computedBase64,
-            received: signature,
-          },
-        });
-      }
+    // Debug logging (remove in production)
+    console.log("Signature verification details:", {
+      receivedSignature: signature,
+      computedHex,
+      computedBase64,
+      bodyPreview:
+        bodyString.length > 100
+          ? bodyString.substring(0, 100) + "..."
+          : bodyString,
+    });
+
+    // Compare signatures (try both hex and base64)
+    if (computedHex !== signature && computedBase64 !== signature) {
+      return res.status(401).json({
+        error: "Invalid signature",
+        details: {
+          note: "The signature provided by PandaDoc doesn't match the computed value",
+          possibleCauses: [
+            "Webhook secret key mismatch",
+            "Vercel header transformation",
+            "Request body modification",
+          ],
+        },
+      });
     }
 
+    // Process webhook events
     const events = JSON.parse(bodyString);
-    console.log("Received webhook events:", events);
+    console.log("Processing webhook events:", events);
 
     for (const event of events) {
       switch (event.event) {
@@ -113,27 +112,17 @@ export default async function handler(
           console.log(
             `Document ${event.data.id} changed to ${event.data.status}`
           );
-          // Handle document state change
+          // Handle state change
           break;
 
         case "document_creation_failed":
-          console.error("Document creation failed:", event.data.error.detail);
+          console.error(`Creation failed: ${event.data.error.detail}`);
           // Handle creation failure
           break;
 
         case "document_completed":
           console.log(`Document ${event.data.id} completed`);
-          // Handle completed document
-          break;
-
-        case "document_sent":
-          console.log(`Document ${event.data.id} sent to recipients`);
-          // Handle sent document
-          break;
-
-        case "document_completed_pdf_ready":
-          console.log(`Document ${event.data.id} PDF ready`);
-          // Handle PDF ready for download
+          // Handle completion
           break;
 
         case "recipient_completed":
@@ -145,7 +134,6 @@ export default async function handler(
 
         default:
           console.log(`Unhandled event type: ${event.event}`);
-        // Handle unknown event types
       }
     }
 
