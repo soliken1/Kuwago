@@ -3,64 +3,40 @@ import crypto from "crypto";
 
 export const config = { api: { bodyParser: false } };
 
-function getSignatureFromHeaders(req: NextApiRequest): string | null {
-  const potentialHeaders = [
-    "x-pandadoc-signature",
-    "x-panda-signature",
-    "X-PandaDoc-Signature",
-    "X-Panda-Signature",
-    "$x_pandadoc_signature",
-  ];
-
-  const getHeaderString = (headerName: string): string | null => {
-    const headerValue =
-      req.headers[headerName.toLowerCase()] || req.headers[headerName];
-    if (!headerValue) return null;
-
-    // Handle Vercel's transformed signature
-    if (headerName.startsWith("$x_")) {
-      const value = Array.isArray(headerValue) ? headerValue[0] : headerValue;
-      return value.startsWith("$x_") ? value.slice(3) : value;
-    }
-
-    return Array.isArray(headerValue) ? headerValue[0] : headerValue;
-  };
-
-  for (const headerName of potentialHeaders) {
-    const value = getHeaderString(headerName);
-    if (value) {
-      console.log(`Found signature in header ${headerName}: ${value}`);
-      return value;
-    }
-  }
-
-  // Check Vercel's special headers as fallback
-  try {
-    const scHeaders = req.headers["x-vercel-sc-headers"];
-    if (scHeaders) {
-      const headers = JSON.parse(
-        Array.isArray(scHeaders) ? scHeaders[0] : scHeaders
-      );
-      for (const headerName of potentialHeaders) {
-        if (headers[headerName]) {
-          const value = headers[headerName];
-          return Array.isArray(value) ? value[0] : value;
-        }
-      }
-    }
-  } catch (e) {
-    console.error("Error parsing x-vercel-sc-headers:", e);
-  }
-
-  return null;
-}
-
 async function getRawBody(req: NextApiRequest): Promise<Buffer> {
   const chunks: Buffer[] = [];
   for await (const chunk of req) {
     chunks.push(Buffer.from(chunk));
   }
   return Buffer.concat(chunks);
+}
+
+function getNormalizedSignature(req: NextApiRequest): string | null {
+  // Try all possible header variations
+  const potentialHeaders = [
+    "x-pandadoc-signature",
+    "x-panda-signature",
+    "X-PandaDoc-Signature",
+    "X-Panda-Signature",
+    "$x_pandadoc_signature", // Vercel's transformed version
+  ];
+
+  for (const headerName of potentialHeaders) {
+    const headerValue =
+      req.headers[headerName.toLowerCase()] || req.headers[headerName];
+    if (!headerValue) continue;
+
+    // Handle both string and string[] cases
+    const value = Array.isArray(headerValue) ? headerValue[0] : headerValue;
+
+    // Handle Vercel's $x_ prefix if present
+    if (headerName.startsWith("$x_") && value.startsWith("$x_")) {
+      return value.slice(3);
+    }
+    return value;
+  }
+
+  return null;
 }
 
 export default async function handler(
@@ -74,10 +50,10 @@ export default async function handler(
   try {
     const rawBody = await getRawBody(req);
     const bodyString = rawBody.toString("utf8");
-    const signature = getSignatureFromHeaders(req);
+    const signature = getNormalizedSignature(req);
 
     if (!signature) {
-      console.error("Signature headers missing. Received:", req.headers);
+      console.error("Missing signature header. Received headers:", req.headers);
       return res.status(400).json({
         error: "Missing signature header",
         receivedHeaders: Object.keys(req.headers),
@@ -100,22 +76,28 @@ export default async function handler(
       .update(rawBody)
       .digest("base64");
 
-    // Debug logging
-    console.log("Signature verification:", {
-      received: signature,
+    // Debug logging (remove in production)
+    console.log("Signature verification details:", {
+      receivedSignature: signature,
       computedHex,
       computedBase64,
-      body: bodyString,
+      bodyPreview:
+        bodyString.length > 100
+          ? bodyString.substring(0, 100) + "..."
+          : bodyString,
     });
 
+    // Compare signatures (try both hex and base64)
     if (computedHex !== signature && computedBase64 !== signature) {
       return res.status(401).json({
         error: "Invalid signature",
         details: {
-          received: signature,
-          computedHex,
-          computedBase64,
-          note: "Check if Vercel is modifying the signature header",
+          note: "The signature provided by PandaDoc doesn't match the computed value",
+          possibleCauses: [
+            "Webhook secret key mismatch",
+            "Vercel header transformation",
+            "Request body modification",
+          ],
         },
       });
     }
@@ -130,27 +112,36 @@ export default async function handler(
           console.log(
             `Document ${event.data.id} changed to ${event.data.status}`
           );
+          // Handle state change
           break;
+
         case "document_creation_failed":
-          console.error("Creation failed:", event.data.error.detail);
+          console.error(`Creation failed: ${event.data.error.detail}`);
+          // Handle creation failure
           break;
+
         case "document_completed":
           console.log(`Document ${event.data.id} completed`);
+          // Handle completion
           break;
-        case "document_sent":
-          console.log(`Document ${event.data.id} sent`);
-          break;
+
         case "recipient_completed":
-          console.log(`Recipient ${event.data.recipient.email} completed`);
+          console.log(
+            `Recipient ${event.data.recipient.email} completed signing`
+          );
+          // Handle recipient completion
           break;
+
         default:
-          console.log(`Unhandled event: ${event.event}`);
+          console.log(`Unhandled event type: ${event.event}`);
       }
     }
 
-    return res.status(200).json({ success: true });
+    return res
+      .status(200)
+      .json({ success: true, processedEvents: events.length });
   } catch (error) {
-    console.error("Webhook error:", error);
+    console.error("Webhook processing error:", error);
     return res.status(500).json({
       error: "Internal server error",
       details: error instanceof Error ? error.message : String(error),

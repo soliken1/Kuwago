@@ -13,14 +13,5 @@
         }
       ]
     }
-  ],
-  "rewrites": [
-    {
-      "source": "/api/stateDocWebhook",
-      "destination": "/api/stateDocWebhook.ts",
-      "headers": {
-        "x-pandadoc-signature": "$x_pandadoc_signature"
-      }
-    }
   ]
 }
