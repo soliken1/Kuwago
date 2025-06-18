@@ -5,6 +5,7 @@ const nextConfig: NextConfig = {
     STREAM_API_KEY: process.env.STREAM_API_KEY,
     STREAM_SECRET_KEY: process.env.STREAM_SECRET_KEY,
     PANDADOC_API_KEY: process.env.PANDADOC_API_KEY,
+    PANDADOC_WEBHOOK_KEY: process.env.PANDADOC_WEBHOOK_KEY,
   },
   images: {
     domains: ["i.pinimg.com"],
