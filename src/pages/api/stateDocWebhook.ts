@@ -52,24 +52,13 @@ export default async function handler(
     const bodyString = rawBody.toString("utf8");
     const signature = getNormalizedSignature(req);
 
-    // TEMPORARY DEBUGGING - Remove in production
     if (!signature) {
-      console.warn(
-        "⚠️ WARNING: Running in insecure mode - signature validation disabled"
-      );
-      // Continue processing without signature verification
-      const events = JSON.parse(bodyString);
-      console.log("Received events (insecure mode):", events);
-      return res.status(200).json({ success: true, warning: "Insecure mode" });
+      console.error("Missing signature header. Received headers:", req.headers);
+      return res.status(400).json({
+        error: "Missing signature header",
+        receivedHeaders: Object.keys(req.headers),
+      });
     }
-
-    // if (!signature) {
-    //   console.error("Missing signature header. Received headers:", req.headers);
-    //   return res.status(400).json({
-    //     error: "Missing signature header",
-    //     receivedHeaders: Object.keys(req.headers),
-    //   });
-    // }
 
     const webhookKey = process.env.PANDADOC_WEBHOOK_KEY;
     if (!webhookKey) {
