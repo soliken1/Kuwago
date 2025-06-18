@@ -4,38 +4,47 @@ import crypto from "crypto";
 export const config = { api: { bodyParser: false } };
 
 function getSignatureFromHeaders(req: NextApiRequest): string | null {
-  // Helper function to safely get a string header
-  const getHeaderString = (headerName: string): string | null => {
-    const headerValue = req.headers[headerName];
-    if (!headerValue) return null;
-    return Array.isArray(headerValue) ? headerValue[0] : headerValue;
-  };
-
-  // Try all possible header variations
   const potentialHeaders = [
     "x-pandadoc-signature",
     "x-panda-signature",
     "X-PandaDoc-Signature",
     "X-Panda-Signature",
+    "$x_pandadoc_signature",
   ];
 
+  const getHeaderString = (headerName: string): string | null => {
+    const headerValue =
+      req.headers[headerName.toLowerCase()] || req.headers[headerName];
+    if (!headerValue) return null;
+
+    // Handle Vercel's transformed signature
+    if (headerName.startsWith("$x_")) {
+      const value = Array.isArray(headerValue) ? headerValue[0] : headerValue;
+      return value.startsWith("$x_") ? value.slice(3) : value;
+    }
+
+    return Array.isArray(headerValue) ? headerValue[0] : headerValue;
+  };
+
   for (const headerName of potentialHeaders) {
-    const headerValue = getHeaderString(headerName);
-    if (headerValue) {
-      return headerValue;
+    const value = getHeaderString(headerName);
+    if (value) {
+      console.log(`Found signature in header ${headerName}: ${value}`);
+      return value;
     }
   }
 
-  // Try extracting from Vercel's special headers
+  // Check Vercel's special headers as fallback
   try {
-    const scHeaders = getHeaderString("x-vercel-sc-headers");
+    const scHeaders = req.headers["x-vercel-sc-headers"];
     if (scHeaders) {
-      const headers = JSON.parse(scHeaders);
+      const headers = JSON.parse(
+        Array.isArray(scHeaders) ? scHeaders[0] : scHeaders
+      );
       for (const headerName of potentialHeaders) {
         if (headers[headerName]) {
-          return Array.isArray(headers[headerName])
-            ? headers[headerName][0]
-            : headers[headerName];
+          const value = headers[headerName];
+          return Array.isArray(value) ? value[0] : value;
         }
       }
     }
@@ -68,7 +77,7 @@ export default async function handler(
     const signature = getSignatureFromHeaders(req);
 
     if (!signature) {
-      console.error("All headers received:", req.headers);
+      console.error("Signature headers missing. Received:", req.headers);
       return res.status(400).json({
         error: "Missing signature header",
         receivedHeaders: Object.keys(req.headers),
@@ -80,32 +89,40 @@ export default async function handler(
       return res.status(500).json({ error: "Webhook key not configured" });
     }
 
-    const computedSignature = crypto
+    // Compute signatures for comparison
+    const computedHex = crypto
       .createHmac("sha256", webhookKey)
       .update(rawBody)
       .digest("hex");
 
-    if (computedSignature !== signature) {
-      // Try base64 as fallback
-      const computedBase64 = crypto
-        .createHmac("sha256", webhookKey)
-        .update(rawBody)
-        .digest("base64");
+    const computedBase64 = crypto
+      .createHmac("sha256", webhookKey)
+      .update(rawBody)
+      .digest("base64");
 
-      if (computedBase64 !== signature) {
-        return res.status(401).json({
-          error: "Invalid signature",
-          details: {
-            computedHex: computedSignature,
-            computedBase64: computedBase64,
-            received: signature,
-          },
-        });
-      }
+    // Debug logging
+    console.log("Signature verification:", {
+      received: signature,
+      computedHex,
+      computedBase64,
+      body: bodyString,
+    });
+
+    if (computedHex !== signature && computedBase64 !== signature) {
+      return res.status(401).json({
+        error: "Invalid signature",
+        details: {
+          received: signature,
+          computedHex,
+          computedBase64,
+          note: "Check if Vercel is modifying the signature header",
+        },
+      });
     }
 
+    // Process webhook events
     const events = JSON.parse(bodyString);
-    console.log("Received webhook events:", events);
+    console.log("Processing webhook events:", events);
 
     for (const event of events) {
       switch (event.event) {
@@ -113,47 +130,27 @@ export default async function handler(
           console.log(
             `Document ${event.data.id} changed to ${event.data.status}`
           );
-          // Handle document state change
           break;
-
         case "document_creation_failed":
-          console.error("Document creation failed:", event.data.error.detail);
-          // Handle creation failure
+          console.error("Creation failed:", event.data.error.detail);
           break;
-
         case "document_completed":
           console.log(`Document ${event.data.id} completed`);
-          // Handle completed document
           break;
-
         case "document_sent":
-          console.log(`Document ${event.data.id} sent to recipients`);
-          // Handle sent document
+          console.log(`Document ${event.data.id} sent`);
           break;
-
-        case "document_completed_pdf_ready":
-          console.log(`Document ${event.data.id} PDF ready`);
-          // Handle PDF ready for download
-          break;
-
         case "recipient_completed":
-          console.log(
-            `Recipient ${event.data.recipient.email} completed signing`
-          );
-          // Handle recipient completion
+          console.log(`Recipient ${event.data.recipient.email} completed`);
           break;
-
         default:
-          console.log(`Unhandled event type: ${event.event}`);
-        // Handle unknown event types
+          console.log(`Unhandled event: ${event.event}`);
       }
     }
 
-    return res
-      .status(200)
-      .json({ success: true, processedEvents: events.length });
+    return res.status(200).json({ success: true });
   } catch (error) {
-    console.error("Webhook processing error:", error);
+    console.error("Webhook error:", error);
     return res.status(500).json({
       error: "Internal server error",
       details: error instanceof Error ? error.message : String(error),
