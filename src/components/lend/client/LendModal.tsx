@@ -36,6 +36,8 @@ export default function LendModal({ onClose, currentUser }: LendModalProps) {
 
   const initiateCreateDoc = async () => {
     setIsSigning(true);
+    setDocuSignUrl(""); // Reset URL on retry
+
     try {
       const response = await fetch("/api/createDoc", {
         method: "POST",
@@ -44,24 +46,28 @@ export default function LendModal({ onClose, currentUser }: LendModalProps) {
         },
         body: JSON.stringify({
           borrowerEmail: currentUser.email,
+          borrowerName: currentUser.name,
           lenderEmail: selectedLender?.email,
+          lenderName: selectedLender?.name,
+          loanAmount: loanAmount,
         }),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to initiate signing");
+        throw new Error(data.error || "Failed to initiate signing");
       }
 
-      const { url } = await response.json();
-      setDocuSignUrl(url); // You can iframe this if needed
+      if (!data.url) {
+        throw new Error("No signing URL returned");
+      }
+
+      setDocuSignUrl(data.url);
     } catch (error) {
       console.error("PandaDoc Error:", error);
-      alert(
-        error instanceof Error
-          ? error.message
-          : "Failed to initiate signing process"
-      );
+      setDocuSignUrl(""); // Clear URL on error
+      // Consider adding a state for error messages
     } finally {
       setIsSigning(false);
     }
