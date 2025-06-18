@@ -1,0 +1,17 @@
+{
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "x-pandadoc-signature",
+          "value": "$x_pandadoc_signature"
+        },
+        {
+          "key": "X-PandaDoc-Signature",
+          "value": "$x_pandadoc_signature"
+        }
+      ]
+    }
+  ]
+}
