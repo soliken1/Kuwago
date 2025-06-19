@@ -80,12 +80,20 @@ export default function LendModal({ onClose, currentUser }: LendModalProps) {
     while (attempts < maxAttempts) {
       attempts++;
       try {
-        // Send POST request with ID in body
         const response = await fetch("/api/document/status", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
           body: JSON.stringify({ id: documentId }),
         });
+
+        // Handle HTTP errors
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || "Failed to check document status");
+        }
 
         const data = await response.json();
 
@@ -108,9 +116,7 @@ export default function LendModal({ onClose, currentUser }: LendModalProps) {
           continue;
         }
 
-        if (data.error) {
-          throw new Error(data.error.message || "Document processing error");
-        }
+        throw new Error(data.error?.message || "Unexpected document status");
       } catch (err) {
         console.error("Polling error:", err);
         if (attempts >= maxAttempts) {
