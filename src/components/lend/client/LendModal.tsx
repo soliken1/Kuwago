@@ -16,6 +16,8 @@ interface Lender {
   email: string;
 }
 
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 export default function LendModal({ onClose, currentUser }: LendModalProps) {
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [selectedLender, setSelectedLender] = useState<Lender | null>(null);
@@ -31,38 +33,53 @@ export default function LendModal({ onClose, currentUser }: LendModalProps) {
   ];
 
   const pollDocumentStatus = async (documentId: string): Promise<string> => {
-    let retries = 10;
-    while (retries > 0) {
+    let attempts = 0;
+    const maxAttempts = 20; // ~40 seconds total with delays
+    const delayMs = 2000;
+
+    while (attempts < maxAttempts) {
+      attempts++;
       try {
         const response = await fetch(`/api/document/status?id=${documentId}`);
         const data = await response.json();
 
+        // Successful cases
         if (data.signingUrl) {
           return data.signingUrl;
         }
-
-        if (data.status === "ready_for_embedded_signing") {
+        if (data.status === "document.sent" && data.signingUrl) {
           return data.signingUrl;
         }
 
-        if (data.error?.code === 403) {
-          throw new Error("Organization restriction: " + data.error.message);
+        // Still processing cases
+        if (
+          ["processing", "document.uploaded", "document.processing"].includes(
+            data.status
+          )
+        ) {
+          await delay(delayMs);
+          continue;
         }
 
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-        retries--;
-      } catch (err: any) {
-        if (err.message.includes("Organization restriction")) {
-          throw err; // Forward organization errors immediately
+        // Ready but not sent case
+        if (data.status === "document.draft") {
+          // You may want to automatically send the document here
+          // Or implement embedded signing
+          throw new Error("Document ready but not sent to recipients");
         }
-        retries--;
-        if (retries === 0) {
+
+        // Error cases
+        if (data.error) {
+          throw new Error(data.error.message || "Document processing error");
+        }
+      } catch (err) {
+        if (attempts >= maxAttempts) {
           throw new Error("Document processing timed out");
         }
-        await new Promise((resolve) => setTimeout(resolve, 2000));
+        await delay(delayMs);
       }
     }
-    throw new Error("Polling failed");
+    throw new Error("Maximum polling attempts reached");
   };
 
   const handleLoanSubmit = async () => {

@@ -6,6 +6,8 @@ const config = pd_api.createConfiguration({
 });
 const apiInstance = new pd_api.DocumentsApi(config);
 
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
@@ -20,41 +22,46 @@ export default async function handler(
       return res.status(400).json({ error: "Missing document ID" });
     }
 
-    // Get document details
-    const document = await apiInstance.detailsDocument({ id });
+    // Initial document check with type safety
+    let document = await apiInstance.detailsDocument({ id });
+    let retries = 5;
 
-    // Handle draft documents with embedded signing
-    if (document.status === "document.draft") {
-      try {
-        const recipientEmail = document.recipients?.[0]?.email || "";
-        const linkRes = await apiInstance.createDocumentLink({
-          id,
-          documentCreateLinkRequest: {
-            recipient: recipientEmail,
-            lifetime: 3600,
-          },
-        });
-
-        return res.status(200).json({
-          status: "ready_for_embedded_signing",
-          signingUrl: (linkRes as any).link,
-        });
-      } catch (error) {
-        return res.status(403).json({
-          error: "Organization restriction",
-          message:
-            "Cannot send to external emails. Please use organization emails or contact support.",
-          solution: "Update recipient emails to use your organization's domain",
-        });
-      }
+    // Handle async processing states with proper type checking
+    while (
+      retries > 0 &&
+      document.status &&
+      ["document.uploaded", "document.processing"].includes(document.status)
+    ) {
+      await delay(2000);
+      document = await apiInstance.detailsDocument({ id });
+      retries--;
     }
 
-    // Handle already sent documents
+    // Ensure status exists before proceeding
+    if (!document.status) {
+      throw new Error("Document status is undefined");
+    }
+
+    // Handle draft state
+    if (document.status === "document.draft") {
+      return res.status(200).json({
+        status: document.status,
+        message: "Document is ready but not sent to recipients",
+        nextAction: "Send the document to recipients or use embedded signing",
+      });
+    }
+
+    // Handle sent state
     if (document.status === "document.sent") {
+      const recipientEmail = document.recipients?.[0]?.email;
+      if (!recipientEmail) {
+        throw new Error("No recipient email found for signing");
+      }
+
       const linkRes = await apiInstance.createDocumentLink({
         id,
         documentCreateLinkRequest: {
-          recipient: document.recipients?.[0]?.email || "",
+          recipient: recipientEmail,
           lifetime: 3600,
         },
       });
@@ -65,7 +72,7 @@ export default async function handler(
       });
     }
 
-    // Other statuses
+    // Handle other states
     return res.status(200).json({
       status: document.status,
       message: `Document is in ${document.status} state`,
@@ -77,16 +84,11 @@ export default async function handler(
       details: err.response?.body || {},
     });
 
-    if (err.code === 403) {
-      return res.status(403).json({
-        error: "Organization restriction",
-        message:
-          "Your PandaDoc account cannot send documents outside your organization",
-        solutions: [
-          "Use email addresses from your organization domain",
-          "Contact PandaDoc support to enable external sending",
-          "Implement embedded signing instead of email delivery",
-        ],
+    if (err.code === 409) {
+      return res.status(200).json({
+        status: "processing",
+        message: "Document is still being processed",
+        info: "Please wait and check again later",
       });
     }
 
