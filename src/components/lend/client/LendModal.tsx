@@ -48,27 +48,47 @@ export default function LendModal({ onClose, currentUser }: LendModalProps) {
 
       let result = await response.json();
 
-      // If email failed with 403, try embedded signing
-      if (result.error?.code === 403) {
-        setSendingMethod("embedded");
-        response = await fetch("/api/document/send", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ documentId, useEmbeddedSigning: true }),
-        });
-        result = await response.json();
+      // If the response is not OK, check for specific error cases
+      if (!response.ok) {
+        // If email failed with 403, try embedded signing
+        if (result.error?.code === 403) {
+          setSendingMethod("embedded");
+          const embeddedResponse = await fetch("/api/document/send", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ documentId, useEmbeddedSigning: true }),
+          });
+
+          const embeddedResult = await embeddedResponse.json();
+
+          if (!embeddedResponse.ok) {
+            throw new Error(
+              embeddedResult.error || "Failed to send via embedded signing"
+            );
+          }
+
+          return embeddedResult.signingUrl || null;
+        }
+
+        throw new Error(result.error || "Failed to send document");
       }
 
+      // Handle successful response
       if (result.signingUrl) {
         return result.signingUrl;
-      } else if (result.success) {
+      }
+
+      // If no signing URL but operation was successful
+      if (result.success || response.ok) {
         return null; // Email was sent successfully
       }
 
-      throw new Error(result.error || "Failed to send document");
+      throw new Error("Unexpected response format");
     } catch (error) {
       console.error("Send error:", error);
-      throw error;
+      throw new Error(
+        error instanceof Error ? error.message : "Failed to send document"
+      );
     }
   };
 
@@ -154,27 +174,13 @@ export default function LendModal({ onClose, currentUser }: LendModalProps) {
         throw new Error("Failed to create document");
       }
 
-      // Add delay before sending (3 seconds)
-      await delay(3000);
+      // 2. Send the document
+      const signingUrl = await sendDocument(documentId);
 
-      // 2. Explicitly send the document
-      const sendResponse = await fetch("/api/document/send", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ documentId }),
-      });
-
-      if (!sendResponse.ok) {
-        const errorData = await sendResponse.json();
-        throw new Error(errorData.error || "Failed to send document");
-      }
-
-      // 3. Poll for status (optional, if needed)
-      const signingUrl = await pollDocumentStatus(documentId);
+      // 3. Handle the result
       if (signingUrl) {
         setDocuSignUrl(signingUrl);
       } else {
-        // Email was sent successfully
         setDocuSignUrl("email-sent");
       }
     } catch (err) {
