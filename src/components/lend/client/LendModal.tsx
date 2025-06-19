@@ -148,7 +148,6 @@ export default function LendModal({ onClose, currentUser }: LendModalProps) {
           loanAmount: loanAmount,
         }),
       });
-
       const { documentId } = await createResponse.json();
 
       if (!createResponse.ok) {

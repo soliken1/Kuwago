@@ -22,19 +22,19 @@ export default async function handler(
 
   try {
     // Get ID from either query params (GET) or request body (POST)
-    const id =
+    const documentId =
       req.method === "GET"
-        ? req.query.id
+        ? req.query.documentId
         : typeof req.body === "object"
-        ? req.body.id
+        ? req.body.documentId
         : null;
 
-    if (!id || typeof id !== "string") {
+    if (!documentId || typeof documentId !== "string") {
       return res.status(400).json({ error: "Missing document ID" });
     }
 
     // Get document details
-    const document = await apiInstance.detailsDocument({ id });
+    const document = await apiInstance.detailsDocument({ id: documentId });
 
     if (!document.status) {
       throw new Error("Document status is undefined");
@@ -48,7 +48,7 @@ export default async function handler(
       }
 
       const linkRes = await apiInstance.createDocumentLink({
-        id,
+        id: documentId,
         documentCreateLinkRequest: {
           recipient: recipientEmail,
           lifetime: 3600,
