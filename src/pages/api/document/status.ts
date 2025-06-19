@@ -6,33 +6,73 @@ const config = pd_api.createConfiguration({
 });
 const apiInstance = new pd_api.DocumentsApi(config);
 
-const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+interface SigningLinkResponse {
+  link: string;
+  expires_at?: string;
+}
+
+interface StatusRequestBody {
+  id: string;
+}
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
+  // Accept both GET and POST methods
   if (!["GET", "POST"].includes(req.method || "")) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
   try {
-    const { id } = req.query;
-    if (!id || typeof id !== "string") {
+    let id: string | undefined;
+
+    // Handle GET request (ID in query params)
+    if (req.method === "GET") {
+      id = req.query.id as string;
+    }
+    // Handle POST request (ID in request body)
+    else if (req.method === "POST") {
+      // Parse and validate request body
+      if (req.headers["content-type"] !== "application/json") {
+        return res
+          .status(400)
+          .json({ error: "Content-Type must be application/json" });
+      }
+
+      let body: StatusRequestBody;
+      try {
+        body = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
+        if (!body.id || typeof body.id !== "string") {
+          return res
+            .status(400)
+            .json({ error: "Missing or invalid document ID in request body" });
+        }
+        id = body.id;
+      } catch (e) {
+        return res.status(400).json({ error: "Invalid JSON body" });
+      }
+    }
+
+    if (!id) {
       return res.status(400).json({ error: "Missing document ID" });
     }
 
-    // Get document details with error handling
+    // Get document details
     const document = await apiInstance.detailsDocument({ id });
 
+    if (!document.status) {
+      throw new Error("Document status is undefined");
+    }
+
     // Handle processing states
-    if (!document.status || document.status === "document.uploaded") {
+    if (document.status === "document.uploaded") {
       return res.status(200).json({
         status: "processing",
         documentId: id,
         message: "Document is being processed",
-        estimatedWait: 30, // seconds
-        nextCheckAfter: 5, // seconds
+        estimatedWait: 30,
+        nextCheckAfter: 5,
       });
     }
 
@@ -43,15 +83,15 @@ export default async function handler(
         documentId: id,
         state: "draft",
         message: "Document is ready for signing",
-        actionRequired: "send", // or 'embedded_sign'
+        actionRequired: "send",
       });
     }
 
-    // Handle sent state - generate signing link
+    // Handle sent state
     if (document.status === "document.sent") {
       const recipientEmail = document.recipients?.[0]?.email;
       if (!recipientEmail) {
-        throw new Error("No recipient email found");
+        throw new Error("No recipient email found for signing");
       }
 
       const linkRes = await apiInstance.createDocumentLink({
@@ -62,12 +102,18 @@ export default async function handler(
         },
       });
 
+      const signingUrl = linkRes as unknown as SigningLinkResponse;
+
+      if (!signingUrl.link) {
+        throw new Error("No signing URL in response");
+      }
+
       return res.status(200).json({
         status: "ready",
         documentId: id,
         state: "sent",
-        signingUrl: (linkRes as any).link,
-        expiresAt: Date.now() + 3600000, // 1 hour from now
+        signingUrl: signingUrl.link,
+        expiresAt: signingUrl.expires_at,
       });
     }
 
@@ -85,13 +131,12 @@ export default async function handler(
       details: err.response?.body || {},
     });
 
-    // Special handling for 409 conflict (processing state)
     if (err.code === 409) {
       return res.status(200).json({
         status: "processing",
         message: "Document is still being processed",
         info: err.response?.body?.info_message || "Please wait",
-        nextCheckAfter: 5, // seconds
+        nextCheckAfter: 5,
       });
     }
 
