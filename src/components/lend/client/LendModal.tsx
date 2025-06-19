@@ -22,9 +22,12 @@ export default function LendModal({ onClose, currentUser }: LendModalProps) {
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [selectedLender, setSelectedLender] = useState<Lender | null>(null);
   const [loanAmount, setLoanAmount] = useState("");
-  const [isSigning, setIsSigning] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const [docuSignUrl, setDocuSignUrl] = useState("");
   const [error, setError] = useState("");
+  const [sendingMethod, setSendingMethod] = useState<
+    "email" | "embedded" | null
+  >(null);
 
   const lenders: Lender[] = [
     { id: "lender1", name: "Lender One", email: "lender1@example.com" },
@@ -32,10 +35,47 @@ export default function LendModal({ onClose, currentUser }: LendModalProps) {
     { id: "lender3", name: "Lender Three", email: "lender3@example.com" },
   ];
 
+  const sendDocument = async (documentId: string): Promise<string | null> => {
+    try {
+      setSendingMethod("email");
+
+      // First try regular email sending
+      let response = await fetch("/api/document/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ documentId }),
+      });
+
+      let result = await response.json();
+
+      // If email failed with 403, try embedded signing
+      if (result.error?.code === 403) {
+        setSendingMethod("embedded");
+        response = await fetch("/api/document/send", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ documentId, useEmbeddedSigning: true }),
+        });
+        result = await response.json();
+      }
+
+      if (result.signingUrl) {
+        return result.signingUrl;
+      } else if (result.success) {
+        return null; // Email was sent successfully
+      }
+
+      throw new Error(result.error || "Failed to send document");
+    } catch (error) {
+      console.error("Send error:", error);
+      throw error;
+    }
+  };
+
   const pollDocumentStatus = async (documentId: string): Promise<string> => {
     let attempts = 0;
-    const maxAttempts = 30; // Increased attempts (about 5 minutes total with backoff)
-    const baseDelay = 2000; // Start with 2 seconds
+    const maxAttempts = 30;
+    const baseDelay = 2000;
 
     while (attempts < maxAttempts) {
       attempts++;
@@ -43,12 +83,10 @@ export default function LendModal({ onClose, currentUser }: LendModalProps) {
         const response = await fetch(`/api/document/status?id=${documentId}`);
         const data = await response.json();
 
-        // Successful cases
         if (data.status === "ready" && data.signingUrl) {
           return data.signingUrl;
         }
 
-        // Still processing cases
         if (data.status === "processing") {
           const delayTime =
             data.nextCheckAfter * 1000 || baseDelay * Math.pow(1.5, attempts);
@@ -56,23 +94,14 @@ export default function LendModal({ onClose, currentUser }: LendModalProps) {
           continue;
         }
 
-        // Document ready but needs to be sent
         if (data.status === "ready" && data.state === "draft") {
-          // Automatically send the document
-          const sendResponse = await fetch("/api/document/send", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ documentId }),
-          });
-          const sendData = await sendResponse.json();
+          const signingUrl = await sendDocument(documentId);
+          if (signingUrl) return signingUrl;
 
-          if (sendData.success) {
-            await delay(3000); // Wait for document to transition to 'sent'
-            continue;
-          }
+          await delay(3000); // Wait for document to transition to 'sent'
+          continue;
         }
 
-        // Error cases
         if (data.error) {
           throw new Error(data.error.message || "Document processing error");
         }
@@ -84,23 +113,20 @@ export default function LendModal({ onClose, currentUser }: LendModalProps) {
           );
         }
 
-        // Exponential backoff with jitter
         const delayTime =
           baseDelay * Math.pow(2, attempts) + Math.random() * 1000;
-        await delay(Math.min(delayTime, 30000)); // Max 30s delay
+        await delay(Math.min(delayTime, 30000));
       }
     }
     throw new Error("Maximum polling attempts reached");
   };
 
-  const handleLoanSubmit = async () => {
-    setStep(3);
-    await initiateCreateDoc();
-  };
-
   const initiateCreateDoc = async () => {
-    setIsSigning(true);
+    setIsProcessing(true);
     setError("");
+    setDocuSignUrl("");
+    setSendingMethod(null);
+
     try {
       if (!selectedLender) {
         throw new Error("No lender selected");
@@ -125,15 +151,25 @@ export default function LendModal({ onClose, currentUser }: LendModalProps) {
       }
 
       const signingUrl = await pollDocumentStatus(data.documentId);
-      setDocuSignUrl(signingUrl);
+      if (signingUrl) {
+        setDocuSignUrl(signingUrl);
+      } else {
+        // Email was sent successfully
+        setDocuSignUrl("email-sent");
+      }
     } catch (err) {
       console.error("Document error:", err);
       setError(
-        err instanceof Error ? err.message : "Failed to create document"
+        err instanceof Error ? err.message : "Failed to process document"
       );
     } finally {
-      setIsSigning(false);
+      setIsProcessing(false);
     }
+  };
+
+  const handleLoanSubmit = async () => {
+    setStep(3);
+    await initiateCreateDoc();
   };
 
   const renderStep1 = () => (
@@ -202,15 +238,48 @@ export default function LendModal({ onClose, currentUser }: LendModalProps) {
         <div className="mb-4 p-2 bg-red-100 text-red-700 rounded">{error}</div>
       )}
 
-      {isSigning ? (
+      {isProcessing ? (
         <div className="text-center py-8">
-          <p>Preparing document for signing...</p>
+          <p>
+            {sendingMethod === "email"
+              ? "Sending document via email..."
+              : sendingMethod === "embedded"
+              ? "Preparing document for signing..."
+              : "Processing document..."}
+          </p>
           <div className="mt-4 h-2 bg-gray-200 rounded overflow-hidden">
             <div
               className="h-full bg-blue-500 animate-pulse"
               style={{ width: "70%" }}
             ></div>
           </div>
+        </div>
+      ) : docuSignUrl === "email-sent" ? (
+        <div className="text-center py-8">
+          <div className="text-green-500 mb-4">
+            <svg
+              className="w-12 h-12 mx-auto"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M5 13l4 4L19 7"
+              ></path>
+            </svg>
+            <p className="mt-2">
+              Document sent successfully to recipient's email!
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            Close
+          </button>
         </div>
       ) : docuSignUrl ? (
         <div className="h-96">
