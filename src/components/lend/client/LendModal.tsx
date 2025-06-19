@@ -30,7 +30,7 @@ export default function LendModal({ onClose, currentUser }: LendModalProps) {
   >(null);
 
   const lenders: Lender[] = [
-    { id: "lender1", name: "Lender One", email: "lender1@example.com" },
+    { id: "lender1", name: "Jobax 55204", email: "jobax55204@forcrack.com" },
     { id: "lender2", name: "Lender Two", email: "lender2@example.com" },
     { id: "lender3", name: "Lender Three", email: "lender3@example.com" },
   ];
