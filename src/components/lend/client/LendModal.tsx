@@ -34,49 +34,37 @@ export default function LendModal({ onClose, currentUser }: LendModalProps) {
 
   const pollDocumentStatus = async (documentId: string): Promise<string> => {
     let attempts = 0;
-    const maxAttempts = 20; // ~40 seconds total with delays
-    const delayMs = 2000;
+    const maxAttempts = 8; // Increased from 20 to account for backoff
+    const baseDelay = 2000;
 
     while (attempts < maxAttempts) {
       attempts++;
       try {
         const response = await fetch(`/api/document/status?id=${documentId}`);
-        const data = await response.json();
 
-        // Successful cases
-        if (data.signingUrl) {
-          return data.signingUrl;
-        }
-        if (data.status === "document.sent" && data.signingUrl) {
-          return data.signingUrl;
-        }
-
-        // Still processing cases
-        if (
-          ["processing", "document.uploaded", "document.processing"].includes(
-            data.status
-          )
-        ) {
-          await delay(delayMs);
+        if (response.status === 429) {
+          const retryAfter =
+            parseInt(response.headers.get("retry-after") || "0") ||
+            Math.min(baseDelay * Math.pow(2, attempts), 30000);
+          await delay(retryAfter);
           continue;
         }
 
-        // Ready but not sent case
-        if (data.status === "document.draft") {
-          // You may want to automatically send the document here
-          // Or implement embedded signing
-          throw new Error("Document ready but not sent to recipients");
-        }
+        const data = await response.json();
 
-        // Error cases
-        if (data.error) {
-          throw new Error(data.error.message || "Document processing error");
-        }
+        if (data.signingUrl) return data.signingUrl;
+        if (data.status === "document.sent" && data.signingUrl)
+          return data.signingUrl;
+
+        // Calculate delay with exponential backoff
+        const nextDelay = Math.min(baseDelay * Math.pow(2, attempts), 30000);
+        await delay(nextDelay);
       } catch (err) {
         if (attempts >= maxAttempts) {
           throw new Error("Document processing timed out");
         }
-        await delay(delayMs);
+        const nextDelay = Math.min(baseDelay * Math.pow(2, attempts), 30000);
+        await delay(nextDelay);
       }
     }
     throw new Error("Maximum polling attempts reached");
