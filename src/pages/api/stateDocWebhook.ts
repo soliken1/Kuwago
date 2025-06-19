@@ -1,4 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from "next";
+import crypto from "crypto";
 
 export const config = { api: { bodyParser: false } };
 
@@ -19,63 +20,63 @@ export default async function handler(
   }
 
   try {
-    console.warn(
-      "⚠️ WARNING: Running in INSECURE MODE - Signature verification DISABLED"
-    );
-
     const rawBody = await getRawBody(req);
     const bodyString = rawBody.toString("utf8");
+    const signature = req.headers["x-pandadoc-signature"] as string;
 
-    console.log("Incoming webhook payload:", bodyString);
+    // Verify signature if in production
+    if (process.env.NODE_ENV === "production") {
+      const webhookKey = process.env.PANDADOC_WEBHOOK_KEY;
+      if (!webhookKey) {
+        return res.status(500).json({ error: "Webhook key not configured" });
+      }
 
-    // Process webhook events without signature verification
+      const computedSignature = crypto
+        .createHmac("sha256", webhookKey)
+        .update(rawBody)
+        .digest("hex");
+
+      if (computedSignature !== signature) {
+        return res.status(401).json({ error: "Invalid signature" });
+      }
+    }
+
+    // Process events
     const events = JSON.parse(bodyString);
-    console.log("Processing webhook events (insecure mode):", events);
+    console.log("Webhook events received:", events);
 
     for (const event of events) {
       switch (event.event) {
         case "document_state_changed":
           console.log(
-            `[INSECURE] Document ${event.data.id} changed to ${event.data.status}`
+            `Document ${event.data.id} changed to ${event.data.status}`
           );
-          // Handle state change
-          break;
-
-        case "document_creation_failed":
-          console.error(
-            `[INSECURE] Creation failed: ${event.data.error.detail}`
-          );
-          // Handle creation failure
-          break;
-
-        case "document_completed":
-          console.log(`[INSECURE] Document ${event.data.id} completed`);
-          // Handle completion
+          // Here you could update your database or trigger notifications
           break;
 
         case "recipient_completed":
           console.log(
-            `[INSECURE] Recipient ${event.data.recipient.email} completed signing`
+            `Recipient ${event.data.recipient.email} completed signing`
           );
-          // Handle recipient completion
+          // Send notifications or update application state
+          break;
+
+        case "document_completed":
+          console.log(`Document ${event.data.id} fully completed`);
+          // Finalize the loan process
           break;
 
         default:
-          console.log(`[INSECURE] Unhandled event type: ${event.event}`);
+          console.log(`Unhandled event: ${event.event}`);
       }
     }
 
-    return res.status(200).json({
-      success: true,
-      processedEvents: events.length,
-      warning: "INSECURE MODE - Signature verification disabled for testing",
-    });
+    return res.status(200).json({ success: true });
   } catch (error) {
     console.error("Webhook processing error:", error);
     return res.status(500).json({
       error: "Internal server error",
       details: error instanceof Error ? error.message : String(error),
-      warning: "Error occurred in insecure test mode",
     });
   }
 }
