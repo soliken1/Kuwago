@@ -45,9 +45,9 @@ export default function LendModal({ onClose, currentUser }: LendModalProps) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          borrowerEmail: currentUser.email,
+          borrowerEmail: "kennethrex456@gmail.com",
           borrowerName: currentUser.name,
-          lenderEmail: selectedLender?.email,
+          lenderEmail: "solitudebaruch@gmail.com",
           lenderName: selectedLender?.name,
           loanAmount: loanAmount,
         }),
