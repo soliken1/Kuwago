@@ -202,7 +202,7 @@ export default function LendModal({ onClose, currentUser }: LendModalProps) {
       const documentId = data.documentId;
 
       // Add a short delay before sending to prevent race conditions
-      await delay(2000);
+      await delay(8000); // Wait 8 seconds
 
       console.log("Sending document...");
       // 2. Send the document - documentId is now guaranteed to be a string
