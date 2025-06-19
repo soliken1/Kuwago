@@ -37,11 +37,24 @@ export default function LendModal({ onClose, currentUser }: LendModalProps) {
         const response = await fetch(`/api/document/status?id=${documentId}`);
         const data = await response.json();
 
-        if (data.status === "document.draft" && data.signingUrl) {
+        if (data.signingUrl) {
           return data.signingUrl;
         }
 
-        if (data.status === "document.uploaded") {
+        if (data.status === "document.sent") {
+          // Wait a moment and check again for the signing URL
+          await new Promise((resolve) => setTimeout(resolve, 2000));
+          const secondResponse = await fetch(
+            `/api/document/status?id=${documentId}`
+          );
+          const secondData = await secondResponse.json();
+          if (secondData.signingUrl) {
+            return secondData.signingUrl;
+          }
+        }
+
+        if (data.status === "document.draft") {
+          // Document is being processed, wait and retry
           await new Promise((resolve) => setTimeout(resolve, 2000));
           retries--;
           continue;
