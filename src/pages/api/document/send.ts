@@ -15,19 +15,26 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  if (req.method !== "POST") {
+  // Accept both GET and POST methods
+  if (!["GET", "POST"].includes(req.method || "")) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
   try {
-    const { id } = req.query;
+    // Get ID from either query params (GET) or request body (POST)
+    const id =
+      req.method === "GET"
+        ? req.query.id
+        : typeof req.body === "object"
+        ? req.body.id
+        : null;
+
     if (!id || typeof id !== "string") {
       return res.status(400).json({ error: "Missing document ID" });
     }
 
-    // Get document details with proper typing
-    const detailsRequest: pd_api.DocumentsApiDetailsDocumentRequest = { id };
-    const document = await apiInstance.detailsDocument(detailsRequest);
+    // Get document details
+    const document = await apiInstance.detailsDocument({ id });
 
     if (!document.status) {
       throw new Error("Document status is undefined");
@@ -40,17 +47,14 @@ export default async function handler(
         throw new Error("No recipient email found for signing");
       }
 
-      // Properly typed request
-      const linkRequest: pd_api.DocumentsApiCreateDocumentLinkRequest = {
+      const linkRes = await apiInstance.createDocumentLink({
         id,
         documentCreateLinkRequest: {
           recipient: recipientEmail,
           lifetime: 3600,
         },
-      };
+      });
 
-      // Type assertion for the response
-      const linkRes = await apiInstance.createDocumentLink(linkRequest);
       const signingUrl = linkRes as unknown as SigningLinkResponse;
 
       if (!signingUrl.link) {
