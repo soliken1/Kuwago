@@ -20,25 +20,41 @@ export default async function handler(
       return res.status(400).json({ error: "Missing document ID" });
     }
 
-    // Create proper request object
-    const detailsRequest: pd_api.DocumentsApiDetailsDocumentRequest = {
-      id: id,
-    };
-
     // Get document details
-    const document = await apiInstance.detailsDocument(detailsRequest);
+    const document = await apiInstance.detailsDocument({ id });
 
-    // If document is ready, generate signing link
+    // Document must be sent before creating signing links
     if (document.status === "document.draft") {
-      const linkRequest: pd_api.DocumentsApiCreateDocumentLinkRequest = {
-        id: id,
+      // First send the document to recipients
+      await apiInstance.sendDocument({
+        id,
+        documentSendRequest: {
+          silent: false, // Set to true if you don't want emails sent
+          subject: "Please sign this document",
+          message: "Hello, please review and sign this document",
+        },
+      });
+
+      return res.status(200).json({
+        status: "document.sent",
+        message: "Document has been sent to recipients",
+      });
+    }
+
+    // Only generate signing link if document is sent
+    if (document.status === "document.sent") {
+      const recipientEmail = document.recipients?.[0]?.email || "";
+      if (!recipientEmail) {
+        throw new Error("No recipient email found");
+      }
+
+      const linkRes = await apiInstance.createDocumentLink({
+        id,
         documentCreateLinkRequest: {
-          recipient: document.recipients?.[0]?.email || "",
+          recipient: recipientEmail,
           lifetime: 3600, // 1 hour expiration
         },
-      };
-
-      const linkRes = await apiInstance.createDocumentLink(linkRequest);
+      });
 
       return res.status(200).json({
         status: document.status,
@@ -46,16 +62,25 @@ export default async function handler(
       });
     }
 
-    // Document still processing
+    // For other statuses (like uploaded, completed)
     return res.status(200).json({
-      status: document.status || "document.uploaded",
+      status: document.status,
+      message: `Document is in ${document.status} state`,
     });
   } catch (err: any) {
-    console.error("PandaDoc Status Error:", err);
-    return res.status(500).json({
-      error: err.message || "Failed to check document status",
-      status: "error",
+    console.error("PandaDoc Status Error:", {
+      message: err.message,
+      code: err.code,
       details: err.response?.body || {},
+    });
+
+    return res.status(500).json({
+      error: "Failed to process document",
+      details: {
+        message: err.message,
+        status: err.response?.status,
+        code: err.code,
+      },
     });
   }
 }
