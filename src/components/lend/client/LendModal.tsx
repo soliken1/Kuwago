@@ -38,20 +38,22 @@ export default function LendModal({ onClose, currentUser }: LendModalProps) {
   const sendDocument = async (documentId: string): Promise<string | null> => {
     try {
       setSendingMethod("email");
+      console.log("Attempting to send document via email...");
 
       // First try regular email sending
-      let response = await fetch("/api/document/send", {
+      const response = await fetch("/api/document/send", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ documentId }),
       });
 
-      let result = await response.json();
+      const result = await response.json();
+      console.log("Send response:", result);
 
-      // If the response is not OK, check for specific error cases
       if (!response.ok) {
         // If email failed with 403, try embedded signing
         if (result.error?.code === 403) {
+          console.log("Email sending failed, trying embedded signing...");
           setSendingMethod("embedded");
           const embeddedResponse = await fetch("/api/document/send", {
             method: "POST",
@@ -60,6 +62,7 @@ export default function LendModal({ onClose, currentUser }: LendModalProps) {
           });
 
           const embeddedResult = await embeddedResponse.json();
+          console.log("Embedded signing response:", embeddedResult);
 
           if (!embeddedResponse.ok) {
             throw new Error(
@@ -80,7 +83,8 @@ export default function LendModal({ onClose, currentUser }: LendModalProps) {
 
       // If no signing URL but operation was successful
       if (result.success || response.ok) {
-        return null; // Email was sent successfully
+        console.log("Document sent successfully via email");
+        return null;
       }
 
       throw new Error("Unexpected response format");
@@ -97,9 +101,13 @@ export default function LendModal({ onClose, currentUser }: LendModalProps) {
     const maxAttempts = 30;
     const baseDelay = 2000;
 
+    console.log("Starting document status polling...");
+
     while (attempts < maxAttempts) {
       attempts++;
       try {
+        console.log(`Polling attempt ${attempts}/${maxAttempts}`);
+
         const response = await fetch("/api/document/status", {
           method: "POST",
           headers: {
@@ -109,25 +117,31 @@ export default function LendModal({ onClose, currentUser }: LendModalProps) {
           body: JSON.stringify({ documentId }),
         });
 
+        const data = await response.json();
+        console.log("Polling response:", data);
+
         if (!response.ok) {
           const errorData = await response.json();
           throw new Error(errorData.error || "Failed to check document status");
         }
 
-        const data = await response.json();
-
         if (data.status === "ready" && data.signingUrl) {
+          console.log("Document ready with signing URL");
           return data.signingUrl;
         }
 
         if (data.status === "processing") {
           const delayTime =
             data.nextCheckAfter * 1000 || baseDelay * Math.pow(1.5, attempts);
+          console.log(`Document processing, waiting ${delayTime}ms...`);
           await delay(delayTime);
           continue;
         }
 
         if (data.status === "ready" && data.state === "draft") {
+          console.log(
+            "Document ready but in draft state, attempting to send..."
+          );
           const signingUrl = await sendDocument(documentId);
           if (signingUrl) return signingUrl;
 
@@ -136,6 +150,7 @@ export default function LendModal({ onClose, currentUser }: LendModalProps) {
 
         throw new Error(data.error?.message || "Unexpected document status");
       } catch (err) {
+        console.error(`Polling error (attempt ${attempts}):`, err);
         if (attempts >= maxAttempts) {
           throw new Error(`Processing timed out after ${maxAttempts} attempts`);
         }
@@ -151,11 +166,14 @@ export default function LendModal({ onClose, currentUser }: LendModalProps) {
     setDocuSignUrl("");
     setSendingMethod(null);
 
+    let data = undefined;
+
     try {
       if (!selectedLender) {
         throw new Error("No lender selected");
       }
 
+      console.log("Creating document...");
       // 1. Create the document
       const createResponse = await fetch("/api/document/create", {
         method: "POST",
@@ -168,26 +186,55 @@ export default function LendModal({ onClose, currentUser }: LendModalProps) {
           loanAmount: loanAmount,
         }),
       });
-      const { documentId } = await createResponse.json();
+
+      data = await createResponse.json();
+      console.log("Create response:", data);
 
       if (!createResponse.ok) {
-        throw new Error("Failed to create document");
+        throw new Error(data.error || "Failed to create document");
       }
 
-      // 2. Send the document
+      // Ensure documentId exists and is a string
+      if (!data.documentId || typeof data.documentId !== "string") {
+        throw new Error("Invalid document ID received");
+      }
+
+      const documentId = data.documentId;
+
+      // Add a short delay before sending to prevent race conditions
+      await delay(2000);
+
+      console.log("Sending document...");
+      // 2. Send the document - documentId is now guaranteed to be a string
       const signingUrl = await sendDocument(documentId);
 
       // 3. Handle the result
       if (signingUrl) {
+        console.log("Setting signing URL:", signingUrl);
         setDocuSignUrl(signingUrl);
       } else {
+        console.log("Document sent via email successfully");
         setDocuSignUrl("email-sent");
       }
-    } catch (err) {
-      console.error("Document error:", err);
+    } catch (err: any) {
+      console.error("Document processing error:", err);
       setError(
         err instanceof Error ? err.message : "Failed to process document"
       );
+
+      // Fallback polling logic can use the same documentId check if needed
+      if (err.message.includes("Failed to send") && data?.documentId) {
+        console.log("Attempting fallback polling...");
+        try {
+          const signingUrl = await pollDocumentStatus(data.documentId);
+          if (signingUrl) {
+            setDocuSignUrl(signingUrl);
+            setError(""); // Clear any previous error
+          }
+        } catch (pollError) {
+          console.error("Fallback polling failed:", pollError);
+        }
+      }
     } finally {
       setIsProcessing(false);
     }
