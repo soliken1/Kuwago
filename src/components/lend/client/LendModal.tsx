@@ -154,6 +154,9 @@ export default function LendModal({ onClose, currentUser }: LendModalProps) {
         throw new Error("Failed to create document");
       }
 
+      // Add delay before sending (3 seconds)
+      await delay(3000);
+
       // 2. Explicitly send the document
       const sendResponse = await fetch("/api/document/send", {
         method: "POST",
@@ -162,7 +165,8 @@ export default function LendModal({ onClose, currentUser }: LendModalProps) {
       });
 
       if (!sendResponse.ok) {
-        throw new Error("Failed to send document");
+        const errorData = await sendResponse.json();
+        throw new Error(errorData.error || "Failed to send document");
       }
 
       // 3. Poll for status (optional, if needed)
