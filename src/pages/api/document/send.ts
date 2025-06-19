@@ -48,8 +48,15 @@ export default async function handler(
         message: message,
         subject: subject,
         silent: false,
-      },
+        // Use the correct parameter name for recipients
+        recipients:
+          document.recipients?.map((recipient) => ({
+            email: recipient.email,
+            role: recipient.role,
+          })) || [],
+      } as pd_api.DocumentSendRequest, // Type assertion if needed
     });
+
     // 4. Get updated document status
     const updatedDoc = await apiInstance.detailsDocument({ id: documentId });
 

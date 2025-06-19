@@ -38,18 +38,16 @@ export default function LendModal({ onClose, currentUser }: LendModalProps) {
   const sendDocument = async (documentId: string): Promise<string | null> => {
     try {
       setSendingMethod("email");
-      console.log("Attempting to send document via email...");
-
       const response = await fetch("/api/document/send", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           documentId,
-          message: "Please sign this loan agreement",
-          subject: "Loan Agreement",
+          message: "ACTION REQUIRED: Loan Agreement",
+          subject: `Loan Agreement - ${loanAmount}`,
+          force: true,
         }),
       });
-
       const result = await response.json();
       console.log("Send response:", result);
 
