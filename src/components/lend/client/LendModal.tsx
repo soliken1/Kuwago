@@ -41,27 +41,20 @@ export default function LendModal({ onClose, currentUser }: LendModalProps) {
           return data.signingUrl;
         }
 
-        if (data.status === "document.sent") {
-          // Wait a moment and check again for the signing URL
-          await new Promise((resolve) => setTimeout(resolve, 2000));
-          const secondResponse = await fetch(
-            `/api/document/status?id=${documentId}`
-          );
-          const secondData = await secondResponse.json();
-          if (secondData.signingUrl) {
-            return secondData.signingUrl;
-          }
+        if (data.status === "ready_for_embedded_signing") {
+          return data.signingUrl;
         }
 
-        if (data.status === "document.draft") {
-          // Document is being processed, wait and retry
-          await new Promise((resolve) => setTimeout(resolve, 2000));
-          retries--;
-          continue;
+        if (data.error?.code === 403) {
+          throw new Error("Organization restriction: " + data.error.message);
         }
 
-        throw new Error(`Unexpected document status: ${data.status}`);
-      } catch (err) {
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        retries--;
+      } catch (err: any) {
+        if (err.message.includes("Organization restriction")) {
+          throw err; // Forward organization errors immediately
+        }
         retries--;
         if (retries === 0) {
           throw new Error("Document processing timed out");
