@@ -86,10 +86,9 @@ export default function LendModal({ onClose, currentUser }: LendModalProps) {
             "Content-Type": "application/json",
             Accept: "application/json",
           },
-          body: JSON.stringify({ id: documentId }),
+          body: JSON.stringify({ documentId }), // Consistent parameter name
         });
 
-        // Handle HTTP errors
         if (!response.ok) {
           const errorData = await response.json();
           throw new Error(errorData.error || "Failed to check document status");
@@ -112,22 +111,15 @@ export default function LendModal({ onClose, currentUser }: LendModalProps) {
           const signingUrl = await sendDocument(documentId);
           if (signingUrl) return signingUrl;
 
-          await delay(3000);
-          continue;
+          await delay(baseDelay * Math.pow(2, attempts));
         }
 
         throw new Error(data.error?.message || "Unexpected document status");
       } catch (err) {
-        console.error("Polling error:", err);
         if (attempts >= maxAttempts) {
-          throw new Error(
-            `Document processing timed out after ${maxAttempts} attempts`
-          );
+          throw new Error(`Processing timed out after ${maxAttempts} attempts`);
         }
-
-        const delayTime =
-          baseDelay * Math.pow(2, attempts) + Math.random() * 1000;
-        await delay(Math.min(delayTime, 30000));
+        await delay(Math.min(baseDelay * Math.pow(2, attempts), 30000));
       }
     }
     throw new Error("Maximum polling attempts reached");

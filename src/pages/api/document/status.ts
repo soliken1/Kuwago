@@ -11,55 +11,44 @@ interface SigningLinkResponse {
   expires_at?: string;
 }
 
-interface StatusRequestBody {
-  id: string;
+interface RequestBody {
+  documentId?: string;
+  id?: string; // Accept both for backward compatibility
 }
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  // Accept both GET and POST methods
   if (!["GET", "POST"].includes(req.method || "")) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
   try {
-    let id: string | undefined;
+    let documentId: string | undefined;
 
-    // Handle GET request (ID in query params)
+    // Handle GET request
     if (req.method === "GET") {
-      id = req.query.id as string;
+      documentId = req.query.id as string;
     }
-    // Handle POST request (ID in request body)
-    else if (req.method === "POST") {
-      // Parse and validate request body
-      if (req.headers["content-type"] !== "application/json") {
-        return res
-          .status(400)
-          .json({ error: "Content-Type must be application/json" });
-      }
+    // Handle POST request
+    else {
+      const body: RequestBody =
+        typeof req.body === "string" ? JSON.parse(req.body) : req.body;
 
-      let body: StatusRequestBody;
-      try {
-        body = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
-        if (!body.id || typeof body.id !== "string") {
-          return res
-            .status(400)
-            .json({ error: "Missing or invalid document ID in request body" });
-        }
-        id = body.id;
-      } catch (e) {
-        return res.status(400).json({ error: "Invalid JSON body" });
-      }
+      // Accept either 'documentId' or 'id' in the request body
+      documentId = body.documentId || body.id;
     }
 
-    if (!id) {
-      return res.status(400).json({ error: "Missing document ID" });
+    if (!documentId) {
+      return res.status(400).json({
+        error: "Missing document ID",
+        details: "Please provide 'documentId' in the request body",
+      });
     }
 
     // Get document details
-    const document = await apiInstance.detailsDocument({ id });
+    const document = await apiInstance.detailsDocument({ id: documentId });
 
     if (!document.status) {
       throw new Error("Document status is undefined");
@@ -69,7 +58,8 @@ export default async function handler(
     if (document.status === "document.uploaded") {
       return res.status(200).json({
         status: "processing",
-        documentId: id,
+        documentId,
+        id: documentId,
         message: "Document is being processed",
         estimatedWait: 30,
         nextCheckAfter: 5,
@@ -80,7 +70,8 @@ export default async function handler(
     if (document.status === "document.draft") {
       return res.status(200).json({
         status: "ready",
-        documentId: id,
+        documentId,
+        id: documentId,
         state: "draft",
         message: "Document is ready for signing",
         actionRequired: "send",
@@ -95,7 +86,7 @@ export default async function handler(
       }
 
       const linkRes = await apiInstance.createDocumentLink({
-        id,
+        id: documentId,
         documentCreateLinkRequest: {
           recipient: recipientEmail,
           lifetime: 3600,
@@ -104,14 +95,8 @@ export default async function handler(
 
       const signingUrl = linkRes as unknown as SigningLinkResponse;
 
-      if (!signingUrl.link) {
-        throw new Error("No signing URL in response");
-      }
-
       return res.status(200).json({
-        status: "ready",
-        documentId: id,
-        state: "sent",
+        status: document.status,
         signingUrl: signingUrl.link,
         expiresAt: signingUrl.expires_at,
       });
@@ -119,9 +104,7 @@ export default async function handler(
 
     // Handle other states
     return res.status(200).json({
-      status: "unknown",
-      documentId: id,
-      state: document.status,
+      status: document.status,
       message: `Document is in ${document.status} state`,
     });
   } catch (err: any) {
