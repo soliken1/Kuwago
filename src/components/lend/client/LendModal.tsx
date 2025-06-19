@@ -34,37 +34,60 @@ export default function LendModal({ onClose, currentUser }: LendModalProps) {
 
   const pollDocumentStatus = async (documentId: string): Promise<string> => {
     let attempts = 0;
-    const maxAttempts = 8; // Increased from 20 to account for backoff
-    const baseDelay = 2000;
+    const maxAttempts = 30; // Increased attempts (about 5 minutes total with backoff)
+    const baseDelay = 2000; // Start with 2 seconds
 
     while (attempts < maxAttempts) {
       attempts++;
       try {
         const response = await fetch(`/api/document/status?id=${documentId}`);
+        const data = await response.json();
 
-        if (response.status === 429) {
-          const retryAfter =
-            parseInt(response.headers.get("retry-after") || "0") ||
-            Math.min(baseDelay * Math.pow(2, attempts), 30000);
-          await delay(retryAfter);
+        // Successful cases
+        if (data.status === "ready" && data.signingUrl) {
+          return data.signingUrl;
+        }
+
+        // Still processing cases
+        if (data.status === "processing") {
+          const delayTime =
+            data.nextCheckAfter * 1000 || baseDelay * Math.pow(1.5, attempts);
+          await delay(delayTime);
           continue;
         }
 
-        const data = await response.json();
+        // Document ready but needs to be sent
+        if (data.status === "ready" && data.state === "draft") {
+          // Automatically send the document
+          const sendResponse = await fetch("/api/document/send", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ documentId }),
+          });
+          const sendData = await sendResponse.json();
 
-        if (data.signingUrl) return data.signingUrl;
-        if (data.status === "document.sent" && data.signingUrl)
-          return data.signingUrl;
-
-        // Calculate delay with exponential backoff
-        const nextDelay = Math.min(baseDelay * Math.pow(2, attempts), 30000);
-        await delay(nextDelay);
-      } catch (err) {
-        if (attempts >= maxAttempts) {
-          throw new Error("Document processing timed out");
+          if (sendData.success) {
+            await delay(3000); // Wait for document to transition to 'sent'
+            continue;
+          }
         }
-        const nextDelay = Math.min(baseDelay * Math.pow(2, attempts), 30000);
-        await delay(nextDelay);
+
+        // Error cases
+        if (data.error) {
+          throw new Error(data.error.message || "Document processing error");
+        }
+      } catch (err) {
+        console.error("Polling error:", err);
+        if (attempts >= maxAttempts) {
+          throw new Error(
+            `Document processing timed out after ${maxAttempts} attempts`
+          );
+        }
+
+        // Exponential backoff with jitter
+        const delayTime =
+          baseDelay * Math.pow(2, attempts) + Math.random() * 1000;
+        await delay(Math.min(delayTime, 30000)); // Max 30s delay
       }
     }
     throw new Error("Maximum polling attempts reached");
