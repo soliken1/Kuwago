@@ -22,6 +22,7 @@ export default function LendModal({ onClose, currentUser }: LendModalProps) {
   const [loanAmount, setLoanAmount] = useState("");
   const [isSigning, setIsSigning] = useState(false);
   const [docuSignUrl, setDocuSignUrl] = useState("");
+  const [error, setError] = useState("");
 
   const lenders: Lender[] = [
     { id: "lender1", name: "Lender One", email: "lender1@example.com" },
@@ -29,26 +30,56 @@ export default function LendModal({ onClose, currentUser }: LendModalProps) {
     { id: "lender3", name: "Lender Three", email: "lender3@example.com" },
   ];
 
-  const handleLoanSubmit = () => {
+  const pollDocumentStatus = async (documentId: string): Promise<string> => {
+    let retries = 10;
+    while (retries > 0) {
+      try {
+        const response = await fetch(`/api/document/status?id=${documentId}`);
+        const data = await response.json();
+
+        if (data.status === "document.draft" && data.signingUrl) {
+          return data.signingUrl;
+        }
+
+        if (data.status === "document.uploaded") {
+          await new Promise((resolve) => setTimeout(resolve, 2000));
+          retries--;
+          continue;
+        }
+
+        throw new Error(`Unexpected document status: ${data.status}`);
+      } catch (err) {
+        retries--;
+        if (retries === 0) {
+          throw new Error("Document processing timed out");
+        }
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+      }
+    }
+    throw new Error("Polling failed");
+  };
+
+  const handleLoanSubmit = async () => {
     setStep(3);
-    initiateCreateDoc();
+    await initiateCreateDoc();
   };
 
   const initiateCreateDoc = async () => {
     setIsSigning(true);
-    setDocuSignUrl(""); // Reset URL on retry
-
+    setError("");
     try {
-      const response = await fetch("/api/createDoc", {
+      if (!selectedLender) {
+        throw new Error("No lender selected");
+      }
+
+      const response = await fetch("/api/document/create", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          borrowerEmail: "kennethrex456@gmail.com",
+          borrowerEmail: currentUser.email,
           borrowerName: currentUser.name,
-          lenderEmail: "solitudebaruch@gmail.com",
-          lenderName: selectedLender?.name,
+          lenderEmail: selectedLender.email,
+          lenderName: selectedLender.name,
           loanAmount: loanAmount,
         }),
       });
@@ -56,18 +87,16 @@ export default function LendModal({ onClose, currentUser }: LendModalProps) {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed to initiate signing");
+        throw new Error(data.error || "Failed to create document");
       }
 
-      if (!data.url) {
-        throw new Error("No signing URL returned");
-      }
-
-      setDocuSignUrl(data.url);
-    } catch (error) {
-      console.error("PandaDoc Error:", error);
-      setDocuSignUrl(""); // Clear URL on error
-      // Consider adding a state for error messages
+      const signingUrl = await pollDocumentStatus(data.documentId);
+      setDocuSignUrl(signingUrl);
+    } catch (err) {
+      console.error("Document error:", err);
+      setError(
+        err instanceof Error ? err.message : "Failed to create document"
+      );
     } finally {
       setIsSigning(false);
     }
@@ -135,16 +164,27 @@ export default function LendModal({ onClose, currentUser }: LendModalProps) {
         <p>Amount: ₱{loanAmount}</p>
       </div>
 
+      {error && (
+        <div className="mb-4 p-2 bg-red-100 text-red-700 rounded">{error}</div>
+      )}
+
       {isSigning ? (
         <div className="text-center py-8">
           <p>Preparing document for signing...</p>
+          <div className="mt-4 h-2 bg-gray-200 rounded overflow-hidden">
+            <div
+              className="h-full bg-blue-500 animate-pulse"
+              style={{ width: "70%" }}
+            ></div>
+          </div>
         </div>
       ) : docuSignUrl ? (
         <div className="h-96">
           <iframe
             src={docuSignUrl}
             className="w-full h-full border"
-            title="DocuSign Document"
+            title="PandaDoc Document"
+            onLoad={() => console.log("Document loaded")}
           />
           <div className="mt-4 flex justify-between">
             <button
