@@ -86,7 +86,7 @@ export default function LendModal({ onClose, currentUser }: LendModalProps) {
             "Content-Type": "application/json",
             Accept: "application/json",
           },
-          body: JSON.stringify({ documentId }), // Consistent parameter name
+          body: JSON.stringify({ documentId }),
         });
 
         if (!response.ok) {
@@ -136,7 +136,8 @@ export default function LendModal({ onClose, currentUser }: LendModalProps) {
         throw new Error("No lender selected");
       }
 
-      const response = await fetch("/api/document/create", {
+      // 1. Create the document
+      const createResponse = await fetch("/api/document/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -148,13 +149,25 @@ export default function LendModal({ onClose, currentUser }: LendModalProps) {
         }),
       });
 
-      const data = await response.json();
+      const { documentId } = await createResponse.json();
 
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to create document");
+      if (!createResponse.ok) {
+        throw new Error("Failed to create document");
       }
 
-      const signingUrl = await pollDocumentStatus(data.documentId);
+      // 2. Explicitly send the document
+      const sendResponse = await fetch("/api/document/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ documentId }),
+      });
+
+      if (!sendResponse.ok) {
+        throw new Error("Failed to send document");
+      }
+
+      // 3. Poll for status (optional, if needed)
+      const signingUrl = await pollDocumentStatus(documentId);
       if (signingUrl) {
         setDocuSignUrl(signingUrl);
       } else {
