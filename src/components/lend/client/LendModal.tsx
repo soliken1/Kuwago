@@ -80,7 +80,13 @@ export default function LendModal({ onClose, currentUser }: LendModalProps) {
     while (attempts < maxAttempts) {
       attempts++;
       try {
-        const response = await fetch(`/api/document/status?id=${documentId}`);
+        // Send POST request with ID in body
+        const response = await fetch("/api/document/status", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: documentId }),
+        });
+
         const data = await response.json();
 
         if (data.status === "ready" && data.signingUrl) {
@@ -98,7 +104,7 @@ export default function LendModal({ onClose, currentUser }: LendModalProps) {
           const signingUrl = await sendDocument(documentId);
           if (signingUrl) return signingUrl;
 
-          await delay(3000); // Wait for document to transition to 'sent'
+          await delay(3000);
           continue;
         }
 
