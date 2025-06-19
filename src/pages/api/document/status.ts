@@ -23,36 +23,39 @@ export default async function handler(
     // Get document details
     const document = await apiInstance.detailsDocument({ id });
 
-    // Document must be sent before creating signing links
+    // Handle draft documents with embedded signing
     if (document.status === "document.draft") {
-      // First send the document to recipients
-      await apiInstance.sendDocument({
-        id,
-        documentSendRequest: {
-          silent: false, // Set to true if you don't want emails sent
-          subject: "Please sign this document",
-          message: "Hello, please review and sign this document",
-        },
-      });
+      try {
+        const recipientEmail = document.recipients?.[0]?.email || "";
+        const linkRes = await apiInstance.createDocumentLink({
+          id,
+          documentCreateLinkRequest: {
+            recipient: recipientEmail,
+            lifetime: 3600,
+          },
+        });
 
-      return res.status(200).json({
-        status: "document.sent",
-        message: "Document has been sent to recipients",
-      });
+        return res.status(200).json({
+          status: "ready_for_embedded_signing",
+          signingUrl: (linkRes as any).link,
+        });
+      } catch (error) {
+        return res.status(403).json({
+          error: "Organization restriction",
+          message:
+            "Cannot send to external emails. Please use organization emails or contact support.",
+          solution: "Update recipient emails to use your organization's domain",
+        });
+      }
     }
 
-    // Only generate signing link if document is sent
+    // Handle already sent documents
     if (document.status === "document.sent") {
-      const recipientEmail = document.recipients?.[0]?.email || "";
-      if (!recipientEmail) {
-        throw new Error("No recipient email found");
-      }
-
       const linkRes = await apiInstance.createDocumentLink({
         id,
         documentCreateLinkRequest: {
-          recipient: recipientEmail,
-          lifetime: 3600, // 1 hour expiration
+          recipient: document.recipients?.[0]?.email || "",
+          lifetime: 3600,
         },
       });
 
@@ -62,25 +65,34 @@ export default async function handler(
       });
     }
 
-    // For other statuses (like uploaded, completed)
+    // Other statuses
     return res.status(200).json({
       status: document.status,
       message: `Document is in ${document.status} state`,
     });
   } catch (err: any) {
-    console.error("PandaDoc Status Error:", {
+    console.error("PandaDoc Error:", {
       message: err.message,
       code: err.code,
       details: err.response?.body || {},
     });
 
+    if (err.code === 403) {
+      return res.status(403).json({
+        error: "Organization restriction",
+        message:
+          "Your PandaDoc account cannot send documents outside your organization",
+        solutions: [
+          "Use email addresses from your organization domain",
+          "Contact PandaDoc support to enable external sending",
+          "Implement embedded signing instead of email delivery",
+        ],
+      });
+    }
+
     return res.status(500).json({
-      error: "Failed to process document",
-      details: {
-        message: err.message,
-        status: err.response?.status,
-        code: err.code,
-      },
+      error: "Document processing failed",
+      details: err.message,
     });
   }
 }
