@@ -46,10 +46,10 @@ export default async function handler(
             value: loanAmount,
           },
           borrowerName: {
-            value: lenderName || "",
+            value: borrowerName || "",
           },
           lenderName: {
-            value: borrowerName || "",
+            value: lenderName || "",
           },
         },
         tags: ["loan-agreement"],
