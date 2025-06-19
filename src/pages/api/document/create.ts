@@ -45,7 +45,10 @@ export default async function handler(
           },
         ],
         fields: {
-          loanAmount: { value: loanAmount },
+          "Document.LoanAmount": {
+            value: loanAmount,
+            role: "Borrower",
+          },
           borrowerName: { value: borrowerName },
           lenderName: { value: lenderName },
           agreementDate: { value: new Date().toISOString().split("T")[0] },
