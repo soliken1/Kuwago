@@ -1,12 +1,13 @@
 "use client";
 import React from "react";
-import Link from "next/link";
 import Overview from "@/components/admindashboard/client/Overview";
 import Users from "@/components/admindashboard/client/Users";
 import Analytics from "@/components/admindashboard/client/Analytics";
 import Settings from "@/components/admindashboard/client/Settings";
-import { BiMessage } from "react-icons/bi";
+import { deleteCookie } from "cookies-next";
 import UserListChat from "@/components/messaging/client/UserListChat";
+import { useRouter } from "next/navigation";
+
 interface AdminDashboardLayoutProps {
   children?: React.ReactNode;
 }
@@ -19,6 +20,14 @@ export default function AdminDashboardLayout({
     if (element) {
       element.scrollIntoView({ behavior: "smooth" });
     }
+  };
+
+  const router = useRouter();
+
+  const logout = () => {
+    deleteCookie("session_token");
+    deleteCookie("user_role");
+    router.push("/login");
   };
 
   return (
@@ -56,6 +65,13 @@ export default function AdminDashboardLayout({
                 className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
               >
                 Settings
+              </button>
+
+              <button
+                onClick={logout}
+                className="text-gray-600 cursor-pointer hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+              >
+                Logout
               </button>
 
               <UserListChat />

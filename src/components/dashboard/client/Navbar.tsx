@@ -28,12 +28,16 @@ export default function Navbar() {
   }, []);
 
   useEffect(() => {
-    const handler = (evt: MouseEvent) => {
-      !dropdownRef.current?.contains(evt.target as Node) &&
+    const handleClickOutside = (evt: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(evt.target as Node)
+      ) {
         setIsDropdownOpen(false);
+      }
     };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const handleLogout = async () => {
@@ -64,12 +68,11 @@ export default function Navbar() {
           )}
         </div>
 
-        <div className="flex items-center gap-5 relative">
+        <div className="flex items-center gap-5 relative" ref={dropdownRef}>
           <IoNotificationsOutline size={24} />
           <div
-            ref={dropdownRef}
-            className="flex items-center gap-2 cursor-pointer"
-            onClick={() => setIsDropdownOpen((v) => !v)}
+            className="flex items-center gap-2 cursor-pointer select-none"
+            onClick={() => setIsDropdownOpen((prev) => !prev)}
           >
             <Image
               src={storedUser.profilePicture || "/Images/User.jpg"}
@@ -83,7 +86,7 @@ export default function Navbar() {
           </div>
 
           {isDropdownOpen && (
-            <div className="absolute right-0 top-full bg-white border rounded-md shadow-md mt-2 w-36 z-50">
+            <div className="absolute right-0 top-12 bg-white border rounded-md shadow-md w-36 z-50">
               <Link
                 href="/profile"
                 className="block px-4 py-2 hover:bg-gray-100"
@@ -92,7 +95,7 @@ export default function Navbar() {
               </Link>
               <button
                 onClick={handleLogout}
-                className="w-full text-left px-4 py-2 hover:bg-gray-100"
+                className="w-full cursor-pointer text-left px-4 py-2 hover:bg-gray-100"
               >
                 Logout
               </button>

@@ -7,7 +7,7 @@ export default function Users() {
 
   useEffect(() => {
     allUsers(); // Fetch users when component mounts
-  });
+  }, []);
 
   return (
     <section id="users" className="min-h-screen py-8">
