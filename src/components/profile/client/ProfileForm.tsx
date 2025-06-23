@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { FiEdit2, FiSave, FiX } from "react-icons/fi";
 import { useProfile, UserProfile } from "@/hooks/users/useProfile";
+import sendEmailWithLink from "@/utils/sendEmailWithLink";
 
 export default function ProfileForm() {
   const [isEditing, setIsEditing] = useState(false);
@@ -63,8 +64,35 @@ export default function ProfileForm() {
       }
     }
 
-    const success = await updateProfile(formData);
-    if (success) {
+    const response = await updateProfile(formData);
+
+    // If the response contains a verification link (i.e., email was changed)
+    if (
+      response &&
+      typeof response === "object" &&
+      response.data &&
+      response.data.user &&
+      response.data.verificationLink
+    ) {
+      const ownerEmail = response.data.user.email;
+      const ownerName = `${response.data.user.firstName} ${response.data.user.lastName}`;
+      const downloadURL = response.data.verificationLink;
+      const subject = "Kuwago Email Change Verification";
+
+      sendEmailWithLink(ownerEmail, ownerName, downloadURL, subject)
+        .then(() => {
+          alert("Verification email sent to your new email address!");
+        })
+        .catch((error) => {
+          alert(
+            error?.response?.data?.message ||
+              "Failed to send verification email. Please try again."
+          );
+          console.error("EmailJS error:", error);
+        });
+    }
+
+    if (response && (response === true || response.success)) {
       setIsEditing(false);
     }
   };

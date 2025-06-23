@@ -31,6 +31,25 @@ interface TokenResponse {
   status: boolean;
 }
 
+interface EmailChangeResponse {
+  success: boolean;
+  message: string;
+  statusCode: number;
+  data: {
+    user: {
+      uid: string;
+      email: string;
+      firstName: string;
+      lastName: string;
+      username: string;
+      role: number;
+      status: number;
+      createdAt: string;
+    };
+    verificationLink: string;
+  };
+}
+
 export const useProfile = () => {
   const [profile, setProfile] = useState<UserProfile>({
     firstName: "",
@@ -45,7 +64,9 @@ export const useProfile = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const updateProfile = async (updatedProfile: Partial<UserProfile>) => {
+  const updateProfile = async (
+    updatedProfile: Partial<UserProfile>
+  ): Promise<true | false | EmailChangeResponse> => {
     setIsLoading(true);
     setError(null);
 
@@ -108,11 +129,6 @@ export const useProfile = () => {
       }
 
       if (updatedProfile.email) {
-        const emailBody = {
-          uid,
-          email: updatedProfile.email,
-        };
-
         const tokenResponse = await axios.get<TokenResponse>(
           "/proxy/Auth/CheckToken",
           {
@@ -124,23 +140,36 @@ export const useProfile = () => {
         );
 
         const firebaseToken = tokenResponse?.data.data.firebase_token;
-        console.log(firebaseToken);
+        console.log("Firebase Token:", firebaseToken);
+        console.log("ChangeEmail Headers:", {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+          FirebaseIdToken: firebaseToken,
+        });
+        console.log("ChangeEmail Body:", {
+          newEmail: updatedProfile.email,
+          firebaseToken: firebaseToken,
+        });
 
-        console.log(emailBody);
+        const emailBody = {
+          newEmail: updatedProfile.email,
+          firebaseToken: firebaseToken,
+        };
 
-        const emailResponse = await axios.put<ProfileResponse>(
+        const emailResponse = await axios.put<EmailChangeResponse>(
           "/proxy/Auth/ChangeEmail",
           emailBody,
           {
             headers: {
               Authorization: `Bearer ${token}`,
               "Content-Type": "application/json",
-              FirebaseIdToken: firebaseToken,
             },
           }
         );
 
         alert(emailResponse.data.message);
+
+        return emailResponse.data;
       }
 
       if (
@@ -172,6 +201,7 @@ export const useProfile = () => {
         }
 
         window.location.reload();
+        return true;
       }
 
       return true;
