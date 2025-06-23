@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import useRegisterRequest from "@/hooks/auth/requestRegister";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import sendEmailWithLink from "@/utils/sendEmailWithLink";
 
 export default function RegisterForm() {
   const router = useRouter();
@@ -28,7 +29,21 @@ export default function RegisterForm() {
   }, [error]);
 
   useEffect(() => {
-    if (registerData) {
+    if (registerData?.data?.user && registerData?.data?.verificationLink) {
+      const ownerEmail = registerData.data.user.email;
+      const ownerName = `${registerData.data.user.firstName} ${registerData.data.user.lastName}`;
+      const downloadURL = registerData.data.verificationLink;
+      const subject = "Kuwago Email Verification";
+
+      // Send verification email
+      sendEmailWithLink(ownerEmail, ownerName, downloadURL, subject)
+        .then(() => {
+          // Optionally show a message or handle success
+        })
+        .catch(() => {
+          // Optionally handle error
+        });
+
       setShowSuccess(true);
       const timer = setTimeout(() => {
         setShowSuccess(false);

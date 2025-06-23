@@ -25,11 +25,16 @@ interface RegisterPayload {
   role: number;
 }
 
+interface RegisterData {
+  user: UserData;
+  verificationLink: string;
+}
+
 interface RegisterResponse {
   token?: string;
   message?: string;
   errors?: Record<string, string[]>;
-  data?: UserData;
+  data?: any;
 }
 
 export default function useRegisterRequest() {
