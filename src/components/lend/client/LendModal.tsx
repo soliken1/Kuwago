@@ -1,15 +1,16 @@
 "use client";
-import React, { useState, useEffect } from "react";
-import useGetLenderUsers from "@/hooks/users/requestLenderUsers";
+import React, { useState } from "react";
 import StepSelectLender from "./StepSelectLender";
+import StepLoanAmount from "./StepBorrowerDetails";
+import StepSigning from "./StepGenerateDocument";
+import { useSubmitLoanRequest } from "@/hooks/lend/requestLoan";
+import { useFetchLoanRequest } from "@/hooks/lend/requestCurrentLoan";
 
 interface LendModalProps {
   onClose: () => void;
-  currentUser: {
-    id: string;
-    name: string;
-    email: string;
-  };
+  currentUser: { id: string; name: string; email: string };
+  lendersData: any;
+  loading: boolean;
 }
 
 interface Lender {
@@ -22,12 +23,18 @@ interface Lender {
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-export default function LendModal({ onClose, currentUser }: LendModalProps) {
-  const { lenderUsers, lendersData, loading } = useGetLenderUsers();
-
+export default function LendModal({
+  onClose,
+  currentUser,
+  lendersData,
+  loading,
+}: LendModalProps) {
+  const { submitLoanRequest, success } = useSubmitLoanRequest();
+  const { getLoanRequest } = useFetchLoanRequest();
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [selectedLender, setSelectedLender] = useState<Lender | null>(null);
-  const [loanAmount, setLoanAmount] = useState("");
+  const [loanAmount, setLoanAmount] = useState<number>(0);
+  const [currentLoanId, setCurrentLoanId] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [docuSignUrl, setDocuSignUrl] = useState("");
   const [error, setError] = useState("");
@@ -36,11 +43,17 @@ export default function LendModal({ onClose, currentUser }: LendModalProps) {
   >(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState<number>(1);
+  const [formData, setFormData] = useState({
+    maritalStatus: 1,
+    highestEducation: 0,
+    employmentInformation: "",
+    detailedAddress: "",
+    residentType: 1,
+    loanType: 1,
+    loanAmount: 1000,
+    loanPurpose: "",
+  });
   const itemsPerPage = 3;
-
-  useEffect(() => {
-    lenderUsers();
-  }, []);
 
   const dynamicLenders: Lender[] =
     lendersData?.data && Array.isArray(lendersData.data)
@@ -123,18 +136,19 @@ export default function LendModal({ onClose, currentUser }: LendModalProps) {
     }
   };
 
-  const initiateCreateDoc = async () => {
+  const initiateCreateDoc = async (loanId: any) => {
     setIsProcessing(true);
     setError("");
     setDocuSignUrl("");
     setSendingMethod(null);
 
     try {
+      const fetchCurrentLoan = await getLoanRequest(currentUser.id, loanId);
+      setLoanAmount(Number(fetchCurrentLoan.loanAmount ?? 0));
       if (!selectedLender) {
         throw new Error("No lender selected");
       }
 
-      // 1. Create document
       const createResponse = await fetch("/api/document/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -143,7 +157,7 @@ export default function LendModal({ onClose, currentUser }: LendModalProps) {
           borrowerName: currentUser.name,
           lenderEmail: selectedLender.email,
           lenderName: selectedLender.username,
-          loanAmount: loanAmount,
+          loanAmount: fetchCurrentLoan.loanAmount,
         }),
       });
 
@@ -190,136 +204,16 @@ export default function LendModal({ onClose, currentUser }: LendModalProps) {
     }
   };
 
-  const handleLoanSubmit = async () => {
-    setStep(3);
-    await initiateCreateDoc();
+  const handleLoanSubmit = async (formData: any) => {
+    try {
+      const loanId = await submitLoanRequest(formData);
+      setCurrentLoanId(loanId);
+      setStep(3);
+      await initiateCreateDoc(loanId);
+    } catch (err) {
+      console.error("Loan request failed:", err);
+    }
   };
-
-  const renderStep2 = () => (
-    <>
-      <h2 className="text-xl font-semibold mb-4">
-        Loan Request from {selectedLender?.username}
-      </h2>
-      <input
-        type="number"
-        placeholder="Enter loan amount (₱)"
-        value={loanAmount}
-        onChange={(e) => setLoanAmount(e.target.value)}
-        className="w-full px-4 py-2 border rounded-md mb-4"
-      />
-      <button
-        onClick={handleLoanSubmit}
-        disabled={!loanAmount}
-        className={`w-full py-2 rounded-md ${
-          !loanAmount
-            ? "bg-gray-300 cursor-not-allowed"
-            : "bg-green-500 hover:bg-green-600 text-white"
-        }`}
-      >
-        Continue to Signing
-      </button>
-      <button
-        onClick={() => setStep(1)}
-        className="mt-3 w-full text-sm text-gray-500 hover:underline"
-      >
-        ← Back to lenders
-      </button>
-    </>
-  );
-
-  const renderStep3 = () => (
-    <>
-      <h2 className="text-xl font-semibold mb-4">Sign Loan Agreement</h2>
-      <div className="mb-4">
-        <p className="font-medium">Loan Details:</p>
-        <p>Lender: {selectedLender?.username}</p>
-        <p>Borrower: {currentUser.name}</p>
-        <p>Amount: ₱{loanAmount}</p>
-      </div>
-
-      {error && (
-        <div className="mb-4 p-2 bg-red-100 text-red-700 rounded">{error}</div>
-      )}
-
-      {isProcessing ? (
-        <div className="text-center py-8">
-          <p>
-            {sendingMethod === "email"
-              ? "Sending document via email..."
-              : sendingMethod === "embedded"
-              ? "Preparing document for signing..."
-              : "Processing document..."}
-          </p>
-          <div className="mt-4 h-2 bg-gray-200 rounded overflow-hidden">
-            <div
-              className="h-full bg-blue-500 animate-pulse"
-              style={{ width: "70%" }}
-            ></div>
-          </div>
-        </div>
-      ) : docuSignUrl === "email-sent" ? (
-        <div className="text-center py-8">
-          <div className="text-green-500 mb-4">
-            <svg
-              className="w-12 h-12 mx-auto"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M5 13l4 4L19 7"
-              ></path>
-            </svg>
-            <p className="mt-2">
-              Document sent successfully to recipient's email!
-            </p>
-          </div>
-          <button
-            onClick={onClose}
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-          >
-            Close
-          </button>
-        </div>
-      ) : docuSignUrl ? (
-        <div className="h-96">
-          <iframe
-            src={docuSignUrl}
-            className="w-full h-full border"
-            title="PandaDoc Document"
-            onLoad={() => console.log("Document loaded")}
-          />
-          <div className="mt-4 flex justify-between">
-            <button
-              onClick={() => setStep(2)}
-              className="px-4 py-2 text-gray-500 hover:text-gray-700"
-            >
-              ← Back
-            </button>
-            <button
-              onClick={onClose}
-              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-            >
-              Finish
-            </button>
-          </div>
-        </div>
-      ) : (
-        <div className="text-center py-8">
-          <p>Error loading signing document. Please try again.</p>
-          <button
-            onClick={initiateCreateDoc}
-            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-          >
-            Retry
-          </button>
-        </div>
-      )}
-    </>
-  );
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
@@ -345,8 +239,32 @@ export default function LendModal({ onClose, currentUser }: LendModalProps) {
             setStep={setStep}
           />
         )}
-        {step === 2 && renderStep2()}
-        {step === 3 && renderStep3()}
+        {step === 2 && (
+          <StepLoanAmount
+            formData={formData}
+            setFormData={setFormData}
+            onBack={() => setStep(1)}
+            onSubmit={handleLoanSubmit}
+            selectedLender={selectedLender}
+          />
+        )}
+
+        {step === 3 && (
+          <StepSigning
+            currentUser={currentUser}
+            selectedLender={selectedLender}
+            loanAmount={loanAmount}
+            docuSignUrl={docuSignUrl}
+            error={error}
+            isProcessing={isProcessing}
+            sendingMethod={sendingMethod}
+            onRetry={(loanId) => {
+              initiateCreateDoc(loanId);
+            }}
+            onBack={() => setStep(2)}
+            onClose={onClose}
+          />
+        )}
       </div>
     </div>
   );

@@ -7,6 +7,7 @@ import { IoMdArrowDropdown } from "react-icons/io";
 import { IoNotificationsOutline } from "react-icons/io5";
 import Image from "next/image";
 import LendModal from "@/components/lend/client/LendModal";
+import useGetLenderUsers from "@/hooks/users/requestLenderUsers";
 
 export default function Navbar() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -14,6 +15,7 @@ export default function Navbar() {
   const { logout } = useLogoutRequest();
   const router = useRouter();
   const dropdownRef = useRef<HTMLDivElement>(null);
+
   const [storedUser, setStoredUser] = useState<{
     uid?: string;
     fullName?: string;
@@ -21,6 +23,21 @@ export default function Navbar() {
     role?: string;
     email?: string;
   }>({});
+
+  const {
+    lenderUsers,
+    lendersData,
+    loading: isLoadingLenders,
+  } = useGetLenderUsers();
+  const [hasFetchedLenders, setHasFetchedLenders] = useState(false);
+
+  const handleLendClick = async () => {
+    if (!hasFetchedLenders) {
+      await lenderUsers();
+      setHasFetchedLenders(true);
+    }
+    setLendOpen(true);
+  };
 
   useEffect(() => {
     const user = localStorage.getItem("user");
@@ -60,10 +77,7 @@ export default function Navbar() {
               <Link href="/dashboard">Dashboard</Link>
 
               {storedUser.role === "Lenders" ? null : (
-                <button
-                  className="cursor-pointer"
-                  onClick={() => setLendOpen(true)}
-                >
+                <button className="cursor-pointer" onClick={handleLendClick}>
                   Lend
                 </button>
               )}
@@ -115,6 +129,8 @@ export default function Navbar() {
             name: storedUser?.fullName || "Unknown User",
             email: storedUser?.email || "No Email",
           }}
+          lendersData={lendersData}
+          loading={isLoadingLenders}
         />
       )}
     </>
