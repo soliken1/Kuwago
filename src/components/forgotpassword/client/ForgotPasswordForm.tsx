@@ -3,13 +3,33 @@
 import usePasswordRequest from "@/hooks/auth/requestPassword";
 import { useState } from "react";
 import Link from "next/link";
+import sendEmailWithLink from "@/utils/sendEmailWithLink";
+
 export default function ForgotPasswordForm() {
   const [email, setEmail] = useState("");
   const { forgotPassword, passwordData, loading, error } = usePasswordRequest();
+  const [emailSent, setEmailSent] = useState(false);
+  const [emailError, setEmailError] = useState("");
+  const [subject, setSubject] = useState("Kuwago Reset Pasword")
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await forgotPassword({ email }, () => {
+    setEmailSent(false);
+    setEmailError("");
+    await forgotPassword({ email }, async (data) => {
       setEmail("");
+      // If backend returns the structure you posted:
+      if (data?.data?.user && data?.data?.verificationLink) {
+        const ownerEmail = data.data.user.email;
+        const ownerName = `${data.data.user.firstName} ${data.data.user.lastName}`;
+        const downloadURL = data.data.verificationLink;
+        try {
+          await sendEmailWithLink(ownerEmail, ownerName, downloadURL, subject);
+          setEmailSent(true);
+        } catch (err) {
+          setEmailError("Failed to send reset email. Please try again.");
+        }
+      }
     });
   };
 
@@ -36,12 +56,21 @@ export default function ForgotPasswordForm() {
         <button
           type="submit"
           disabled={loading}
+          onClick={() => setSubject ("Kuwago Reset Password")}
           className="bg-green-400 disabled:opacity-50 hover:bg-green-500 text-white rounded-md py-2 font-semibold transition-colors duration-200"
         >
           {loading ? "Please Wait..." : "Send Password Link"}
         </button>
 
-        {passwordData?.message && (
+        {emailSent && (
+          <p className="text-green-600 text-sm text-center">
+            Password reset email sent! Please check your inbox.
+          </p>
+        )}
+        {emailError && (
+          <p className="text-red-500 text-sm text-center">{emailError}</p>
+        )}
+        {passwordData?.message && !emailSent && (
           <p className="text-green-600 text-sm text-center">
             {passwordData?.message}
           </p>
