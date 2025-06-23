@@ -9,7 +9,7 @@ interface PasswordResponse {
   success?: boolean;
   message?: string;
   statusCode?: number;
-  data?: null;
+  data?: any;
 }
 
 export default function usePasswordRequest() {
@@ -21,21 +21,21 @@ export default function usePasswordRequest() {
 
   const forgotPassword = async (
     payload: PasswordPayload,
-    onSuccess?: () => void
+    onSuccess?: (data: PasswordResponse) => void
   ) => {
     setLoading(true);
     setError(null);
 
     try {
-      const PasswordResponse = await axios.post<PasswordResponse>(
-        "/proxy/Auth/ForgotPassword",
+      const response = await axios.post<PasswordResponse>(
+        "/proxy/Auth/forgotPassword",
         payload
       );
-      setPasswordData(PasswordResponse.data);
-      onSuccess?.();
+      setPasswordData(response.data);
+      if (onSuccess) onSuccess(response.data);
     } catch (error: unknown) {
       const err = error as AxiosError<{ message: string }>;
-      setError(err.response?.data?.message || err.message || "Login failed");
+      setError(err.response?.data?.message || err.message || "Request failed");
     } finally {
       setLoading(false);
     }
