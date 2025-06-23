@@ -58,12 +58,15 @@ export default function Navbar() {
           ) : (
             <div className="flex items-center gap-5">
               <Link href="/dashboard">Dashboard</Link>
-              <button
-                className="cursor-pointer"
-                onClick={() => setLendOpen(true)}
-              >
-                Lend
-              </button>
+
+              {storedUser.role === "Lenders" ? null : (
+                <button
+                  className="cursor-pointer"
+                  onClick={() => setLendOpen(true)}
+                >
+                  Lend
+                </button>
+              )}
             </div>
           )}
         </div>

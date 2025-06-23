@@ -53,7 +53,7 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL("/admindashboard", request.url));
     }
 
-    if (pathname === "/" && role === "Lender") {
+    if (pathname === "/" && role === "Lenders") {
       return NextResponse.redirect(new URL("/lenderdashboard", request.url));
     }
 
@@ -65,7 +65,7 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL("/", request.url));
     }
 
-    if (pathname.startsWith("/lenderdashboard") && role !== "Lender") {
+    if (pathname.startsWith("/lenderdashboard") && role !== "Lenders") {
       return NextResponse.redirect(new URL("/", request.url));
     }
 
