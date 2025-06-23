@@ -1,5 +1,7 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import useGetLenderUsers from "@/hooks/users/requestLenderUsers";
+import StepSelectLender from "./StepSelectLender";
 
 interface LendModalProps {
   onClose: () => void;
@@ -11,14 +13,18 @@ interface LendModalProps {
 }
 
 interface Lender {
-  id: string;
-  name: string;
+  uid: string;
+  username: string;
   email: string;
+  profilePicture: string;
+  phoneNumber: string;
 }
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export default function LendModal({ onClose, currentUser }: LendModalProps) {
+  const { lenderUsers, lendersData, loading } = useGetLenderUsers();
+
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [selectedLender, setSelectedLender] = useState<Lender | null>(null);
   const [loanAmount, setLoanAmount] = useState("");
@@ -28,12 +34,34 @@ export default function LendModal({ onClose, currentUser }: LendModalProps) {
   const [sendingMethod, setSendingMethod] = useState<
     "email" | "embedded" | null
   >(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const itemsPerPage = 3;
 
-  const lenders: Lender[] = [
-    { id: "lender1", name: "Jobax 55204", email: "jobax55204@forcrack.com" },
-    { id: "lender2", name: "Lender Two", email: "lender2@example.com" },
-    { id: "lender3", name: "Lender Three", email: "lender3@example.com" },
-  ];
+  useEffect(() => {
+    lenderUsers();
+  }, []);
+
+  const dynamicLenders: Lender[] =
+    lendersData?.data && Array.isArray(lendersData.data)
+      ? lendersData.data.map((user: any) => ({
+          uid: user.uid,
+          username: user.username,
+          email: user.email || "No email",
+          profilePicture: user.profilePicture,
+          phoneNumber: user.phoneNumber,
+        }))
+      : [];
+
+  const filteredLenders = dynamicLenders.filter((lender) =>
+    lender.username.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const totalPages = Math.ceil(filteredLenders.length / itemsPerPage);
+  const paginatedLenders = filteredLenders.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   const sendDocument = async (documentId: string): Promise<string | null> => {
     try {
@@ -95,70 +123,6 @@ export default function LendModal({ onClose, currentUser }: LendModalProps) {
     }
   };
 
-  const pollDocumentStatus = async (documentId: string): Promise<string> => {
-    let attempts = 0;
-    const maxAttempts = 30;
-    const baseDelay = 2000;
-
-    console.log("Starting document status polling...");
-
-    while (attempts < maxAttempts) {
-      attempts++;
-      try {
-        console.log(`Polling attempt ${attempts}/${maxAttempts}`);
-
-        const response = await fetch("/api/document/status", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          },
-          body: JSON.stringify({ documentId }),
-        });
-
-        const data = await response.json();
-        console.log("Polling response:", data);
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || "Failed to check document status");
-        }
-
-        if (data.status === "ready" && data.signingUrl) {
-          console.log("Document ready with signing URL");
-          return data.signingUrl;
-        }
-
-        if (data.status === "processing") {
-          const delayTime =
-            data.nextCheckAfter * 1000 || baseDelay * Math.pow(1.5, attempts);
-          console.log(`Document processing, waiting ${delayTime}ms...`);
-          await delay(delayTime);
-          continue;
-        }
-
-        if (data.status === "ready" && data.state === "draft") {
-          console.log(
-            "Document ready but in draft state, attempting to send..."
-          );
-          const signingUrl = await sendDocument(documentId);
-          if (signingUrl) return signingUrl;
-
-          await delay(baseDelay * Math.pow(2, attempts));
-        }
-
-        throw new Error(data.error?.message || "Unexpected document status");
-      } catch (err) {
-        console.error(`Polling error (attempt ${attempts}):`, err);
-        if (attempts >= maxAttempts) {
-          throw new Error(`Processing timed out after ${maxAttempts} attempts`);
-        }
-        await delay(Math.min(baseDelay * Math.pow(2, attempts), 30000));
-      }
-    }
-    throw new Error("Maximum polling attempts reached");
-  };
-
   const initiateCreateDoc = async () => {
     setIsProcessing(true);
     setError("");
@@ -178,7 +142,7 @@ export default function LendModal({ onClose, currentUser }: LendModalProps) {
           borrowerEmail: currentUser.email,
           borrowerName: currentUser.name,
           lenderEmail: selectedLender.email,
-          lenderName: selectedLender.name,
+          lenderName: selectedLender.username,
           loanAmount: loanAmount,
         }),
       });
@@ -231,30 +195,10 @@ export default function LendModal({ onClose, currentUser }: LendModalProps) {
     await initiateCreateDoc();
   };
 
-  const renderStep1 = () => (
-    <>
-      <h2 className="text-xl font-semibold mb-4">Available Lenders</h2>
-      <div className="space-y-3">
-        {lenders.map((lender) => (
-          <button
-            key={lender.id}
-            onClick={() => {
-              setSelectedLender(lender);
-              setStep(2);
-            }}
-            className="w-full text-left px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-md"
-          >
-            {lender.name}
-          </button>
-        ))}
-      </div>
-    </>
-  );
-
   const renderStep2 = () => (
     <>
       <h2 className="text-xl font-semibold mb-4">
-        Loan Request from {selectedLender?.name}
+        Loan Request from {selectedLender?.username}
       </h2>
       <input
         type="number"
@@ -288,7 +232,7 @@ export default function LendModal({ onClose, currentUser }: LendModalProps) {
       <h2 className="text-xl font-semibold mb-4">Sign Loan Agreement</h2>
       <div className="mb-4">
         <p className="font-medium">Loan Details:</p>
-        <p>Lender: {selectedLender?.name}</p>
+        <p>Lender: {selectedLender?.username}</p>
         <p>Borrower: {currentUser.name}</p>
         <p>Amount: ₱{loanAmount}</p>
       </div>
@@ -386,8 +330,21 @@ export default function LendModal({ onClose, currentUser }: LendModalProps) {
         >
           ✕
         </button>
-
-        {step === 1 && renderStep1()}
+        {step === 1 && (
+          <StepSelectLender
+            loading={loading}
+            error={error}
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            currentPage={currentPage}
+            setCurrentPage={setCurrentPage}
+            totalPages={totalPages}
+            paginatedLenders={paginatedLenders}
+            selectedLender={selectedLender}
+            setSelectedLender={setSelectedLender}
+            setStep={setStep}
+          />
+        )}
         {step === 2 && renderStep2()}
         {step === 3 && renderStep3()}
       </div>
