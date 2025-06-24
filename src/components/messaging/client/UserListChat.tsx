@@ -41,6 +41,7 @@ export default function UserListChat() {
     userId: string;
     name: string;
   } | null>(null);
+  const [hasUnreadMessages, setHasUnreadMessages] = useState(false);
 
   useEffect(() => {
     const raw = localStorage.getItem("user");
@@ -71,6 +72,15 @@ export default function UserListChat() {
           },
           tokenRes.data.token
         );
+
+        chatClient.on((event) => {
+          if (
+            event.type === "message.new" &&
+            event.message?.user?.id !== storedUser.uid
+          ) {
+            setHasUnreadMessages(true);
+          }
+        });
 
         const filters = {
           type: "messaging",
@@ -127,16 +137,51 @@ export default function UserListChat() {
     }
   };
 
+  useEffect(() => {
+    if (showChat) {
+      setHasUnreadMessages(false);
+    }
+  }, [showChat]);
+
+  useEffect(() => {
+    const audio = new Audio("/sounds/notification.mp3");
+
+    const handleNewMessage = (event: any) => {
+      if (
+        event.type === "message.new" &&
+        event.message?.user?.id !== storedUser?.uid
+      ) {
+        setHasUnreadMessages(true);
+        audio.play();
+      }
+    };
+
+    chatClient.on(handleNewMessage);
+    return () => {
+      chatClient.off(handleNewMessage);
+    };
+  }, [storedUser]);
+
   if (loading) return null;
 
   return (
     <>
       <button
         onClick={() => setShowChat(true)}
-        className="fixed flex items-center gap-2 bottom-12 right-12 rounded-xl bg-gray-200 py-3 px-6 shadow-lg hover:bg-gray-300 z-40"
+        className={`fixed flex items-center gap-2 bottom-12 right-12 rounded-xl py-3 px-6 shadow-lg z-40 
+    ${
+      hasUnreadMessages
+        ? "bg-red-500 hover:bg-red-600 text-white"
+        : "bg-gray-200 hover:bg-gray-300"
+    }`}
       >
         <span className="font-bold text-xl">Chat</span>
-        <BiMessage size={24} />
+        <div className="relative">
+          <BiMessage size={24} />
+          {hasUnreadMessages && (
+            <span className="absolute -top-1 -right-1 h-3 w-3 bg-red-600 rounded-full border border-white" />
+          )}
+        </div>
       </button>
 
       {showChat && (

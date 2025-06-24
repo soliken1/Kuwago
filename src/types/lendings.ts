@@ -8,6 +8,6 @@ export interface Application {
   loanType: string;
   loanPurpose: string;
   loanAmount: string;
-  loanStatus: "Pending" | "Approved" | "Rejected";
+  loanStatus: "Pending" | "Approved" | "Denied";
   createdAt: string;
 }
