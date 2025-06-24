@@ -70,8 +70,8 @@ export default function DashboardBody() {
 
       <div className="w-8/12">
         {selectedApp ? (
-          <div className="bg-white rounded-2xl p-8 shadow-xl h-full space-y-6">
-            <h2 className="text-3xl font-bold text-gray-800">
+          <div className="bg-white rounded-2xl shadow-xl h-full px-6 space-y-6">
+            <h2 className="text-3xl font-bold text-gray-800 pt-6">
               Loan Application Details
             </h2>
 
@@ -123,12 +123,6 @@ export default function DashboardBody() {
               />
               <DetailItem label="Address" value={selectedApp.residentType} />
             </div>
-
-            {/* Optional message */}
-            <p className="text-sm text-gray-500 pt-4">
-              Additional verification documents, credit remarks, and reviewer
-              notes can be added here.
-            </p>
           </div>
         ) : (
           <div className="h-full flex items-center justify-center text-gray-400 text-lg">

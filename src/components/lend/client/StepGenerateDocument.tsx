@@ -91,7 +91,6 @@ export default function StepSigning({
             src={docuSignUrl}
             className="w-full h-full border"
             title="PandaDoc Document"
-            onLoad={() => console.log("Document loaded")}
           />
           <div className="mt-4 flex justify-between">
             <button
