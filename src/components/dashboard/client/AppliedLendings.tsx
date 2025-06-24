@@ -1,37 +1,7 @@
 "use client";
-import React from "react";
-
-export interface Application {
-  id: number;
-  name: string;
-  amount: string;
-  status: "Pending" | "Approved" | "Rejected";
-  date: string;
-}
-
-const applications: Application[] = [
-  {
-    id: 1,
-    name: "Juan Dela Cruz",
-    amount: "₱15,000",
-    status: "Pending",
-    date: "May 30, 2025",
-  },
-  {
-    id: 2,
-    name: "Maria Santos",
-    amount: "₱25,000",
-    status: "Approved",
-    date: "May 25, 2025",
-  },
-  {
-    id: 3,
-    name: "Carlos Reyes",
-    amount: "₱10,000",
-    status: "Rejected",
-    date: "May 20, 2025",
-  },
-];
+import React, { useEffect, useState } from "react";
+import { useFetchUserLoans } from "@/hooks/lend/requestUserLoan";
+import { Application } from "@/types/lendings";
 
 const statusColor = {
   Pending: "bg-yellow-100 text-yellow-600",
@@ -43,29 +13,115 @@ interface Props {
   onSelect: (app: Application) => void;
 }
 
+const ITEMS_PER_PAGE = 3;
+
 export default function AppliedLendings({ onSelect }: Props) {
+  const { getUserLoans, loading, error } = useFetchUserLoans();
+  const [applications, setApplications] = useState<Application[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  useEffect(() => {
+    const fetchLoans = async () => {
+      const storedUser = localStorage.getItem("user");
+      if (!storedUser) return;
+
+      try {
+        const { uid } = JSON.parse(storedUser);
+        const data = await getUserLoans(uid);
+
+        if (data?.loans) {
+          const mappedLoans: Application[] = data.loans.map((loan, index) => ({
+            loanRequestID: loan.loanRequestID,
+            uid: loan.uid,
+            maritalStatus: loan.maritalStatus,
+            highestEducation: loan.highestEducation,
+            employmentInformation: loan.employmentInformation,
+            residentType: loan.residentType,
+            loanType: loan.loanType,
+            loanPurpose: loan.loanPurpose || "Unknown",
+            loanAmount: loan.loanAmount,
+            loanStatus:
+              loan.loanStatus === "Approved"
+                ? "Approved"
+                : loan.loanStatus === "Rejected"
+                ? "Rejected"
+                : "Pending",
+            createdAt: new Date(loan.createdAt).toLocaleDateString("en-PH", {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            }),
+          }));
+
+          setApplications(mappedLoans);
+        }
+      } catch (err) {
+        console.error("Failed to fetch user loans", err);
+      }
+    };
+
+    fetchLoans();
+  }, []);
+
+  const totalPages = Math.ceil(applications.length / ITEMS_PER_PAGE);
+  const paginatedApps = applications.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
   return (
     <div className="flex-1 flex flex-col overflow-y-auto space-y-4">
-      {applications.map((app) => (
+      {loading && <p>Loading loans...</p>}
+      {error && <p className="text-red-500">Error: {error}</p>}
+      {!loading && applications.length === 0 && (
+        <p>No loan applications found.</p>
+      )}
+
+      {paginatedApps.map((app) => (
         <div
-          key={app.id}
+          key={app.loanRequestID}
           onClick={() => onSelect(app)}
           className="bg-white p-4 rounded-xl shadow-md flex flex-col gap-1 cursor-pointer hover:shadow-lg transition"
         >
           <div className="flex justify-between items-center">
-            <p className="text-lg font-semibold">{app.name}</p>
+            <p className="text-lg font-semibold">{app.loanPurpose}</p>
             <span
               className={`px-3 py-1 rounded-full text-sm font-medium ${
-                statusColor[app.status]
+                statusColor[app.loanStatus]
               }`}
             >
-              {app.status}
+              {app.loanStatus}
             </span>
           </div>
-          <p className="text-gray-600 text-sm">Amount: {app.amount}</p>
-          <p className="text-gray-500 text-xs">Applied: {app.date}</p>
+          <p className="text-gray-600 text-sm">Amount: {app.loanAmount}</p>
+          <p className="text-gray-500 text-xs">Applied: {app.createdAt}</p>
         </div>
       ))}
+
+      {/* Pagination controls */}
+      {applications.length > ITEMS_PER_PAGE && (
+        <div className="flex justify-center items-center space-x-4 mt-4">
+          <button
+            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+            className="px-4 py-2 bg-gray-200 rounded disabled:opacity-50"
+          >
+            Previous
+          </button>
+          <span className="text-sm text-gray-600">
+            Page {currentPage} of {totalPages}
+          </span>
+          <button
+            onClick={() =>
+              setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+            }
+            disabled={currentPage === totalPages}
+            className="px-4 py-2 bg-gray-200 rounded disabled:opacity-50"
+          >
+            Next
+          </button>
+        </div>
+      )}
     </div>
   );
 }
