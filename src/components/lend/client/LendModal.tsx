@@ -91,7 +91,6 @@ export default function LendModal({
         }),
       });
       const result = await response.json();
-      console.log("Send response:", result);
 
       if (!response.ok) {
         // Handle document not ready (409 Conflict)
@@ -251,19 +250,17 @@ export default function LendModal({
       await channel.watch(); // Ensure the channel is initialized
 
       const messageText = `
-    📄 *New Loan Application Submitted*
+      New Loan Application Submitted
 
-    **Borrower:** ${borrowerName}  
-    **Purpose:** ${loanPurpose}  
-    **Amount:** ₱${loanAmount.toLocaleString()}  
-    **Date:** ${loanDate}
-        `.trim();
+      Borrower: ${borrowerName}  
+      Purpose: ${loanPurpose}  
+      Amount: ₱${loanAmount.toLocaleString()}  
+      Date: ${loanDate}
+          `.trim();
 
       await channel.sendMessage({
         text: messageText,
       });
-
-      console.log("Loan application message sent!");
     } catch (error) {
       console.error("Failed to send loan application message:", error);
     }

@@ -26,18 +26,12 @@ export default async function handler(
     const rawBody = await getRawBody(req);
     const bodyString = rawBody.toString("utf8");
 
-    console.log("Incoming webhook payload:", bodyString);
-
     // Process webhook events without signature verification
     const events = JSON.parse(bodyString);
-    console.log("Processing webhook events (insecure mode):", events);
 
     for (const event of events) {
       switch (event.event) {
         case "document_state_changed":
-          console.log(
-            `[INSECURE] Document ${event.data.id} changed to ${event.data.status}`
-          );
           // Handle state change
           break;
 
@@ -49,19 +43,14 @@ export default async function handler(
           break;
 
         case "document_completed":
-          console.log(`[INSECURE] Document ${event.data.id} completed`);
           // Handle completion
           break;
 
         case "recipient_completed":
-          console.log(
-            `[INSECURE] Recipient ${event.data.recipient.email} completed signing`
-          );
           // Handle recipient completion
           break;
 
         default:
-          console.log(`[INSECURE] Unhandled event type: ${event.event}`);
       }
     }
 

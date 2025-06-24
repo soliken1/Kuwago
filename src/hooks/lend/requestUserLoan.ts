@@ -40,7 +40,6 @@ export const useFetchUserLoans = () => {
     try {
       const token = getCookie("session_token");
 
-      console.log(token);
       const response = await axios.get<LoanResponse>(
         `/proxy/Loan/LoanRequests/${uid}`,
         {
@@ -52,7 +51,6 @@ export const useFetchUserLoans = () => {
       );
 
       setSuccess(true);
-      console.log(response.data.data);
       return response.data.data;
     } catch (err) {
       const axiosError = err as AxiosError;

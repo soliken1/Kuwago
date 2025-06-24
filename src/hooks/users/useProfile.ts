@@ -140,17 +140,6 @@ export const useProfile = () => {
         );
 
         const firebaseToken = tokenResponse?.data.data.firebase_token;
-        console.log("Firebase Token:", firebaseToken);
-        console.log("ChangeEmail Headers:", {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-          FirebaseIdToken: firebaseToken,
-        });
-        console.log("ChangeEmail Body:", {
-          newEmail: updatedProfile.email,
-          firebaseToken: firebaseToken,
-        });
-
         const emailBody = {
           newEmail: updatedProfile.email,
           firebaseToken: firebaseToken,
