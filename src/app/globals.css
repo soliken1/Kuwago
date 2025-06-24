@@ -16,8 +16,30 @@ body {
   font-style: normal;
 }
 
+@font-face {
+  font-family: "Poppins-Normal";
+  src: url("../fonts/Poppins/Poppins-Regular.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Poppins-Bold";
+  src: url("../fonts/Poppins/Poppins-Bold.ttf") format("truetype");
+  font-weight: bold;
+  font-style: normal;
+}
+
 .lexend-semibold {
   font-family: "Lexend-SemiBold", sans-serif;
+}
+
+.poppins-normal {
+  font-family: "Poppins-Normal", sans-serif;
+}
+
+.poppins-bold {
+  font-family: "Poppins-Bold", sans-serif;
 }
 
 /* Animated Ball Loader Styles */
