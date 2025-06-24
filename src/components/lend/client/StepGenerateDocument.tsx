@@ -28,7 +28,9 @@ export default function StepSigning({
 }: StepSigningProps) {
   return (
     <>
-      <h2 className="text-xl font-semibold mb-4">Sign Loan Agreement</h2>
+      <h2 className="text-xl font-semibold mb-4">
+        Generating Document For {selectedLender?.username}
+      </h2>
       <div className="mb-4">
         <p className="font-medium">Loan Details:</p>
         <p>Lender: {selectedLender?.username}</p>
