@@ -2,11 +2,10 @@
 import React from "react";
 
 interface LoanApplicationModalProps {
-  selectedLender: { username: string } | null;
-  onBack: () => void;
   onSubmit: (formData: any) => void;
   formData: any;
   setFormData: any;
+  onClose: () => void;
 }
 
 const maritalOptions = [
@@ -50,10 +49,10 @@ const loanAmountOptions = [
 ];
 
 export default function LoanApplicationModal({
-  onBack,
   onSubmit,
   formData,
   setFormData,
+  onClose,
 }: LoanApplicationModalProps) {
   const handleChange = (key: keyof typeof formData, value: any) => {
     setFormData({ ...formData, [key]: value });
@@ -67,9 +66,17 @@ export default function LoanApplicationModal({
   return (
     <div className="fixed inset-0 z-50 flex justify-center items-start overflow-y-auto py-6">
       <div className="bg-white rounded-lg w-full max-w-lg shadow-lg max-h-[90vh] overflow-y-auto space-y-4">
-        <h2 className="text-2xl font-semibold sticky top-0 bg-white z-10 py-4 border-b border-gray-100 px-6">
-          Apply for a Loan
-        </h2>
+        <div className="flex flex-row justify-between pe-6">
+          <h2 className="text-2xl font-semibold sticky top-0 bg-white z-10 py-4 border-b border-gray-100 px-6">
+            Apply for a Loan
+          </h2>
+          <button
+            onClick={onClose}
+            className="text-gray-600 hover:text-gray-800"
+          >
+            ✕
+          </button>
+        </div>
 
         {/* Marital Status */}
         <div className="px-6">
@@ -201,12 +208,6 @@ export default function LoanApplicationModal({
 
         {/* Action Buttons */}
         <div className="flex justify-end gap-2 sticky bottom-0 bg-white pb-6">
-          <button
-            onClick={onBack}
-            className="px-4 py-2 border rounded hover:bg-gray-100"
-          >
-            Go Back
-          </button>
           <button
             onClick={() => onSubmit(formData)}
             disabled={!isValid}
