@@ -5,6 +5,7 @@ import StepLoanAmount from "./StepBorrowerDetails";
 import StepSigning from "./StepGenerateDocument";
 import { useSubmitLoanRequest } from "@/hooks/lend/requestLoan";
 import { useFetchLoanRequest } from "@/hooks/lend/requestCurrentLoan";
+import { chatClient } from "@/utils/streamClient";
 
 interface LendModalProps {
   onClose: () => void;
@@ -207,11 +208,64 @@ export default function LendModal({
   const handleLoanSubmit = async (formData: any) => {
     try {
       const loanId = await submitLoanRequest(formData);
+      await sendLoanApplicationMessage({
+        borrowerId: currentUser.id,
+        lenderId: selectedLender!.uid,
+        borrowerName: currentUser.name,
+        loanPurpose: formData.loanPurpose,
+        loanAmount: formData.loanAmount,
+        loanDate: new Date().toLocaleDateString("en-PH", {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        }),
+      });
       setCurrentLoanId(loanId);
       setStep(3);
       await initiateCreateDoc(loanId);
     } catch (err) {
       console.error("Loan request failed:", err);
+    }
+  };
+
+  const sendLoanApplicationMessage = async ({
+    borrowerId,
+    lenderId,
+    borrowerName,
+    loanPurpose,
+    loanAmount,
+    loanDate,
+  }: {
+    borrowerId: string;
+    lenderId: string;
+    borrowerName: string;
+    loanPurpose: string;
+    loanAmount: number;
+    loanDate: string;
+  }) => {
+    try {
+      const channel = chatClient.channel("messaging", {
+        members: [borrowerId, lenderId],
+      });
+
+      await channel.watch(); // Ensure the channel is initialized
+
+      const messageText = `
+    📄 *New Loan Application Submitted*
+
+    **Borrower:** ${borrowerName}  
+    **Purpose:** ${loanPurpose}  
+    **Amount:** ₱${loanAmount.toLocaleString()}  
+    **Date:** ${loanDate}
+        `.trim();
+
+      await channel.sendMessage({
+        text: messageText,
+      });
+
+      console.log("Loan application message sent!");
+    } catch (error) {
+      console.error("Failed to send loan application message:", error);
     }
   };
 

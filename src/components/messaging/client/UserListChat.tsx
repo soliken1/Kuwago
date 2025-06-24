@@ -72,21 +72,19 @@ export default function UserListChat() {
           tokenRes.data.token
         );
 
-        const { users } = await chatClient.queryUsers({
-          id: { $ne: storedUser.uid },
-        } as any);
+        const filters = {
+          type: "messaging",
+          members: { $in: [storedUser.uid] },
+          last_message_at: { $exists: true },
+        };
 
-        const userChannels = await Promise.all(
-          users.map(async (user) => {
-            const channel = chatClient.channel("messaging", {
-              members: [storedUser.uid, user.id],
-            });
-            await channel.watch();
-            return channel;
-          })
+        const channels = await chatClient.queryChannels(
+          filters,
+          { last_message_at: -1 },
+          { watch: true, state: true, message_limit: 1 }
         );
 
-        setChannels(userChannels);
+        setChannels(channels);
         setLoading(false);
       } catch (error) {
         console.error("Error initializing chat:", error);
@@ -142,7 +140,7 @@ export default function UserListChat() {
       </button>
 
       {showChat && (
-        <div className="fixed inset-0 bg-opacity-50 flex justify-end items-center me-16 z-50">
+        <div className="fixed inset-0 bg-opacity-50 flex justify-end items-center pe-16 z-50 bg-black/40">
           <div className="bg-white w-11/12 md:w-3/4 lg:w-1/2 h-4/5 rounded-lg shadow-lg relative flex flex-col">
             <div className="flex justify-between items-center p-4 border-b border-gray-200">
               <h2 className="font-bold text-xl">Messages</h2>
@@ -170,7 +168,13 @@ export default function UserListChat() {
               <div className="w-1/3 border-r border-gray-200 overflow-auto">
                 <Chat client={chatClient}>
                   <ChannelList
-                    filters={{ members: { $in: [storedUser?.uid || ""] } }}
+                    filters={{
+                      type: "messaging",
+                      members: { $in: [storedUser?.uid || ""] },
+                      last_message_at: { $exists: true }, // Excludes channels with no messages
+                    }}
+                    sort={{ last_message_at: -1 }}
+                    options={{ watch: true, state: true, message_limit: 1 }}
                     Preview={(props) => {
                       const { channel } = props;
                       const members = Object.values(channel.state.members)
