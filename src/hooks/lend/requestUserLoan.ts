@@ -11,7 +11,7 @@ interface LoanData {
   detailedAddress: string;
   residentType: string;
   loanType: string;
-  loanAmount: number;
+  loanAmount: string;
   loanPurpose: string;
   loanStatus: string;
   createdAt: string;
@@ -27,12 +27,12 @@ interface LoanResponse {
   };
 }
 
-export const useFetchLoanRequest = () => {
+export const useFetchUserLoans = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  const getLoanRequest = async (uid: string, currentLoanId: string) => {
+  const getUserLoans = async (uid: string) => {
     setLoading(true);
     setError(null);
     setSuccess(false);
@@ -40,6 +40,7 @@ export const useFetchLoanRequest = () => {
     try {
       const token = getCookie("session_token");
 
+      console.log(token);
       const response = await axios.get<LoanResponse>(
         `/proxy/Loan/LoanRequests/${uid}`,
         {
@@ -50,24 +51,16 @@ export const useFetchLoanRequest = () => {
         }
       );
 
-      const loanList = response.data.data?.loans || [];
-
-      const matchedLoan = loanList.find(
-        (loan) => loan.loanRequestID === currentLoanId
-      );
-
-      if (!matchedLoan) {
-        throw new Error("No matching loan request found.");
-      }
-
       setSuccess(true);
-      return matchedLoan;
+      console.log(response.data.data);
+      return response.data.data;
     } catch (err) {
       const axiosError = err as AxiosError;
 
       if (axiosError.response && axiosError.response.data) {
         const message =
-          (axiosError.response.data as any).message || "Loan request failed.";
+          (axiosError.response.data as any).message ||
+          "Fetching user loans failed.";
         setError(message);
       } else {
         setError(axiosError.message);
@@ -80,7 +73,7 @@ export const useFetchLoanRequest = () => {
   };
 
   return {
-    getLoanRequest,
+    getUserLoans,
     loading,
     error,
     success,
