@@ -33,7 +33,7 @@ export default function useGetLenderUsers() {
       const token = getCookie("session_token");
       if (token) {
         const response = await axios.get<UserResponse>(
-          "/proxy/Auth/GetSpecificUser?Role=2",
+          "/proxy/Auth/GetSpecificUser?Role=1",
           {
             headers: {
               Authorization: `Bearer ${token}`,
