@@ -24,10 +24,14 @@ const DetailItem = ({
         <span
           className={`mt-1 inline-block w-fit px-3 py-1 text-sm rounded-full font-medium ${
             value === "Approved"
-              ? "bg-green-100 text-green-700"
+              ? "bg-green-100 text-green-700 border border-green-300"
               : value === "Denied"
-              ? "bg-red-100 text-red-700"
-              : "bg-yellow-100 text-yellow-700"
+              ? "bg-red-100 text-red-700 border border-red-300"
+              : value === "InProgress"
+              ? "bg-blue-100 text-blue-700 border border-blue-300"
+              : value === "Completed"
+              ? "bg-gray-100 text-gray-700 border border-gray-300"
+              : "bg-yellow-100 text-yellow-700 border border-yellow-300"
           }`}
         >
           {value}
