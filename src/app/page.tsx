@@ -24,13 +24,13 @@ export default function Home() {
         <div className="flex justify-center gap-4">
           <Link
             href="/login"
-            className="px-10 py-2 bg-green-400 text-white rounded-xl hover:bg-green-500 transition"
+            className="poppins-normal px-12 py-2 mx-4 bg-green-400 text-white rounded-xl hover:bg-green-500 transition"
           >
             Login
           </Link>
           <Link
             href="/register"
-            className="px-10 py-2 border border-green-400 text-black rounded-xl hover:bg-green-50 transition"
+            className="poppins-normal px-12 py-2 border mx-4 border-green-400 text-black rounded-xl hover:bg-green-50 transition"
           >
             Register
           </Link>
