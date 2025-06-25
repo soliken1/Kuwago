@@ -16,6 +16,7 @@ export default function DashboardBody() {
   const [storedUser, setStoredUser] = useState<{
     uid?: string;
     username?: string;
+    email?: string;
   }>({});
 
   useEffect(() => {
@@ -190,6 +191,7 @@ export default function DashboardBody() {
           sendMessage={sendMessage}
           closeModal={closeModal}
           updateLoanStatus={updateLoanStatus}
+          storedUser={storedUser}
         />
       )}
     </div>
