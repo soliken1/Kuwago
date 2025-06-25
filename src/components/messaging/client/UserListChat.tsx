@@ -16,12 +16,13 @@ import axios from "axios";
 import "stream-chat-react/dist/css/v2/index.css";
 import { BiMessage, BiVideo } from "react-icons/bi";
 import X from "../../../../assets/actions/X";
-
+import FAQChat from "./FAQChat";
 interface StoredUser {
   uid: string;
   fullName: string;
   profilePicture?: string;
 }
+import IncomingCallModal from "./IncomingCallModal";
 
 export default function UserListChat() {
   const [loading, setLoading] = useState(true);
@@ -39,6 +40,11 @@ export default function UserListChat() {
     Record<string, number>
   >({});
   const [showHelpChat, setShowHelpChat] = useState(false);
+  const [incomingCall, setIncomingCall] = useState<{
+    fromName: string;
+    fromImage?: string;
+    callLink: string;
+  } | null>(null);
 
   useEffect(() => {
     const raw = localStorage.getItem("user");
@@ -151,8 +157,12 @@ export default function UserListChat() {
 
     try {
       await activeChannel.sendMessage({
-        text: `Incoming video call from ${storedUser.fullName}. Join here: ${callLink}`,
+        text: `Incoming video call from ${storedUser.fullName}`,
+        customType: "video_call",
+        callLink: callLink,
       });
+
+      window.open(callLink, "_blank", "noopener,noreferrer");
       setShowVideoCall(true);
     } catch (error) {
       console.error("Failed to send call invitation:", error);
@@ -178,6 +188,20 @@ export default function UserListChat() {
           setHasUnreadMessages(true);
           audio.play();
         }
+      }
+
+      const message = event.message;
+      if (
+        event.type === "message.new" &&
+        message?.user?.id !== storedUser.uid &&
+        message?.callLink
+      ) {
+        setIncomingCall({
+          fromName: message.user.name,
+          fromImage: message.user.image,
+          callLink: message.callLink,
+        });
+        audio.play();
       }
     };
 
@@ -351,33 +375,25 @@ export default function UserListChat() {
                 </div>
               </>
             ) : (
-              <>
-                <div className="flex justify-between items-center p-4 border-b border-gray-200">
-                  <h2 className="font-bold text-xl">Help Chat</h2>
-                  <div className="flex gap-5">
-                    <button
-                      onClick={() => {
-                        setShowHelpChat(false);
-                      }}
-                      className="border border-gray-400 rounded-xl px-4"
-                    >
-                      Go Back
-                    </button>
-                    <button
-                      onClick={() => setShowChat(false)}
-                      className="p-2 text-gray-600 hover:text-gray-900 rounded-full hover:bg-gray-100"
-                    >
-                      <X />
-                    </button>
-                  </div>
-                </div>
-                <div className="flex flex-1 font-bold justify-center items-center overflow-hidden">
-                  I'm Under Construction...
-                </div>
-              </>
+              <FAQChat
+                setShowChat={setShowChat}
+                setShowHelpChat={setShowHelpChat}
+              />
             )}
           </div>
         </div>
+      )}
+      {incomingCall && (
+        <IncomingCallModal
+          fromName={incomingCall.fromName}
+          fromImage={incomingCall.fromImage}
+          callLink={incomingCall.callLink}
+          onAccept={() => {
+            window.open(incomingCall.callLink, "_blank");
+            setIncomingCall(null);
+          }}
+          onDecline={() => setIncomingCall(null)}
+        />
       )}
     </>
   );
