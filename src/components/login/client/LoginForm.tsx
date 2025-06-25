@@ -50,13 +50,13 @@ export default function LoginForm() {
   return (
     <>
       {isLoading && <Loader />}
-      <div className="flex flex-col items-center justify-center min-h-screen p-4">
+      <div className="flex flex-col items-center justify-center min-h-screen p-4 poppins-normal">
         <form
           onSubmit={handleSubmit}
           className="flex flex-col w-80 sm:w-96 p-8 bg-white border border-gray-300 rounded-xl shadow-md space-y-6"
         >
-          <h2 className="text-2xl font-semibold text-center text-gray-700">
-            Welcome Back
+          <h2 className="poppins-bold text-2xl font-semibold text-center text-gray-700">
+            Login!
           </h2>
 
           <div className="flex flex-col space-y-1">
@@ -66,7 +66,8 @@ export default function LoginForm() {
             <input
               type="email"
               id="email"
-              className="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-400"
+              placeholder="Enter your email"
+              className="px-4 py-2 border-2 border-black rounded-4xl focus:outline-none focus:ring-1 focus:ring-grey-400"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -80,7 +81,8 @@ export default function LoginForm() {
             <input
               type="password"
               id="password"
-              className="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-400"
+              placeholder="Enter your password"
+              className="px-4 py-2 border-2 border-black rounded-4xl focus:outline-none focus:ring-1 focus:ring-grey-400"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -90,7 +92,7 @@ export default function LoginForm() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-2 px-4 bg-green-400 text-white font-semibold rounded-xl hover:bg-green-500 transition duration-200 disabled:opacity-50"
+            className="w-full py-2 px-4 shadow-2xl bg-green-400 text-white font-semibold rounded-4xl hover:bg-green-500 transition duration-200 disabled:opacity-50"
           >
             {loading ? "Logging in..." : "Login"}
           </button>

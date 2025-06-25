@@ -18,13 +18,13 @@ export default function Home() {
             />
           </div>
         </div>
-        <p className="lexend-semibold text-xs sm:text-xs md:text-base lg:text-lg text-gray-600">
+        <p className="px-4 lexend-semibold text-xs sm:text-xs md:text-base lg:text-lg text-gray-600">
           Your trusted partner in smart, simple, and secure lending.
         </p>
         <div className="flex justify-center gap-4">
           <Link
             href="/login"
-            className=" px-10 py-2 bg-green-400 text-white rounded-xl hover:bg-green-500 transition"
+            className="px-10 py-2 bg-green-400 text-white rounded-xl hover:bg-green-500 transition"
           >
             Login
           </Link>
