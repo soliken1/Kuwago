@@ -21,6 +21,14 @@ export default function RegisterForm() {
   });
   const [showError, setShowError] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const placeholderMap: Record<string, string> = {
+    firstName: "'Juan'",
+    lastName: "'Dela Cruz'",
+    email: "abc123@example.com'",
+    username: "'Juan123'",
+    phoneNumber: "'09123456789'",
+    password: "Create a password",
+  };
 
   useEffect(() => {
     if (error) {
@@ -93,7 +101,8 @@ export default function RegisterForm() {
                   type="text"
                   id={field}
                   name={field}
-                  className="px-4 mx-4 py-1 border-2 border-black rounded-4xl focus:outline-none focus:ring-1 focus:ring-gray-400"
+                  placeholder={placeholderMap[field]}
+                  className="px-4 mx-4 py-2 border-2 border-black rounded-4xl focus:outline-none focus:ring-1 focus:ring-gray-400"
                   value={formData[field as keyof typeof formData]}
                   onChange={handleChange}
                   required
@@ -113,7 +122,8 @@ export default function RegisterForm() {
                 type={field === "password" ? "password" : "text"}
                 id={field}
                 name={field}
-                className="px-4 mx-4 py-1 border-2 border-black rounded-4xl focus:outline-none focus:ring-1 focus:ring-gray-400"
+                placeholder={placeholderMap[field]}
+                className="px-4 mx-4 py-2 border-2 border-black rounded-4xl focus:outline-none focus:ring-1 focus:ring-gray-400"
                 value={formData[field as keyof typeof formData]}
                 onChange={handleChange}
                 required
