@@ -1,17 +1,27 @@
 "use client";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import useGetAllUsers from "@/hooks/users/requestAllUsers";
+import RegisterModal from "./RegisterModal";
 
 export default function Users() {
   const { allUsers, allUsersData, error, loading } = useGetAllUsers();
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
-    allUsers(); // Fetch users when component mounts
+    allUsers(); // Fetch users on mount
   }, []);
 
   return (
     <section id="users" className="min-h-screen py-8">
-      <h2 className="text-2xl font-bold mb-6">Users</h2>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold">Users</h2>
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+        >
+          Register User
+        </button>
+      </div>
 
       {loading && <p className="text-gray-500">Loading users...</p>}
       {error && <p className="text-red-500">{error}</p>}
@@ -61,6 +71,11 @@ export default function Users() {
       ) : (
         !loading && <p>No users found.</p>
       )}
+
+      <RegisterModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+      />
     </section>
   );
 }

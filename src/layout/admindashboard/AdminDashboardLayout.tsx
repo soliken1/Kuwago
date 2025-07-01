@@ -27,6 +27,7 @@ export default function AdminDashboardLayout({
   const logout = () => {
     deleteCookie("session_token");
     deleteCookie("user_role");
+    localStorage.removeItem("user");
     router.push("/login");
   };
 
