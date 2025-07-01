@@ -31,6 +31,7 @@ export default function LendModal({ onClose }: LendModalProps) {
 
       toast.success("Loan request submitted successfully!");
       onClose(); // Optional: close modal on success
+      window.location.reload();
     } catch (err) {
       console.error("Loan request failed:", err);
       toast.error("Failed to submit loan request. Please try again.");

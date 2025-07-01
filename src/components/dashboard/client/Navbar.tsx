@@ -77,9 +77,12 @@ export default function Navbar() {
               <Link href="/dashboard">Dashboard</Link>
 
               {storedUser.role === "Lenders" ? null : (
-                <button className="cursor-pointer" onClick={handleLendClick}>
-                  Lend
-                </button>
+                <>
+                  <button className="cursor-pointer" onClick={handleLendClick}>
+                    Lend
+                  </button>
+                  <Link href="/approvedloans">Approved Loans</Link>
+                </>
               )}
             </div>
           )}

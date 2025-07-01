@@ -32,32 +32,38 @@ export default function AppliedLendings({ onSelect }: Props) {
         const data = await getUserLoans(uid);
 
         if (data?.loans) {
-          const mappedLoans: Application[] = data.loans.map((loan, index) => ({
-            loanRequestID: loan.loanRequestID,
-            uid: loan.uid,
-            maritalStatus: loan.maritalStatus,
-            highestEducation: loan.highestEducation,
-            employmentInformation: loan.employmentInformation,
-            residentType: loan.residentType,
-            loanType: loan.loanType,
-            loanPurpose: loan.loanPurpose || "Unknown",
-            loanAmount: loan.loanAmount,
-            loanStatus:
-              loan.loanStatus === "Approved"
-                ? "Approved"
-                : loan.loanStatus === "Denied"
-                ? "Denied"
-                : loan.loanStatus === "Completed"
-                ? "Completed"
-                : loan.loanStatus === "InProgress"
-                ? "InProgress"
-                : "Pending",
-            createdAt: new Date(loan.createdAt).toLocaleDateString("en-PH", {
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-            }),
-          }));
+          const filteredLoans = data.loans.filter(
+            (loan) => loan.loanStatus !== "Approved"
+          );
+
+          const mappedLoans: Application[] = filteredLoans.map(
+            (loan, index) => ({
+              loanRequestID: loan.loanRequestID,
+              uid: loan.uid,
+              maritalStatus: loan.maritalStatus,
+              highestEducation: loan.highestEducation,
+              employmentInformation: loan.employmentInformation,
+              residentType: loan.residentType,
+              loanType: loan.loanType,
+              loanPurpose: loan.loanPurpose || "Unknown",
+              loanAmount: loan.loanAmount,
+              loanStatus:
+                loan.loanStatus === "Approved"
+                  ? "Approved"
+                  : loan.loanStatus === "Denied"
+                  ? "Denied"
+                  : loan.loanStatus === "Completed"
+                  ? "Completed"
+                  : loan.loanStatus === "InProgress"
+                  ? "InProgress"
+                  : "Pending",
+              createdAt: new Date(loan.createdAt).toLocaleDateString("en-PH", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              }),
+            })
+          );
 
           setApplications(mappedLoans);
         }
