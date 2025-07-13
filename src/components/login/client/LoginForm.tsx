@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Loader from "../../../../assets/loader/Loader";
 import LoginVector from "../../../../assets/images/LoginVector.png";
+import LoginResponseModal from "./LoginResponseModal";
 
 export default function LoginForm() {
   const router = useRouter();
@@ -16,6 +17,8 @@ export default function LoginForm() {
   const [storedUser, setStoredUser] = useState<{
     role?: string;
   }>({});
+  const [showModal, setShowModal] = useState(false);
+  const [modalType, setModalType] = useState<"success" | "error">("success");
 
   useEffect(() => {
     const user = localStorage.getItem("user");
@@ -35,23 +38,39 @@ export default function LoginForm() {
     }
   }, [loading]);
 
+  useEffect(() => {
+    if (!loading && (loginData || error)) {
+      if (loginData && !error) {
+        setModalType("success");
+        setShowModal(true);
+        const userRole = storedUser.role;
+        if (userRole === "Admin") {
+          router.push("/admindashboard");
+        } else if (userRole === "Lender") {
+          router.push("/lenderdashboard");
+        } else {
+          router.push("/dashboard");
+        }
+      } else if (error) {
+        setModalType("error");
+        setShowModal(true);
+      }
+    }
+  }, [loginData, error, loading, storedUser.role, router]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await login({ email, password }, () => {
-      const userRole = storedUser.role;
-      if (userRole === "Admin") {
-        router.push("/admindashboard");
-      } else if (userRole === "Lender") {
-        router.push("/lenderdashboard");
-      } else {
-        router.push("/dashboard");
-      }
-    });
+    await login({ email, password });
   };
 
   return (
     <>
       {isLoading && <Loader />}
+      <LoginResponseModal
+        open={showModal}
+        type={modalType}
+        onClose={() => setShowModal(false)}
+      />
       <div className="flex flex-col items-center w-full bg-black/25 justify-center min-h-screen p-4 poppins-normal">
         <div className="flex w-full max-w-4xl bg-white rounded-xl shadow-md overflow-hidden">
           {/* LEFT SIDE: FORM - 1/2 width */}
@@ -106,15 +125,6 @@ export default function LoginForm() {
             >
               {loading ? "Logging in..." : "Login"}
             </button>
-
-            {error && (
-              <p className="text-sm text-red-500 text-center">{error}</p>
-            )}
-            {loginData && (
-              <p className="text-sm text-green-600 text-center">
-                {loginData.message}
-              </p>
-            )}
 
             <p className="text-center text-sm text-gray-600">
               Don&apos;t have an account?{" "}
