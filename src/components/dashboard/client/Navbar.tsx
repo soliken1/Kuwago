@@ -82,7 +82,7 @@ export default function Navbar() {
         style={{ minWidth: 0 }}
       >
         <div
-          className="flex items-center h-12 bg-[#F9F9F9] rounded-full shadow-md px-12 gap-16 my-6 justify-between w-full"
+          className="flex items-center h-12 bg-[#F9F9F9] rounded-full shadow-md px-6 gap-16 justify-between w-full"
           style={{ minWidth: 600, maxWidth: 900 }}
         >
           {/* Navigation section (left) */}
