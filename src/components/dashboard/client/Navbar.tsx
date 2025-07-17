@@ -8,6 +8,7 @@ import { IoNotificationsOutline } from "react-icons/io5";
 import Image from "next/image";
 import LendModal from "@/components/lend/client/LendModal";
 import useGetLenderUsers from "@/hooks/users/requestLenderUsers";
+import KuwagoLogo from "../../../../assets/images/KuwagoLogo.png";
 
 export default function Navbar() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -63,67 +64,101 @@ export default function Navbar() {
   };
 
   return (
-    <>
-      <div className="w-full flex items-center h-16 px-6 justify-between">
-        <div className="flex items-center gap-12">
-          <span className="text-xl font-semibold">
-            Kuwa<span className="text-green-500">Go</span>
-          </span>
-
-          {storedUser.role === "Admin" ? (
-            <Link href="/admindashboard">Dashboard</Link>
-          ) : (
-            <div className="flex items-center gap-5">
-              <Link href="/dashboard">Dashboard</Link>
-
-              {storedUser.role === "Lenders" ? null : (
-                <>
-                  <button className="cursor-pointer" onClick={handleLendClick}>
-                    Lend
-                  </button>
-                  <Link href="/approvedloans">Approved Loans</Link>
-                </>
-              )}
-            </div>
-          )}
-        </div>
-
-        <div className="flex items-center gap-5 relative" ref={dropdownRef}>
-          <IoNotificationsOutline size={24} />
-          <div
-            className="flex items-center gap-2 cursor-pointer select-none"
-            onClick={() => setIsDropdownOpen((prev) => !prev)}
-          >
-            <Image
-              src={storedUser.profilePicture || "/Images/User.jpg"}
-              alt="Profile"
-              width={32}
-              height={32}
-              className="rounded-full"
-            />
-            <span>{storedUser.fullName}</span>
-            <IoMdArrowDropdown size={20} />
-          </div>
-
-          {isDropdownOpen && (
-            <div className="absolute right-0 top-12 bg-white border rounded-md shadow-md w-36 z-50">
+    <div className="w-full flex items-center h-20 px-8 justify-between">
+      {/* Logo on the far left */}
+      <div className="flex-shrink-0 flex items-center h-full">
+        <Image
+          src={KuwagoLogo}
+          alt="KuwaGo Logo"
+          width={120}
+          height={40}
+          style={{ objectFit: "contain", background: "transparent" }}
+          priority
+        />
+      </div>
+      {/* Main navbar container aligned to flex-end */}
+      <div
+        className="flex-1 flex justify-end poppins-normal"
+        style={{ minWidth: 0 }}
+      >
+        <div
+          className="flex items-center h-12 bg-[#F9F9F9] rounded-full shadow-md px-12 gap-16 my-6 justify-between w-full"
+          style={{ minWidth: 600, maxWidth: 900 }}
+        >
+          {/* Navigation section (left) */}
+          <div className="flex items-center gap-3 mr-8">
+            {storedUser.role === "Admin" ? (
               <Link
-                href="/profile"
-                className="block px-4 py-2 hover:bg-gray-100"
+                href="/admindashboard"
+                className="px-4 py-1 rounded-full bg-green-100 text-gray-700 text-sm font-medium shadow-sm border border-transparent hover:bg-green-200 transition"
               >
-                Profile
+                Dashboard
               </Link>
-              <button
-                onClick={handleLogout}
-                className="w-full cursor-pointer text-left px-4 py-2 hover:bg-gray-100"
-              >
-                Logout
-              </button>
+            ) : (
+              <>
+                <Link
+                  href="/dashboard"
+                  className="px-4 py-1 rounded-full  text-gray-700 text-sm font-medium  hover:text-lg ease-in-out duration-200"
+                >
+                  Dashboard
+                </Link>
+                {storedUser.role === "Lenders" ? null : (
+                  <>
+                    <button
+                      className="px-4 py-1 rounded-full  text-gray-700 text-sm font-medium  hover:text-lg ease-in-out duration-200 "
+                      onClick={handleLendClick}
+                    >
+                      Lend
+                    </button>
+                    <Link
+                      href="/approvedloans"
+                      className="px-4 py-1 rounded-full text-gray-700 text-sm font-medium  hover:text-lg ease-in-out duration-200"
+                    >
+                      Approved Loans
+                    </Link>
+                  </>
+                )}
+              </>
+            )}
+          </div>
+          {/* Notification and user info (right) */}
+          <div className="flex items-center gap-5 relative" ref={dropdownRef}>
+            <IoNotificationsOutline size={24} />
+            <div
+              className="flex items-center gap-2 cursor-pointer select-none"
+              onClick={() => setIsDropdownOpen((prev) => !prev)}
+            >
+              <Image
+                src={storedUser.profilePicture || "/Images/User.jpg"}
+                alt="Profile"
+                width={32}
+                height={32}
+                className="rounded-full"
+              />
+              <span className="font-medium text-gray-700">
+                {storedUser.fullName}
+              </span>
+              <IoMdArrowDropdown size={20} />
             </div>
-          )}
+            {isDropdownOpen && (
+              <div className="absolute right-0 top-12 bg-white border rounded-md shadow-md w-36 z-50">
+                <Link
+                  href="/profile"
+                  className="block px-4 py-2 hover:bg-gray-100"
+                >
+                  Profile
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className="w-full cursor-pointer text-left px-4 py-2 hover:bg-gray-100"
+                >
+                  Logout
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
-
       {lendOpen && (
         <LendModal
           onClose={() => setLendOpen(false)}
@@ -136,6 +171,6 @@ export default function Navbar() {
           loading={isLoadingLenders}
         />
       )}
-    </>
+    </div>
   );
 }
