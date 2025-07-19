@@ -82,7 +82,7 @@ export default function AppliedLendings({ onSelect }: Props) {
   );
 
   return (
-    <div className="flex-1 flex flex-col overflow-y-auto space-y-4">
+    <div className="flex-1 flex flex-col overflow-y-auto space-y-4 poppins-normal">
       {loading && <p>Loading loans...</p>}
       {error && <p className="text-red-500">Error: {error}</p>}
       {!loading && applications.length === 0 && (
@@ -93,7 +93,7 @@ export default function AppliedLendings({ onSelect }: Props) {
         <div
           key={app.loanRequestID}
           onClick={() => onSelect(app)}
-          className="bg-white p-4 rounded-xl shadow-md flex flex-col gap-1 cursor-pointer hover:shadow-lg transition"
+          className="bg-white p-4 rounded-xl shadow-md flex flex-col gap-1 cursor-pointer hover:shadow-lg transition hover:border-1 ease-in-out duration-300 "
         >
           <div className="flex justify-between items-center">
             <p className="text-lg font-semibold">{app.loanPurpose}</p>
