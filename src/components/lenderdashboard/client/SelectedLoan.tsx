@@ -11,7 +11,10 @@ interface Props {
   updateLoanStatus: (
     loanRequestID: string,
     loanStatus: string,
-    loanAmount: number
+    loanAmount: number,
+    interestRate: number,
+    termsofMonths: number,
+    paymentType: number
   ) => void;
   storedUser: any;
 }
@@ -26,10 +29,14 @@ export default function SelectedLoan({
   const [finalAmount, setFinalAmount] = useState<number>(
     selectedLoan.loanInfo.loanAmount
   );
-
+  const [interestRate, setInterestRate] = useState<number>(0);
+  const [termsOfMonths, setTermsOfMonths] = useState<number>(0);
+  const [paymentType, setPaymentType] = useState<number>(0);
   const handleApprove = async () => {
     const confirm = window.confirm(
-      `Are you sure you want to approve this loan with ₱${finalAmount}?`
+      `Are you sure you want to approve this loan with ₱${finalAmount}, an Interest of ${interestRate}%, Terms of Month of ${termsOfMonths} and a Payment Method of ${
+        paymentType === 1 ? "On-Hand" : "Online"
+      }?`
     );
     if (!confirm) return;
 
@@ -38,7 +45,10 @@ export default function SelectedLoan({
       updateLoanStatus(
         selectedLoan.loanInfo.loanRequestID,
         "Approved",
-        finalAmount
+        finalAmount,
+        interestRate,
+        termsOfMonths,
+        paymentType
       );
 
       // 🟢 PandaDoc API details
@@ -101,7 +111,10 @@ export default function SelectedLoan({
     updateLoanStatus(
       selectedLoan.loanInfo.loanRequestID,
       "Denied",
-      selectedLoan.loanInfo.loanAmount
+      selectedLoan.loanInfo.loanAmount,
+      0,
+      0,
+      0
     );
     window.location.reload();
     toast.error("Loan denied");
@@ -135,17 +148,66 @@ export default function SelectedLoan({
           </div>
 
           {selectedLoan.loanInfo.loanStatus === "InProgress" && (
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Final Loan Amount (₱)
-              </label>
-              <input
-                type="number"
-                className="w-full rounded-md border border-gray-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-                value={finalAmount}
-                onChange={(e) => setFinalAmount(Number(e.target.value))}
-                min={0}
-              />
+            <div className="flex flex-col gap-2">
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Final Loan Amount (₱)
+                </label>
+                <input
+                  type="number"
+                  className="w-full rounded-md border border-gray-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                  value={finalAmount}
+                  onChange={(e) => setFinalAmount(Number(e.target.value))}
+                  min={0}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Interest Rate (%)
+                </label>
+                <input
+                  type="number"
+                  value={interestRate}
+                  className="w-full rounded-md border border-gray-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                  onChange={(e) => setInterestRate(Number(e.target.value))}
+                  min={0}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Terms of Months
+                </label>
+                <input
+                  type="number"
+                  value={termsOfMonths}
+                  className="w-full rounded-md border border-gray-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                  onChange={(e) => setTermsOfMonths(Number(e.target.value))}
+                  min={0}
+                  max={32}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Payment Type
+                </label>
+                <div className="flex flex-row justify-evenly">
+                  <button
+                    className={`${paymentType === 1 ? "bg-green-500" : ""}`}
+                    onClick={() => setPaymentType(1)}
+                  >
+                    On-Hand
+                  </button>
+                  <button
+                    className={`${paymentType === 0 ? "bg-green-500" : ""}`}
+                    onClick={() => setPaymentType(0)}
+                  >
+                    Online
+                  </button>
+                </div>
+              </div>
             </div>
           )}
 

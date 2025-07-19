@@ -10,7 +10,10 @@ export const useUpdateLoanStatus = () => {
   const updateLoanStatus = async (
     loanRequestID: string,
     updatedLoanStatus: string,
-    updatedLoanAmount: number
+    updatedLoanAmount: number,
+    interestRate: number,
+    termsOfMonths: number,
+    paymentType: number
   ) => {
     setLoading(true);
     setError(null);
@@ -23,6 +26,9 @@ export const useUpdateLoanStatus = () => {
         loanRequestID,
         updatedLoanStatus,
         updatedLoanAmount,
+        interestRate,
+        termsOfMonths,
+        paymentType,
       };
 
       console.log(payload);

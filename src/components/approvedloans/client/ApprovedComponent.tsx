@@ -27,8 +27,6 @@ export default function ApprovedComponent() {
         const { uid } = JSON.parse(storedUser);
         const response = await submitLoanRequest({ uid });
 
-        console.log(response); // For debugging
-
         if (response?.data?.length) {
           const loans = response.data.map((loan: any) => ({
             agreedLoanID: loan.agreedLoanID,
@@ -67,33 +65,35 @@ export default function ApprovedComponent() {
       {approvedLoans.length === 0 ? (
         <p>No approved loans found.</p>
       ) : (
-        approvedLoans.map((loan) => (
-          <div
-            key={loan.agreedLoanID}
-            className="bg-green-50 border border-green-300 p-4 rounded-xl shadow-sm"
-          >
-            <div className="flex justify-between items-center mb-2">
-              <p className="text-lg font-semibold">{loan.loanPurpose}</p>
-              <span className="px-3 py-1 text-sm font-medium rounded-full bg-green-100 text-green-700 border border-green-300">
-                {loan.loanStatus}
-              </span>
+        approvedLoans
+          .filter((loan: any) => loan.loanStatus === "Approved")
+          .map((loan) => (
+            <div
+              key={loan.agreedLoanID}
+              className="bg-green-50 border border-green-300 p-4 rounded-xl shadow-sm"
+            >
+              <div className="flex justify-between items-center mb-2">
+                <p className="text-lg font-semibold">{loan.loanPurpose}</p>
+                <span className="px-3 py-1 text-sm font-medium rounded-full bg-green-100 text-green-700 border border-green-300">
+                  {loan.loanStatus}
+                </span>
+              </div>
+              <p className="text-sm text-gray-600">Type: {loan.loanType}</p>
+              <p className="text-sm text-gray-600">
+                Amount: ₱{loan.loanAmount.toLocaleString()}
+              </p>
+              <p className="text-sm text-gray-600">
+                Interest: {(loan.interestRate * 100).toFixed(2)}%
+              </p>
+              <p className="text-sm text-gray-600">Lender: {loan.lenderName}</p>
+              <p className="text-sm text-gray-600">
+                Borrower: {loan.borrowerName}
+              </p>
+              <p className="text-xs text-gray-500 mt-1">
+                Agreement Date: {loan.agreementDate}
+              </p>
             </div>
-            <p className="text-sm text-gray-600">Type: {loan.loanType}</p>
-            <p className="text-sm text-gray-600">
-              Amount: ₱{loan.loanAmount.toLocaleString()}
-            </p>
-            <p className="text-sm text-gray-600">
-              Interest: {(loan.interestRate * 100).toFixed(2)}%
-            </p>
-            <p className="text-sm text-gray-600">Lender: {loan.lenderName}</p>
-            <p className="text-sm text-gray-600">
-              Borrower: {loan.borrowerName}
-            </p>
-            <p className="text-xs text-gray-500 mt-1">
-              Agreement Date: {loan.agreementDate}
-            </p>
-          </div>
-        ))
+          ))
       )}
     </div>
   );
