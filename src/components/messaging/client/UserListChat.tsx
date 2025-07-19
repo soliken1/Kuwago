@@ -217,11 +217,11 @@ export default function UserListChat() {
     <>
       <button
         onClick={() => setShowChat(true)}
-        className={`fixed flex items-center gap-2 bottom-12 right-12 rounded-xl py-3 px-6 shadow-lg z-40 
+        className={`fixed flex items-center gap-2 bottom-12 right-12 rounded-full py-3 px-6 shadow-lg z-40 poppins-bold 
     ${
       hasUnreadMessages
         ? "bg-red-500 hover:bg-red-600 text-white"
-        : "bg-gray-200 hover:bg-gray-300"
+        : "bg-gray-200 border-2 border-black hover:bg-gray-300"
     }`}
       >
         <span className="font-bold text-xl">Chat</span>
