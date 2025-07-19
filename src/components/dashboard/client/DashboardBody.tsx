@@ -74,13 +74,19 @@ export default function DashboardBody() {
 
       <div className="w-8/12">
         {selectedApp ? (
-          <div className="bg-white rounded-2xl shadow-xl h-full px-6 space-y-6">
-            <h2 className="text-3xl font-bold text-gray-800 pt-6">
+          <div className="bg-gradient-to-br from-white via-gray-50 to-gray-100 rounded-xl shadow-lg border border-gray-200 px-6 py-4 space-y-4 poppins-normal">
+            <h2 className="poppins-bold text-xl text-center text-gray-700 mb-2 tracking-tight">
               Loan Application Details
             </h2>
 
             {/* Section 1: Overview */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="inline-block w-2 h-5 rounded bg-green-400" />
+              <span className="poppins-semibold text-sm text-gray-700">
+                Overview
+              </span>
+            </div>
+            <div className="grid grid-cols-2 gap-3 bg-white/80 rounded-lg p-3 shadow-sm">
               <DetailItem
                 label="Loan Purpose"
                 value={selectedApp.loanPurpose}
@@ -98,10 +104,13 @@ export default function DashboardBody() {
             </div>
 
             {/* Section 2: Personal Info */}
-            <h3 className="text-xl font-semibold text-gray-700 mt-6">
-              Personal Information
-            </h3>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="flex items-center gap-2 mt-4 mb-1">
+              <span className="inline-block w-2 h-5 rounded bg-blue-400" />
+              <span className="poppins-semibold text-sm text-gray-700">
+                Personal Information
+              </span>
+            </div>
+            <div className="grid grid-cols-2 gap-3 bg-white/80 rounded-lg p-3 shadow-sm">
               <DetailItem
                 label="Marital Status"
                 value={selectedApp.maritalStatus}
@@ -117,10 +126,13 @@ export default function DashboardBody() {
             </div>
 
             {/* Section 3: Employment + Address */}
-            <h3 className="text-xl font-semibold text-gray-700 mt-6">
-              Employment & Address
-            </h3>
-            <div className="grid grid-cols-1 gap-4">
+            <div className="flex items-center gap-2 mt-4 mb-1">
+              <span className="inline-block w-2 h-5 rounded bg-purple-400" />
+              <span className="poppins-semibold text-sm text-gray-700">
+                Employment & Address
+              </span>
+            </div>
+            <div className="grid grid-cols-1 gap-3 bg-white/80 rounded-lg p-3 shadow-sm">
               <DetailItem
                 label="Employment Info"
                 value={selectedApp.employmentInformation}
