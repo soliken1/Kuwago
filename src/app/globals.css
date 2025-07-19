@@ -265,3 +265,22 @@ body {
 .loader .loader__balls__group :nth-child(3) {
   animation-duration: 1000ms;
 }
+
+/* Custom modern scrollbar for modal and other components */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  border-radius: 8px;
+  background: #f3f4f6;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #a7f3d0;
+  border-radius: 8px;
+  border: 2px solid #f3f4f6;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #34d399;
+}
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #a7f3d0 #f3f4f6;
+}
