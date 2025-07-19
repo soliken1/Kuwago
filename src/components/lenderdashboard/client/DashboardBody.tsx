@@ -63,7 +63,10 @@ export default function DashboardBody() {
     await updateLoanStatus(
       selectedLoan.loanInfo.loanRequestID,
       "InProgress",
-      selectedLoan.loanInfo.loanAmount
+      selectedLoan.loanInfo.loanAmount,
+      0,
+      0,
+      0
     );
     window.location.reload();
     closeModal();
