@@ -64,9 +64,9 @@ export default function DashboardBody() {
       selectedLoan.loanInfo.loanRequestID,
       "InProgress",
       selectedLoan.loanInfo.loanAmount,
-      0,
-      0,
-      0
+      20,
+      12,
+      1
     );
     window.location.reload();
     closeModal();
