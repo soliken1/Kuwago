@@ -65,24 +65,32 @@ export default function LoanApplicationModal({
 
   return (
     <div className="fixed inset-0 z-50 flex justify-center items-start overflow-y-auto py-6">
-      <div className="bg-white rounded-lg w-full max-w-lg shadow-lg max-h-[90vh] overflow-y-auto space-y-4">
-        <div className="flex flex-row justify-between pe-6">
-          <h2 className="text-2xl font-semibold sticky top-0 bg-white z-10 py-4 border-b border-gray-100 px-6">
+      <div className="bg-gradient-to-br from-white via-gray-50 to-gray-100 rounded-2xl shadow-2xl border border-gray-200 w-full max-w-2xl max-h-[90vh] overflow-y-auto space-y-4 poppins-normal custom-scrollbar relative px-2">
+        {/* Fixed Close Button */}
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 z-20 text-gray-600 hover:text-gray-800 text-xl bg-white/80 rounded-full w-9 h-9 flex items-center justify-center shadow-md border border-gray-200 transition"
+          aria-label="Close"
+        >
+          ✕
+        </button>
+        <div className="px-6 pt-4 pb-2 border-b border-gray-100">
+          <h2 className="poppins-bold text-xl text-gray-700 tracking-tight">
             Apply for a Loan
           </h2>
-          <button
-            onClick={onClose}
-            className="text-gray-600 hover:text-gray-800"
-          >
-            ✕
-          </button>
         </div>
 
         {/* Marital Status */}
+        <div className="flex items-center gap-2 mt-3 mb-1 px-6">
+          <span className="inline-block w-2 h-5 rounded bg-blue-400" />
+          <span className="poppins-semibold text-sm text-gray-700">
+            Personal Details
+          </span>
+        </div>
         <div className="px-6">
           <label className="block font-medium mb-1">Marital Status</label>
           <select
-            className="w-full border rounded px-3 py-2"
+            className="w-full rounded-xl border-2 border-gray-200 bg-white/80 px-4 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-green-200 transition"
             value={formData.maritalStatus}
             onChange={(e) =>
               handleChange("maritalStatus", parseInt(e.target.value))
@@ -100,7 +108,7 @@ export default function LoanApplicationModal({
         <div className="px-6">
           <label className="block font-medium mb-1">Highest Education</label>
           <select
-            className="w-full border rounded px-3 py-2"
+            className="w-full rounded-xl border-2 border-gray-200 bg-white/80 px-4 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-green-200 transition"
             value={formData.highestEducation}
             onChange={(e) =>
               handleChange("highestEducation", parseInt(e.target.value))
@@ -114,6 +122,15 @@ export default function LoanApplicationModal({
           </select>
         </div>
 
+        {/* Divider */}
+        <div className="border-t border-gray-200 mx-6 my-2" />
+
+        <div className="flex items-center gap-2 mt-2 mb-1 px-6">
+          <span className="inline-block w-2 h-5 rounded bg-green-400" />
+          <span className="poppins-semibold text-sm text-gray-700">
+            Employment & Address
+          </span>
+        </div>
         {/* Employment Info */}
         <div className="px-6">
           <label className="block font-medium mb-1">
@@ -121,7 +138,7 @@ export default function LoanApplicationModal({
           </label>
           <input
             type="text"
-            className="w-full border rounded px-3 py-2"
+            className="w-full rounded-xl border-2 border-gray-200 bg-white/80 px-4 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-green-200 transition"
             placeholder="e.g., Job title, Company"
             value={formData.employmentInformation}
             onChange={(e) =>
@@ -135,7 +152,7 @@ export default function LoanApplicationModal({
           <label className="block font-medium mb-1">Detailed Address</label>
           <input
             type="text"
-            className="w-full border rounded px-3 py-2"
+            className="w-full rounded-xl border-2 border-gray-200 bg-white/80 px-4 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-green-200 transition"
             placeholder="Street, Barangay, City"
             value={formData.detailedAddress}
             onChange={(e) => handleChange("detailedAddress", e.target.value)}
@@ -146,7 +163,7 @@ export default function LoanApplicationModal({
         <div className="px-6">
           <label className="block font-medium mb-1">Resident Type</label>
           <select
-            className="w-full border rounded px-3 py-2"
+            className="w-full rounded-xl border-2 border-gray-200 bg-white/80 px-4 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-green-200 transition"
             value={formData.residentType}
             onChange={(e) =>
               handleChange("residentType", parseInt(e.target.value))
@@ -160,11 +177,20 @@ export default function LoanApplicationModal({
           </select>
         </div>
 
+        {/* Divider */}
+        <div className="border-t border-gray-200 mx-6 my-2" />
+
+        <div className="flex items-center gap-2 mt-2 mb-1 px-6">
+          <span className="inline-block w-2 h-5 rounded bg-purple-400" />
+          <span className="poppins-semibold text-sm text-gray-700">
+            Loan Details
+          </span>
+        </div>
         {/* Loan Type */}
         <div className="px-6">
           <label className="block font-medium mb-1">Loan Type</label>
           <select
-            className="w-full border rounded px-3 py-2"
+            className="w-full rounded-xl border-2 border-gray-200 bg-white/80 px-4 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-green-200 transition"
             value={formData.loanType}
             onChange={(e) => handleChange("loanType", parseInt(e.target.value))}
           >
@@ -180,7 +206,7 @@ export default function LoanApplicationModal({
         <div className="px-6">
           <label className="block font-medium mb-1">Loan Amount</label>
           <select
-            className="w-full border rounded px-3 py-2"
+            className="w-full rounded-xl border-2 border-gray-200 bg-white/80 px-4 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-green-200 transition"
             value={formData.loanAmount}
             onChange={(e) =>
               handleChange("loanAmount", parseInt(e.target.value))
@@ -198,7 +224,7 @@ export default function LoanApplicationModal({
         <div className="px-6">
           <label className="block font-medium mb-1">Loan Purpose</label>
           <textarea
-            className="w-full border rounded px-3 py-2"
+            className="w-full rounded-xl border-2 border-gray-200 bg-white/80 px-4 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-green-200 transition"
             rows={3}
             placeholder="Explain how you will use this loan..."
             value={formData.loanPurpose}
@@ -207,11 +233,11 @@ export default function LoanApplicationModal({
         </div>
 
         {/* Action Buttons */}
-        <div className="flex justify-end gap-2 sticky bottom-0 bg-white pb-6">
+        <div className="flex justify-end gap-2 sticky bottom-0 bg-gradient-to-br from-white via-gray-50 to-gray-100 pb-4 px-6">
           <button
             onClick={() => onSubmit(formData)}
             disabled={!isValid}
-            className={`px-4 py-2 rounded text-white ${
+            className={`px-4 py-2 rounded text-white poppins-semibold text-sm ${
               isValid ? "bg-green-500 hover:bg-green-600" : "bg-gray-300"
             }`}
           >
