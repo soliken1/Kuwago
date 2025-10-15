@@ -19,6 +19,7 @@ export default function LoginForm() {
   }>({});
   const [showModal, setShowModal] = useState(false);
   const [modalType, setModalType] = useState<"success" | "error">("success");
+  const [modalMessage, setModalMessage] = useState<string>("");
 
   useEffect(() => {
     const user = localStorage.getItem("user");
@@ -42,6 +43,7 @@ export default function LoginForm() {
     if (!loading && (loginData || error)) {
       if (loginData && !error) {
         setModalType("success");
+        setModalMessage(loginData.message);
         setShowModal(true);
         const userRole = storedUser.role;
         if (userRole === "Admin") {
@@ -53,6 +55,7 @@ export default function LoginForm() {
         }
       } else if (error) {
         setModalType("error");
+        setModalMessage(error);
         setShowModal(true);
       }
     }
@@ -69,6 +72,7 @@ export default function LoginForm() {
       <LoginResponseModal
         open={showModal}
         type={modalType}
+        message={modalMessage}
         onClose={() => setShowModal(false)}
       />
       <div className="flex flex-col items-center w-full bg-black/25 justify-center min-h-screen p-4 poppins-normal">

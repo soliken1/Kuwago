@@ -6,12 +6,14 @@ import { motion } from "framer-motion";
 interface LoginResponseModalProps {
   open: boolean;
   type: "success" | "error";
+  message?: string;
   onClose: () => void;
 }
 
 export default function LoginResponseModal({
   open,
   type,
+  message,
   onClose,
 }: LoginResponseModalProps) {
   const [internalOpen, setInternalOpen] = useState(open);
@@ -76,9 +78,9 @@ export default function LoginResponseModal({
             )}
           </div>
           <p className="text-center text-lg font-semibold">
-            {type === "success"
+            {message || (type === "success"
               ? "Login successful!"
-              : "Login failed. Please try again."}
+              : "Login failed. Please try again.")}
           </p>
         </div>
       </motion.div>

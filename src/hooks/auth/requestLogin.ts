@@ -15,10 +15,12 @@ interface Token {
 }
 
 interface LoginResponse {
-  // Update this based on actual API response structure
-  token?: string;
-  message?: string;
-  data?: Token;
+  success: boolean;
+  message: string;
+  statusCode: number;
+  data: {
+    token: string;
+  };
 }
 
 interface UserData {
@@ -48,7 +50,7 @@ export default function useLoginRequest() {
   const [error, setError] = useState<string | null>(null);
 
   //Prepare payload to be sent when user presses login (e.g email and password to be handled on the backend if it exists or not)
-  const login = async (payload: LoginPayload, onSuccess?: () => void) => {
+  const login = async (payload: LoginPayload, onSuccess?: (message: string) => void) => {
     setLoading(true);
     setError(null);
 
@@ -59,7 +61,7 @@ export default function useLoginRequest() {
         payload
       );
       setLoginData(loginResponse.data);
-      const token = loginResponse.data.data?.token;
+      const token = loginResponse.data.data.token;
 
       if (token) {
         setCookie("session_token", token);
@@ -92,7 +94,7 @@ export default function useLoginRequest() {
         }
         setUserData(userResponse.data);
 
-        onSuccess?.();
+        onSuccess?.(loginResponse.data.message);
       } else {
         throw new Error("Token missing in login response.");
       }
