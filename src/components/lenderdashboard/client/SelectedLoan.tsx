@@ -30,12 +30,12 @@ export default function SelectedLoan({
     selectedLoan.loanInfo.loanAmount
   );
   const [interestRate, setInterestRate] = useState<number>(0);
-  const [termsOfMonths, setTermsOfMonths] = useState<number>(0);
-  const [paymentType, setPaymentType] = useState<number>(0);
+  const [termsOfMonths, setTermsOfMonths] = useState<number>(3);
+  const [paymentType, setPaymentType] = useState<number>(1);
   const handleApprove = async () => {
     const confirm = window.confirm(
-      `Are you sure you want to approve this loan with ₱${finalAmount}, an Interest of ${interestRate}%, Terms of Month of ${termsOfMonths} and a Payment Method of ${
-        paymentType === 1 ? "On-Hand" : "Online"
+      `Are you sure you want to approve this loan with ₱${finalAmount}, an Interest of ${interestRate}%, Terms of Month of ${termsOfMonths} Months and a Payment Method of ${
+        paymentType === 1 ? "Cash" : "ECash"
       }?`
     );
     if (!confirm) return;
@@ -179,14 +179,33 @@ export default function SelectedLoan({
                 <label className="block text-sm font-medium mb-1">
                   Terms of Months
                 </label>
-                <input
-                  type="number"
-                  value={termsOfMonths}
-                  className="w-full rounded-md border border-gray-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-                  onChange={(e) => setTermsOfMonths(Number(e.target.value))}
-                  min={0}
-                  max={32}
-                />
+                <div className="justify-between flex">
+                  {" "}
+                  <button
+                    className={`${termsOfMonths === 3 ? "bg-green-500" : ""}`}
+                    onClick={() => setTermsOfMonths(3)}
+                  >
+                    3 Months
+                  </button>
+                  <button
+                    className={`${termsOfMonths === 6 ? "bg-green-500" : ""}`}
+                    onClick={() => setTermsOfMonths(6)}
+                  >
+                    6 Months
+                  </button>
+                  <button
+                    className={`${termsOfMonths === 9 ? "bg-green-500" : ""}`}
+                    onClick={() => setTermsOfMonths(9)}
+                  >
+                    9 Months
+                  </button>
+                  <button
+                    className={`${termsOfMonths === 12 ? "bg-green-500" : ""}`}
+                    onClick={() => setTermsOfMonths(12)}
+                  >
+                    12 Months
+                  </button>
+                </div>{" "}
               </div>
 
               <div>
@@ -199,14 +218,14 @@ export default function SelectedLoan({
                     style={{ backgroundColor: paymentType === 1 ? '#85d4a4' : 'transparent' }}
                     onClick={() => setPaymentType(1)}
                   >
-                    On-Hand
+                    Cash
                   </button>
                   <button
                     className=""
-                    style={{ backgroundColor: paymentType === 0 ? '#85d4a4' : 'transparent' }}
-                    onClick={() => setPaymentType(0)}
+                    style={{ backgroundColor: paymentType === 2 ? '#85d4a4' : 'transparent' }}
+                    onClick={() => setPaymentType(2)}
                   >
-                    Online
+                    ECash
                   </button>
                 </div>
               </div>
