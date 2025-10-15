@@ -40,12 +40,14 @@ export default function LoginResponseModal({
         <div className="flex flex-col items-center justify-center gap-4">
           <div
             className={`w-20 h-20 rounded-full flex items-center justify-center ${
-              type === "success" ? "bg-green-100" : "bg-red-100"
+              type === "success" ? "" : "bg-red-100"
             }`}
+            style={type === "success" ? { backgroundColor: '#f0f9f4' } : {}}
           >
             {type === "success" ? (
               <svg
-                className="w-12 h-12 text-green-600"
+                className="w-12 h-12"
+                style={{ color: '#85d4a4' }}
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"

@@ -59,7 +59,7 @@ export default function CreditScore() {
         <span className="text-3xl poppins-normal tracking-widest">
           Credit Score
         </span>
-        <span className="px-8 py-2 rounded-full bg-green-100 text-black text-xl font-normal border border-green-300 text-center">
+        <span className="px-8 py-2 rounded-full text-black text-xl font-normal text-center" style={{ backgroundColor: '#f0f9f4', border: '1px solid #85d4a4' }}>
           {status}
         </span>
       </div>

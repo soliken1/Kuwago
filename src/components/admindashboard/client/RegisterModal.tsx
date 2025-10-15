@@ -79,7 +79,7 @@ export default function RegisterModal({ isOpen, onClose }: Props) {
 
           {error && <p className="text-red-500 text-sm">{error}</p>}
           {showSuccess && (
-            <p className="text-green-500 text-sm">Registration successful!</p>
+            <p className="text-sm" style={{ color: '#85d4a4' }}>Registration successful!</p>
           )}
 
           <div className="flex justify-end gap-2">
@@ -93,7 +93,10 @@ export default function RegisterModal({ isOpen, onClose }: Props) {
             <button
               type="submit"
               disabled={loading}
-              className="px-4 py-2 rounded bg-green-500 text-white hover:bg-green-600"
+              className="px-4 py-2 rounded text-white"
+              style={{ backgroundColor: '#85d4a4' }}
+              onMouseEnter={(e) => e.target.style.backgroundColor = '#6bc48a'}
+              onMouseLeave={(e) => e.target.style.backgroundColor = '#85d4a4'}
             >
               {loading ? "Registering..." : "Register"}
             </button>

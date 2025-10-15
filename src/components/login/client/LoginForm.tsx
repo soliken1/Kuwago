@@ -121,7 +121,10 @@ export default function LoginForm() {
             <button
               type="submit"
               disabled={loading}
-              className="cursor-pointer py-2 my-8 mx-4 shadow-2xl bg-green-400 text-white font-semibold rounded-4xl hover:bg-green-500 transition duration-200 "
+              className="cursor-pointer py-2 my-8 mx-4 shadow-2xl text-white font-semibold rounded-4xl transition duration-200"
+              style={{ backgroundColor: '#85d4a4' }}
+              onMouseEnter={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#6bc48a'}
+              onMouseLeave={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#85d4a4'}
             >
               {loading ? "Logging in..." : "Login"}
             </button>
@@ -130,7 +133,10 @@ export default function LoginForm() {
               Don&apos;t have an account?{" "}
               <Link
                 href="/register"
-                className="poppins-bold text-green-400 hover:text-green-500"
+                className="poppins-bold"
+                style={{ color: '#85d4a4' }}
+                onMouseEnter={(e) => (e.target as HTMLElement).style.color = '#6bc48a'}
+                onMouseLeave={(e) => (e.target as HTMLElement).style.color = '#85d4a4'}
               >
                 Register
               </Link>

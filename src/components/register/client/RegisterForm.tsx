@@ -134,7 +134,10 @@ export default function RegisterForm() {
           <button
             type="submit"
             disabled={loading}
-            className="cursor-pointer py-2 mt-6 mx-4 shadow-2xl bg-green-400 text-white font-semibold rounded-4xl hover:bg-green-500 transition duration-200"
+            className="cursor-pointer py-2 mt-6 mx-4 shadow-2xl text-white font-semibold rounded-4xl transition duration-200"
+            style={{ backgroundColor: '#85d4a4' }}
+            onMouseEnter={(e) => e.target.style.backgroundColor = '#6bc48a'}
+            onMouseLeave={(e) => e.target.style.backgroundColor = '#85d4a4'}
           >
             {loading ? "Registering..." : "Register"}
           </button>
@@ -162,7 +165,7 @@ export default function RegisterForm() {
 
           {showSuccess && (
             <div className="fixed top-4 right-4 transform transition-all duration-300 ease-in-out translate-x-0 opacity-100">
-              <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded shadow-lg">
+              <div className="p-4 rounded shadow-lg" style={{ backgroundColor: '#f0f9f4', borderLeft: '4px solid #85d4a4', color: '#2d5a3d' }}>
                 <div className="flex items-center">
                   <svg
                     className="w-5 h-5 mr-2"
@@ -185,7 +188,10 @@ export default function RegisterForm() {
             Already have an account?{" "}
             <Link
               href="/login"
-              className="poppins-bold text-green-400 hover:text-green-500"
+              className="poppins-bold"
+              style={{ color: '#85d4a4' }}
+              onMouseEnter={(e) => e.target.style.color = '#6bc48a'}
+              onMouseLeave={(e) => e.target.style.color = '#85d4a4'}
             >
               Sign in
             </Link>

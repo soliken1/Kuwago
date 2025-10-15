@@ -160,7 +160,7 @@ export default function DashboardBody() {
                   <span
                     className={`font-medium ${
                       loanInfo.loanStatus === "Approved"
-                        ? "bg-green-100 text-green-700 border border-green-300 px-2 py-1 rounded-full"
+                        ? "px-2 py-1 rounded-full"
                         : loanInfo.loanStatus === "Denied"
                         ? "bg-red-100 text-red-700 border border-red-300 px-2 py-1 rounded-full"
                         : loanInfo.loanStatus === "InProgress"
@@ -169,6 +169,7 @@ export default function DashboardBody() {
                         ? "bg-gray-100 text-gray-700 border border-gray-300 px-2 py-1 rounded-full"
                         : "bg-yellow-100 text-yellow-700 border border-yellow-300 px-2 py-1 rounded-full"
                     }`}
+                    style={loanInfo.loanStatus === "Approved" ? { backgroundColor: '#f0f9f4', color: '#2d5a3d', border: '1px solid #85d4a4' } : {}}
                   >
                     {loanInfo.loanStatus}
                   </span>

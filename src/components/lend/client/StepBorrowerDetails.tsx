@@ -126,7 +126,7 @@ export default function LoanApplicationModal({
         <div className="border-t border-gray-200 mx-6 my-2" />
 
         <div className="flex items-center gap-2 mt-2 mb-1 px-6">
-          <span className="inline-block w-2 h-5 rounded bg-green-400" />
+          <span className="inline-block w-2 h-5 rounded" style={{ backgroundColor: '#85d4a4' }} />
           <span className="poppins-semibold text-sm text-gray-700">
             Employment & Address
           </span>
@@ -238,8 +238,11 @@ export default function LoanApplicationModal({
             onClick={() => onSubmit(formData)}
             disabled={!isValid}
             className={`px-4 py-2 rounded text-white poppins-semibold text-sm ${
-              isValid ? "bg-green-500 hover:bg-green-600" : "bg-gray-300"
+              isValid ? "" : "bg-gray-300"
             }`}
+            style={isValid ? { backgroundColor: '#85d4a4' } : {}}
+            onMouseEnter={isValid ? (e) => e.target.style.backgroundColor = '#6bc48a' : undefined}
+            onMouseLeave={isValid ? (e) => e.target.style.backgroundColor = '#85d4a4' : undefined}
           >
             Submit Application
           </button>

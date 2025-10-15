@@ -24,13 +24,19 @@ export default function Home() {
         <div className="flex justify-center gap-4">
           <Link
             href="/login"
-            className="poppins-normal px-12 py-2 mx-4 bg-green-400 text-white rounded-xl hover:bg-green-500 transition"
+            className="poppins-normal px-12 py-2 mx-4 text-white rounded-xl transition"
+            style={{ backgroundColor: '#85d4a4' }}
+            onMouseEnter={(e) => (e.target as HTMLElement).style.backgroundColor = '#6bc48a'}
+            onMouseLeave={(e) => (e.target as HTMLElement).style.backgroundColor = '#85d4a4'}
           >
             Login
           </Link>
           <Link
             href="/register"
-            className="poppins-normal px-12 py-2 border mx-4 border-green-400 text-black rounded-xl hover:bg-green-50 transition"
+            className="poppins-normal px-12 py-2 border mx-4 text-black rounded-xl transition"
+            style={{ borderColor: '#85d4a4' }}
+            onMouseEnter={(e) => (e.target as HTMLElement).style.backgroundColor = '#f0f9f4'}
+            onMouseLeave={(e) => (e.target as HTMLElement).style.backgroundColor = 'transparent'}
           >
             Register
           </Link>

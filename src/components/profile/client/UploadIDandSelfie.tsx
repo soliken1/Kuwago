@@ -112,7 +112,10 @@ export default function UploadIDandSelfieModal({
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-green-400 text-white py-2 rounded hover:bg-green-500 transition disabled:opacity-50"
+              className="w-full text-white py-2 rounded transition disabled:opacity-50"
+              style={{ backgroundColor: '#85d4a4' }}
+              onMouseEnter={(e) => e.target.style.backgroundColor = '#6bc48a'}
+              onMouseLeave={(e) => e.target.style.backgroundColor = '#85d4a4'}
             >
               {loading ? "Uploading..." : "Submit for Verification"}
             </button>

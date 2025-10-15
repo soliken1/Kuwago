@@ -195,13 +195,15 @@ export default function SelectedLoan({
                 </label>
                 <div className="flex flex-row justify-evenly">
                   <button
-                    className={`${paymentType === 1 ? "bg-green-500" : ""}`}
+                    className=""
+                    style={{ backgroundColor: paymentType === 1 ? '#85d4a4' : 'transparent' }}
                     onClick={() => setPaymentType(1)}
                   >
                     On-Hand
                   </button>
                   <button
-                    className={`${paymentType === 0 ? "bg-green-500" : ""}`}
+                    className=""
+                    style={{ backgroundColor: paymentType === 0 ? '#85d4a4' : 'transparent' }}
                     onClick={() => setPaymentType(0)}
                   >
                     Online
@@ -242,7 +244,10 @@ export default function SelectedLoan({
               <>
                 <button
                   onClick={handleApprove}
-                  className="px-4 py-2 text-sm font-medium rounded-md bg-green-600 text-white hover:bg-green-700 transition"
+                  className="px-4 py-2 text-sm font-medium rounded-md text-white transition"
+                  style={{ backgroundColor: '#85d4a4' }}
+                  onMouseEnter={(e) => e.target.style.backgroundColor = '#6bc48a'}
+                  onMouseLeave={(e) => e.target.style.backgroundColor = '#85d4a4'}
                 >
                   Approve
                 </button>

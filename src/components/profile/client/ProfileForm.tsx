@@ -102,7 +102,7 @@ export default function ProfileForm() {
       <div className="max-w-4xl mx-auto p-6">
         <div className="bg-white rounded-lg shadow-lg p-8">
           <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2" style={{ borderBottomColor: '#85d4a4' }}></div>
           </div>
         </div>
       </div>
@@ -130,7 +130,10 @@ export default function ProfileForm() {
           </h1>
           <button
             onClick={() => setIsEditing(!isEditing)}
-            className="flex items-center gap-2 px-4 py-2 rounded-md bg-green-500 text-white hover:bg-green-600 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 rounded-md text-white transition-colors"
+            style={{ backgroundColor: '#85d4a4' }}
+            onMouseEnter={(e) => e.target.style.backgroundColor = '#6bc48a'}
+            onMouseLeave={(e) => e.target.style.backgroundColor = '#85d4a4'}
           >
             {isEditing ? (
               <>
@@ -189,7 +192,10 @@ export default function ProfileForm() {
                   />
                   <label
                     htmlFor="profilePictureInput"
-                    className="absolute bottom-0 right-0 bg-green-500 text-white p-2 rounded-full hover:bg-green-600 cursor-pointer"
+                    className="absolute bottom-0 right-0 text-white p-2 rounded-full cursor-pointer"
+                    style={{ backgroundColor: '#85d4a4' }}
+                    onMouseEnter={(e) => e.target.style.backgroundColor = '#6bc48a'}
+                    onMouseLeave={(e) => e.target.style.backgroundColor = '#85d4a4'}
                   >
                     <FiEdit2 size={20} />
                   </label>
@@ -305,7 +311,10 @@ export default function ProfileForm() {
             <div className="flex justify-end mt-8">
               <button
                 type="submit"
-                className="flex items-center gap-2 px-6 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors"
+                className="flex items-center gap-2 px-6 py-2 text-white rounded-md transition-colors"
+                style={{ backgroundColor: '#85d4a4' }}
+                onMouseEnter={(e) => e.target.style.backgroundColor = '#6bc48a'}
+                onMouseLeave={(e) => e.target.style.backgroundColor = '#85d4a4'}
               >
                 <FiSave size={20} />
                 Save Changes

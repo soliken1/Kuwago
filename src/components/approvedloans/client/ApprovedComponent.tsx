@@ -70,11 +70,12 @@ export default function ApprovedComponent() {
           .map((loan) => (
             <div
               key={loan.agreedLoanID}
-              className="bg-green-50 border border-green-300 p-4 rounded-xl shadow-sm"
+              className="p-4 rounded-xl shadow-sm"
+              style={{ backgroundColor: '#f0f9f4', border: '1px solid #85d4a4' }}
             >
               <div className="flex justify-between items-center mb-2">
                 <p className="text-lg font-semibold">{loan.loanPurpose}</p>
-                <span className="px-3 py-1 text-sm font-medium rounded-full bg-green-100 text-green-700 border border-green-300">
+                <span className="px-3 py-1 text-sm font-medium rounded-full" style={{ backgroundColor: '#f0f9f4', color: '#2d5a3d', border: '1px solid #85d4a4' }}>
                   {loan.loanStatus}
                 </span>
               </div>

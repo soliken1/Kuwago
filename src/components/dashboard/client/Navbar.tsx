@@ -90,7 +90,10 @@ export default function Navbar() {
             {storedUser.role === "Admin" ? (
               <Link
                 href="/admindashboard"
-                className="px-4 py-1 rounded-full bg-green-100 text-gray-700 text-sm font-medium shadow-sm border border-transparent hover:bg-green-200 transition"
+                className="px-4 py-1 rounded-full text-gray-700 text-sm font-medium shadow-sm border border-transparent transition"
+                style={{ backgroundColor: '#f0f9f4' }}
+                onMouseEnter={(e) => e.target.style.backgroundColor = '#e6f7ed'}
+                onMouseLeave={(e) => e.target.style.backgroundColor = '#f0f9f4'}
               >
                 Dashboard
               </Link>

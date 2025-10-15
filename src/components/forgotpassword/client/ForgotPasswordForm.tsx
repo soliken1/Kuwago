@@ -82,12 +82,15 @@ export default function ForgotPasswordForm() {
               type="submit"
               disabled={loading}
               onClick={() => setSubject("Kuwago Reset Password")}
-              className="cursor-pointer py-2 my-8 mx-4 shadow-2xl bg-green-400 text-white font-semibold rounded-4xl hover:bg-green-500 transition duration-200 "
+              className="cursor-pointer py-2 my-8 mx-4 shadow-2xl text-white font-semibold rounded-4xl transition duration-200"
+              style={{ backgroundColor: '#85d4a4' }}
+              onMouseEnter={(e) => e.target.style.backgroundColor = '#6bc48a'}
+              onMouseLeave={(e) => e.target.style.backgroundColor = '#85d4a4'}
             >
               {loading ? "Please Wait..." : "Send Password Link"}
             </button>
             {emailSent && (
-              <p className="text-green-600 text-sm text-center">
+              <p className="text-sm text-center" style={{ color: '#85d4a4' }}>
                 Password reset email sent! Please check your inbox.
               </p>
             )}
@@ -95,7 +98,7 @@ export default function ForgotPasswordForm() {
               <p className="text-red-500 text-sm text-center">{emailError}</p>
             )}
             {passwordData?.message && !emailSent && (
-              <p className="text-green-600 text-sm text-center">
+              <p className="text-sm text-center" style={{ color: '#85d4a4' }}>
                 {passwordData?.message}
               </p>
             )}
