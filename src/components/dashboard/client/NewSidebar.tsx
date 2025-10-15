@@ -92,10 +92,10 @@ export default function NewSidebar() {
           {storedUser.role !== "Lenders" && storedUser.role !== "Admin" && (
             <>
               <Link
-                href="/lend"
+                href="/applyloan"
                 className="block px-4 py-3 text-white text-lg font-medium hover:bg-white/20 rounded-lg transition-colors"
               >
-                Lend
+                Loan
               </Link>
               <Link
                 href="/approvedloans"

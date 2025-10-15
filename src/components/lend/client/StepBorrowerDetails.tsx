@@ -241,8 +241,8 @@ export default function LoanApplicationModal({
               isValid ? "" : "bg-gray-300"
             }`}
             style={isValid ? { backgroundColor: '#85d4a4' } : {}}
-            onMouseEnter={isValid ? (e) => e.target.style.backgroundColor = '#6bc48a' : undefined}
-            onMouseLeave={isValid ? (e) => e.target.style.backgroundColor = '#85d4a4' : undefined}
+            onMouseEnter={isValid ? (e) => (e.target as HTMLButtonElement).style.backgroundColor = '#6bc48a' : undefined}
+            onMouseLeave={isValid ? (e) => (e.target as HTMLButtonElement).style.backgroundColor = '#85d4a4' : undefined}
           >
             Submit Application
           </button>
