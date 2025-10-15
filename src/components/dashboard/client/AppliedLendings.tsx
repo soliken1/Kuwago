@@ -6,9 +6,13 @@ import { Application } from "@/types/lendings";
 const statusColor = {
   Pending: "bg-yellow-100 text-yellow-700 border border-yellow-300",
   InProgress: "bg-blue-100 text-blue-700 border border-blue-300",
-  Approved: "bg-green-100 text-green-700 border border-green-300",
+  Approved: "text-center",
   Denied: "bg-red-100 text-red-700 border border-red-300",
   Completed: "bg-gray-100 text-gray-700 border border-gray-300",
+};
+
+const statusStyle = {
+  Approved: { backgroundColor: '#f0f9f4', color: '#2d5a3d', border: '1px solid #85d4a4' }
 };
 
 interface Props {
@@ -101,6 +105,7 @@ export default function AppliedLendings({ onSelect }: Props) {
               className={`px-3 py-1 rounded-full text-sm font-medium ${
                 statusColor[app.loanStatus]
               }`}
+              style={app.loanStatus === 'Approved' ? statusStyle.Approved : {}}
             >
               {app.loanStatus}
             </span>

@@ -24,7 +24,7 @@ const DetailItem = ({
         <span
           className={`mt-1 inline-block w-fit px-3 py-1 text-sm rounded-full font-medium ${
             value === "Approved"
-              ? "bg-green-100 text-green-700 border border-green-300"
+              ? "text-center"
               : value === "Denied"
               ? "bg-red-100 text-red-700 border border-red-300"
               : value === "InProgress"
@@ -33,6 +33,7 @@ const DetailItem = ({
               ? "bg-gray-100 text-gray-700 border border-gray-300"
               : "bg-yellow-100 text-yellow-700 border border-yellow-300"
           }`}
+          style={value === "Approved" ? { backgroundColor: '#f0f9f4', color: '#2d5a3d', border: '1px solid #85d4a4' } : {}}
         >
           {value}
         </span>
@@ -81,7 +82,7 @@ export default function DashboardBody() {
 
             {/* Section 1: Overview */}
             <div className="flex items-center gap-2 mb-1">
-              <span className="inline-block w-2 h-5 rounded bg-green-400" />
+              <span className="inline-block w-2 h-5 rounded" style={{ backgroundColor: '#85d4a4' }} />
               <span className="poppins-semibold text-sm text-gray-700">
                 Overview
               </span>

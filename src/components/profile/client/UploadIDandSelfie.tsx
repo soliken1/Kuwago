@@ -59,22 +59,22 @@ export default function UploadIDandSelfieModal({
   return (
     <>
       <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center px-4">
-        <div className="bg-white max-w-2xl w-full rounded-lg shadow-lg p-6 relative">
-          <h2 className="text-2xl font-bold mb-6 text-center">
+        <div className="bg-white max-w-2xl w-full rounded-xl shadow-lg p-8 relative">
+          <h2 className="poppins-bold text-4xl mb-8 text-center text-gray-700">
             Upload ID & Selfie
           </h2>
 
           <form onSubmit={handleSubmit} className="space-y-6 flex flex-col">
-            <div className="flex gap-5 flex-row">
+            <div className="flex gap-6 flex-row">
               <div className="w-1/2">
-                <label className="block mb-2 font-medium">
+                <label className="block mb-3 poppins-bold text-gray-700">
                   Upload Valid ID
                 </label>
                 <input
                   type="file"
                   accept="image/*"
                   onChange={handleIdChange}
-                  className="w-full border p-2"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:outline-none focus:border-gray-400 bg-white"
                 />
                 {idPreview && (
                   <Image
@@ -82,20 +82,20 @@ export default function UploadIDandSelfieModal({
                     alt="ID Preview"
                     width={1920}
                     height={1080}
-                    className="mt-2 w-full h-40 object-contain rounded-md border"
+                    className="mt-3 w-full h-40 object-contain rounded-2xl border border-gray-300"
                   />
                 )}
               </div>
 
               <div className="w-1/2">
-                <label className="block mb-2 font-medium">
+                <label className="block mb-3 poppins-bold text-gray-700">
                   Upload Selfie with ID
                 </label>
                 <input
                   type="file"
                   accept="image/*"
                   onChange={handleSelfieChange}
-                  className="w-full border p-2"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:outline-none focus:border-gray-400 bg-white"
                 />
                 {selfiePreview && (
                   <Image
@@ -103,7 +103,7 @@ export default function UploadIDandSelfieModal({
                     src={selfiePreview}
                     width={1920}
                     height={1080}
-                    className="mt-2 w-full h-40 object-contain rounded-md border"
+                    className="mt-3 w-full h-40 object-contain rounded-2xl border border-gray-300"
                   />
                 )}
               </div>
@@ -112,13 +112,16 @@ export default function UploadIDandSelfieModal({
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-green-400 text-white py-2 rounded hover:bg-green-500 transition disabled:opacity-50"
+              className="w-full py-3 text-white font-bold rounded-2xl transition duration-200 mt-6 disabled:opacity-50"
+              style={{ backgroundColor: '#2c8068' }}
+              onMouseEnter={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#1f5a4a'}
+              onMouseLeave={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#2c8068'}
             >
               {loading ? "Uploading..." : "Submit for Verification"}
             </button>
 
             {error && (
-              <p className="text-red-600 text-center font-medium">{error}</p>
+              <p className="text-red-600 text-center poppins-bold">{error}</p>
             )}
           </form>
         </div>

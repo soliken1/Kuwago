@@ -1,13 +1,13 @@
 "use client";
-import React, { ReactNode } from "react";
+import React from "react";
 import NewSidebar from "@/components/dashboard/client/NewSidebar";
-import ProfileHeader from "@/components/profile/client/ProfileHeader";
+import LoanHeader from "@/components/applyloan/client/LoanHeader";
 
-interface ProfileLayoutProps {
-  children: ReactNode;
+interface ApplyLoanLayoutProps {
+  children: React.ReactNode;
 }
 
-export default function ProfileLayout({ children }: ProfileLayoutProps) {
+export default function ApplyLoanLayout({ children }: ApplyLoanLayoutProps) {
   return (
     <div className="w-full h-screen flex bg-gray-50 relative">
       {/* Sidebar */}
@@ -18,7 +18,7 @@ export default function ProfileLayout({ children }: ProfileLayoutProps) {
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Header */}
-        <ProfileHeader />
+        <LoanHeader />
         
         {/* Content Area */}
         <div className="flex-1 p-8 overflow-auto">
