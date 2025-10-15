@@ -92,8 +92,8 @@ export default function Navbar() {
                 href="/admindashboard"
                 className="px-4 py-1 rounded-full text-gray-700 text-sm font-medium shadow-sm border border-transparent transition"
                 style={{ backgroundColor: '#f0f9f4' }}
-                onMouseEnter={(e) => e.target.style.backgroundColor = '#e6f7ed'}
-                onMouseLeave={(e) => e.target.style.backgroundColor = '#f0f9f4'}
+                onMouseEnter={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#6bc48a'}
+                onMouseLeave={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#f0f9f4'}
               >
                 Dashboard
               </Link>

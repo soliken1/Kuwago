@@ -211,18 +211,38 @@ export default function UserListChat() {
     };
   }, [storedUser]);
 
-  if (loading) return null;
+  if (loading) {
+    return (
+      <button
+        onClick={() => setShowChat(true)}
+        className="fixed flex items-center gap-2 bottom-12 right-12 rounded-full py-3 px-6 shadow-lg z-[9999] poppins-bold text-white hover:opacity-90 hover:scale-105 transition-all duration-200 cursor-pointer"
+        style={{ 
+          backgroundColor: '#2c8068',
+          pointerEvents: 'auto'
+        }}
+      >
+        <span className="font-bold text-xl">Chat</span>
+        <div className="relative">
+          <BiMessage size={24} />
+        </div>
+      </button>
+    );
+  }
 
   return (
     <>
       <button
         onClick={() => setShowChat(true)}
-        className={`fixed flex items-center gap-2 bottom-12 right-12 rounded-full py-3 px-6 shadow-lg z-40 poppins-bold 
+        className={`fixed flex items-center gap-2 bottom-12 right-12 rounded-full py-3 px-6 shadow-lg z-[9999] poppins-bold text-white transition-all duration-200 cursor-pointer
     ${
       hasUnreadMessages
-        ? "bg-red-500 hover:bg-red-600 text-white"
-        : "bg-gray-200 border-2 border-black hover:bg-gray-300"
+        ? "bg-red-500 hover:bg-red-600"
+        : "hover:opacity-90 hover:scale-105"
     }`}
+        style={{ 
+          backgroundColor: hasUnreadMessages ? undefined : '#2c8068',
+          pointerEvents: 'auto'
+        }}
       >
         <span className="font-bold text-xl">Chat</span>
         <div className="relative">
@@ -241,14 +261,14 @@ export default function UserListChat() {
                 <div className="flex justify-between items-center p-4 border-b border-gray-200">
                   <h2 className="font-bold text-xl">Messages</h2>
                   <div className="flex gap-5">
-                    <button
-                      onClick={() => {
-                        setShowHelpChat(true);
-                      }}
-                      className="border border-gray-400 rounded-xl px-4"
-                    >
-                      Need Help?
-                    </button>
+                     <button
+                       onClick={() => {
+                         setShowHelpChat(true);
+                       }}
+                       className="border border-[#2c8068] text-[#2c8068] rounded-xl px-4 hover:bg-[#2c8068] hover:text-white transition-colors"
+                     >
+                       Need Help?
+                     </button>
                     <button
                       onClick={() => setShowChat(false)}
                       className="p-2 text-gray-600 hover:text-gray-900 rounded-full hover:bg-gray-100"
@@ -352,14 +372,15 @@ export default function UserListChat() {
                           <Window>
                             <div className="flex justify-between items-center p-2 border-b border-gray-200">
                               <ChannelHeader />
-                              <button
-                                onClick={startVideoCall}
-                                className="flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500 text-white hover:bg-blue-600"
-                                title="Start Video Call"
-                              >
-                                <BiVideo size={20} />
-                                <span>Call</span>
-                              </button>
+                               <button
+                                 onClick={startVideoCall}
+                                 className="flex items-center gap-2 px-4 py-2 rounded-full text-white hover:opacity-90 transition-opacity"
+                                 style={{ backgroundColor: '#2c8068' }}
+                                 title="Start Video Call"
+                               >
+                                 <BiVideo size={20} />
+                                 <span>Call</span>
+                               </button>
                             </div>
                             <MessageList />
                             <MessageInput />
