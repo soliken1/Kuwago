@@ -182,25 +182,29 @@ export default function SelectedLoan({
                 <div className="justify-between flex">
                   {" "}
                   <button
-                    className={`${termsOfMonths === 3 ? "bg-green-500" : ""}`}
+                    className=""
+                    style={{ backgroundColor: termsOfMonths === 3 ? '#85d4a4' : 'transparent' }}
                     onClick={() => setTermsOfMonths(3)}
                   >
                     3 Months
                   </button>
                   <button
-                    className={`${termsOfMonths === 6 ? "bg-green-500" : ""}`}
+                    className=""
+                    style={{ backgroundColor: termsOfMonths === 6 ? '#85d4a4' : 'transparent' }}
                     onClick={() => setTermsOfMonths(6)}
                   >
                     6 Months
                   </button>
                   <button
-                    className={`${termsOfMonths === 9 ? "bg-green-500" : ""}`}
+                    className=""
+                    style={{ backgroundColor: termsOfMonths === 9 ? '#85d4a4' : 'transparent' }}
                     onClick={() => setTermsOfMonths(9)}
                   >
                     9 Months
                   </button>
                   <button
-                    className={`${termsOfMonths === 12 ? "bg-green-500" : ""}`}
+                    className=""
+                    style={{ backgroundColor: termsOfMonths === 12 ? '#85d4a4' : 'transparent' }}
                     onClick={() => setTermsOfMonths(12)}
                   >
                     12 Months
@@ -265,8 +269,8 @@ export default function SelectedLoan({
                   onClick={handleApprove}
                   className="px-4 py-2 text-sm font-medium rounded-md text-white transition"
                   style={{ backgroundColor: '#85d4a4' }}
-                  onMouseEnter={(e) => e.target.style.backgroundColor = '#6bc48a'}
-                  onMouseLeave={(e) => e.target.style.backgroundColor = '#85d4a4'}
+                  onMouseEnter={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#6bc48a'}
+                  onMouseLeave={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#85d4a4'}
                 >
                   Approve
                 </button>

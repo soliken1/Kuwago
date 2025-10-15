@@ -72,82 +72,73 @@ export default function LoginForm() {
         onClose={() => setShowModal(false)}
       />
       <div className="flex flex-col items-center w-full bg-black/25 justify-center min-h-screen p-4 poppins-normal">
-        <div className="flex w-full max-w-4xl bg-white rounded-xl shadow-md overflow-hidden">
+        <div className="flex w-[800px] h-[500px] bg-white rounded-xl shadow-md overflow-hidden">
           {/* LEFT SIDE: FORM - 1/2 width */}
           <form
             onSubmit={handleSubmit}
             className="flex flex-col w-full sm:w-1/2 p-8 border-r border-gray-200 space-y-6 "
           >
             <h2 className="poppins-bold pt-6 mb-12 text-4xl text-center text-gray-700">
-              L o g i n !
+              Login
             </h2>
 
-            <div className="flex flex-col space-y-1">
-              <label
-                htmlFor="email"
-                className="text-sm text-gray-600 pl-3 pt-1 "
-              >
-                Email
-              </label>
+            <div className="flex flex-col space-y-4">
               <input
                 type="email"
                 id="email"
-                placeholder="Enter your email"
-                className="px-4 mx-4 py-2 border-2 border-black rounded-4xl focus:outline-none focus:ring-1 focus:ring-gray-400"
+                placeholder="Username"
+                className="px-4 py-3 border border-gray-300 rounded-2xl focus:outline-none focus:border-gray-400 bg-white"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
               />
-            </div>
 
-            <div className="flex flex-col space-y-1">
-              <label
-                htmlFor="password"
-                className="text-sm text-gray-600 pl-3 pt-1"
-              >
-                Password
-              </label>
               <input
                 type="password"
                 id="password"
-                placeholder="Enter your password"
-                className="px-4 mx-4 py-2 border-2 border-black rounded-4xl focus:outline-none focus:ring-1 focus:ring-gray-400"
+                placeholder="Password"
+                className="px-4 py-3 border border-gray-300 rounded-2xl focus:outline-none focus:border-gray-400 bg-white"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
-            </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="cursor-pointer py-2 my-8 mx-4 shadow-2xl text-white font-semibold rounded-4xl transition duration-200"
-              style={{ backgroundColor: '#85d4a4' }}
-              onMouseEnter={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#6bc48a'}
-              onMouseLeave={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#85d4a4'}
-            >
-              {loading ? "Logging in..." : "Login"}
-            </button>
+              <div className="flex justify-end">
+                <Link
+                  href="/forgotpassword"
+                  className="text-sm"
+                  style={{ color: '#85d4a4' }}
+                  onMouseEnter={(e) => (e.target as HTMLElement).style.color = '#6bc48a'}
+                  onMouseLeave={(e) => (e.target as HTMLElement).style.color = '#85d4a4'}
+                >
+                  Forgot Password?
+                </Link>
+              </div>
 
-            <p className="text-center text-sm text-gray-600">
-              Don&apos;t have an account?{" "}
-              <Link
-                href="/register"
-                className="poppins-bold"
-                style={{ color: '#85d4a4' }}
-                onMouseEnter={(e) => (e.target as HTMLElement).style.color = '#6bc48a'}
-                onMouseLeave={(e) => (e.target as HTMLElement).style.color = '#85d4a4'}
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-3 text-white font-bold rounded-2xl transition duration-200 mt-6"
+                style={{ backgroundColor: '#85d4a4' }}
+                onMouseEnter={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#6bc48a'}
+                onMouseLeave={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#85d4a4'}
               >
-                Register
-              </Link>
-            </p>
+                {loading ? "Logging in..." : "Login"}
+              </button>
 
-            <Link
-              href="/forgotpassword"
-              className="poppins-bold pt-6 text-sm text-black text-center"
-            >
-              Forgot Password?
-            </Link>
+              <p className="text-center text-sm text-gray-600 mt-4">
+                Don&apos;t have an account?{" "}
+                <Link
+                  href="/register"
+                  className="poppins-bold"
+                  style={{ color: '#85d4a4' }}
+                  onMouseEnter={(e) => (e.target as HTMLElement).style.color = '#6bc48a'}
+                  onMouseLeave={(e) => (e.target as HTMLElement).style.color = '#85d4a4'}
+                >
+                  Register
+                </Link>
+              </p>
+            </div>
           </form>
 
           {/* RIGHT SIDE: IMAGE - 1/2 width */}

@@ -72,8 +72,8 @@ export default function RegisterForm() {
 
   return (
     <div className="flex flex-col items-center w-full bg-black/25 justify-center min-h-screen p-4 poppins-normal">
-      <div className="flex w-full max-w-5xl bg-white rounded-xl shadow-md overflow-hidden min-h-[600px]">
-        {/* RIGHT SIDE: IMAGE - 1/2 width */}
+      <div className="flex w-[820px] h-[650px] bg-white rounded-xl shadow-md overflow-hidden">
+        {/* LEFT SIDE: IMAGE - 1/2 width */}
         <div className="hidden sm:block sm:w-1/2 relative min-h-[300px]">
           <Image
             src={RegisterVector}
@@ -83,61 +83,54 @@ export default function RegisterForm() {
             priority
           />
         </div>
+        {/* RIGHT SIDE: FORM - 1/2 width */}
         <form
           onSubmit={handleSubmit}
-          className="flex flex-col justify-center w-full sm:w-1/2 px-6 border-r border-gray-200 space-y-3"
+          className="flex flex-col w-full sm:w-1/2 p-8 border-l border-gray-200 space-y-6"
         >
-          <h2 className="poppins-bold pt-6 mb-4 text-4xl text-center text-gray-700">
+          <h2 className="poppins-bold pt-6 mb-12 text-4xl text-center text-gray-700">
             Create Account
           </h2>
 
-          <div className="grid grid-cols-2">
-            {["firstName", "lastName"].map((field) => (
-              <div key={field} className="flex flex-col">
-                <label htmlFor={field} className="text-sm text-gray-600 pl-3">
-                  {field === "firstName" ? "First Name" : "Last Name"}
-                </label>
+          <div className="flex flex-col space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              {["firstName", "lastName"].map((field) => (
                 <input
+                  key={field}
                   type="text"
                   id={field}
                   name={field}
-                  placeholder={placeholderMap[field]}
-                  className="px-4 mx-4 py-2 border-2 border-black rounded-4xl focus:outline-none focus:ring-1 focus:ring-gray-400"
+                  placeholder={field === "firstName" ? "First Name" : "Last Name"}
+                  className="px-4 py-3 border border-gray-300 rounded-2xl focus:outline-none focus:border-gray-400 bg-white"
                   value={formData[field as keyof typeof formData]}
                   onChange={handleChange}
                   required
                 />
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
 
-          {["email", "username", "phoneNumber", "password"].map((field) => (
-            <div key={field} className="flex flex-col">
-              <label htmlFor={field} className="text-sm text-gray-600 pl-3">
-                {field === "phoneNumber"
-                  ? "Phone Number"
-                  : field.charAt(0).toUpperCase() + field.slice(1)}
-              </label>
+            {["email", "username", "phoneNumber", "password"].map((field) => (
               <input
+                key={field}
                 type={field === "password" ? "password" : "text"}
                 id={field}
                 name={field}
-                placeholder={placeholderMap[field]}
-                className="px-4 mx-4 py-2 border-2 border-black rounded-4xl focus:outline-none focus:ring-1 focus:ring-gray-400"
+                placeholder={field === "phoneNumber" ? "Phone Number" : field.charAt(0).toUpperCase() + field.slice(1)}
+                className="px-4 py-3 border border-gray-300 rounded-2xl focus:outline-none focus:border-gray-400 bg-white"
                 value={formData[field as keyof typeof formData]}
                 onChange={handleChange}
                 required
               />
-            </div>
-          ))}
+            ))}
+          </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="cursor-pointer py-2 mt-6 mx-4 shadow-2xl text-white font-semibold rounded-4xl transition duration-200"
+            className="w-full py-3 text-white font-bold rounded-2xl transition duration-200 mt-6"
             style={{ backgroundColor: '#85d4a4' }}
-            onMouseEnter={(e) => e.target.style.backgroundColor = '#6bc48a'}
-            onMouseLeave={(e) => e.target.style.backgroundColor = '#85d4a4'}
+            onMouseEnter={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#6bc48a'}
+            onMouseLeave={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#85d4a4'}
           >
             {loading ? "Registering..." : "Register"}
           </button>
@@ -190,8 +183,8 @@ export default function RegisterForm() {
               href="/login"
               className="poppins-bold"
               style={{ color: '#85d4a4' }}
-              onMouseEnter={(e) => e.target.style.color = '#6bc48a'}
-              onMouseLeave={(e) => e.target.style.color = '#85d4a4'}
+              onMouseEnter={(e) => (e.target as HTMLElement).style.color = '#6bc48a'}
+              onMouseLeave={(e) => (e.target as HTMLElement).style.color = '#85d4a4'}
             >
               Sign in
             </Link>

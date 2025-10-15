@@ -19,8 +19,8 @@ export default function Users() {
           onClick={() => setIsModalOpen(true)}
           className="px-4 py-2 text-white rounded"
           style={{ backgroundColor: '#85d4a4' }}
-          onMouseEnter={(e) => e.target.style.backgroundColor = '#6bc48a'}
-          onMouseLeave={(e) => e.target.style.backgroundColor = '#85d4a4'}
+          onMouseEnter={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#6bc48a'}
+          onMouseLeave={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#85d4a4'}
         >
           Register User
         </button>
