@@ -7,7 +7,7 @@ export const useFetchApprovedLoans = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  const submitLoanRequest = async (UID: any) => {
+  const submitLoanRequest = async (loanStatus: string, borrowerUid: string) => {
     setLoading(true);
     setError(null);
     setSuccess(false);
@@ -15,9 +15,12 @@ export const useFetchApprovedLoans = () => {
     try {
       const token = getCookie("session_token");
 
-      const response = await axios.post("/proxy/Loan/FilterAgreedLoans", UID, {
+      const response = await axios.get("/proxy/Loan/FilterAgreedLoans", {
+        params: {
+          loanStatus,
+          borrowerUid,
+        },
         headers: {
-          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
       });

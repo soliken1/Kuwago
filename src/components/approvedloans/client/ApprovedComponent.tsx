@@ -33,7 +33,7 @@ export default function ApprovedComponent() {
 
       try {
         const { uid } = JSON.parse(storedUser);
-        const response = await submitLoanRequest({ uid });
+        const response = await submitLoanRequest("Approved", uid);
 
         if (response?.data?.length) {
           const loans = response.data.map((loan: any) => ({
@@ -130,9 +130,7 @@ export default function ApprovedComponent() {
                 </td>
               </tr>
             )}
-            {approvedLoans
-              .filter((loan: any) => loan.loanStatus === "Approved")
-              .map((loan) => (
+            {approvedLoans.map((loan) => (
                 <tr key={loan.agreedLoanID} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
