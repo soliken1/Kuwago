@@ -38,9 +38,9 @@ export default function ForgotPasswordForm() {
   return (
     <>
       <div className="flex flex-col items-center w-full bg-black/25 justify-center min-h-screen p-4 poppins-normal">
-        <div className="flex w-full max-w-4xl bg-white rounded-xl shadow-md overflow-hidden">
+        <div className="flex w-[800px] h-[500px] bg-white rounded-xl shadow-md overflow-hidden">
           {/* LEFT SIDE: IMAGE - 1/2 width */}
-          <div className="hidden sm:block sm:w-1/2 relative min-h-[500px]">
+          <div className="hidden sm:block sm:w-1/2 relative min-h-[300px]">
             <Image
               src={ForgotPassVector}
               alt="Forgot Password Vector"
@@ -52,22 +52,17 @@ export default function ForgotPasswordForm() {
           {/* RIGHT SIDE: FORM - 1/2 width */}
           <form
             onSubmit={handleSubmit}
-            className="flex flex-col w-full sm:w-1/2 p-12 border-l border-gray-200 space-y-6 min-h-[500px] justify-center"
+            className="flex flex-col w-full sm:w-1/2 p-8 border-l border-gray-200 space-y-6"
           >
-            <h2 className="poppins-bold pt-6 mb-12 text-4xl text-center text-gray-700">
+            <h2 className="poppins-bold pt-6 mb-4 text-4xl text-center text-gray-700">
               Forgot Password
             </h2>
-            <p className="text-sm text-gray-600 text-center mb-4">
+            <p className="text-sm text-gray-600 text-center mb-10">
               Enter your email and we&apos;ll send you the reset verification
               link.
             </p>
-            <div className="flex flex-col space-y-1 py-4">
-              <label
-                htmlFor="email"
-                className="text-sm text-gray-600 pl-3 pt-1 "
-              >
-                Email
-              </label>
+
+            <div className="flex flex-col space-y-4">
               <input
                 type="email"
                 id="email"
@@ -75,17 +70,17 @@ export default function ForgotPasswordForm() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="px-4 mx-4 py-2 border-2 border-black rounded-4xl focus:outline-none focus:ring-1 focus:ring-gray-400"
+                className="px-4 py-3 border border-gray-300 rounded-2xl focus:outline-none focus:border-gray-400 bg-white"
               />
             </div>
             <button
               type="submit"
               disabled={loading}
               onClick={() => setSubject("Kuwago Reset Password")}
-              className="cursor-pointer py-2 my-8 mx-4 shadow-2xl text-white font-semibold rounded-4xl transition duration-200"
+              className="w-full py-3 text-white font-bold rounded-2xl transition duration-200 mt-6"
               style={{ backgroundColor: '#85d4a4' }}
-              onMouseEnter={(e) => e.target.style.backgroundColor = '#6bc48a'}
-              onMouseLeave={(e) => e.target.style.backgroundColor = '#85d4a4'}
+              onMouseEnter={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#6bc48a'}
+              onMouseLeave={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#85d4a4'}
             >
               {loading ? "Please Wait..." : "Send Password Link"}
             </button>
@@ -105,12 +100,18 @@ export default function ForgotPasswordForm() {
             {error && (
               <p className="text-red-500 text-sm text-center">{error}</p>
             )}
-            <Link
-              href="/login"
-              className="poppins-bold pt-6 text-sm text-black text-center"
-            >
-              Back to Login
-            </Link>
+            <p className="text-center text-sm text-gray-600 mt-4">
+              Remember your password?{" "}
+              <Link
+                href="/login"
+                className="poppins-bold"
+                style={{ color: '#85d4a4' }}
+                onMouseEnter={(e) => (e.target as HTMLElement).style.color = '#6bc48a'}
+                onMouseLeave={(e) => (e.target as HTMLElement).style.color = '#85d4a4'}
+              >
+                Back to Login
+              </Link>
+            </p>
           </form>
         </div>
       </div>

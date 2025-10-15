@@ -21,7 +21,7 @@ export default function Home() {
         <p className="px-4 lexend-semibold text-xs sm:text-xs md:text-base lg:text-lg text-gray-600">
           Your trusted partner in smart, simple, and secure lending.
         </p>
-        <div className="flex justify-center gap-4">
+        <div className="flex justify-center">
           <Link
             href="/login"
             className="poppins-normal px-12 py-2 mx-4 text-white rounded-xl transition"
@@ -33,7 +33,7 @@ export default function Home() {
           </Link>
           <Link
             href="/register"
-            className="poppins-normal px-12 py-2 border mx-4 text-black rounded-xl transition"
+            className="poppins-normal px-12 py-2 border mx-4 text-gray-700 rounded-xl transition"
             style={{ borderColor: '#85d4a4' }}
             onMouseEnter={(e) => (e.target as HTMLElement).style.backgroundColor = '#f0f9f4'}
             onMouseLeave={(e) => (e.target as HTMLElement).style.backgroundColor = 'transparent'}
