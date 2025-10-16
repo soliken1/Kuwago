@@ -33,8 +33,8 @@ const IncomingCallModal: React.FC<IncomingCallModalProps> = ({
             onClick={onAccept}
             className="text-white px-4 py-2 rounded-lg"
             style={{ backgroundColor: '#85d4a4' }}
-            onMouseEnter={(e) => e.target.style.backgroundColor = '#6bc48a'}
-            onMouseLeave={(e) => e.target.style.backgroundColor = '#85d4a4'}
+            onMouseEnter={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#6bc48a'}
+            onMouseLeave={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#85d4a4'}
           >
             Accept
           </button>
