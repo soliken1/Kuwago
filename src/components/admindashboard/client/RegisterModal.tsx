@@ -95,8 +95,8 @@ export default function RegisterModal({ isOpen, onClose }: Props) {
               disabled={loading}
               className="px-4 py-2 rounded text-white"
               style={{ backgroundColor: '#85d4a4' }}
-              onMouseEnter={(e) => e.target.style.backgroundColor = '#6bc48a'}
-              onMouseLeave={(e) => e.target.style.backgroundColor = '#85d4a4'}
+              onMouseEnter={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#6bc48a'}
+              onMouseLeave={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#85d4a4'}
             >
               {loading ? "Registering..." : "Register"}
             </button>
