@@ -48,6 +48,7 @@ export default function AppliedLendings({ onSelect }: Props) {
               highestEducation: loan.highestEducation,
               employmentInformation: loan.employmentInformation,
               residentType: loan.residentType,
+              detailedAddress: loan.detailedAddress,
               loanType: loan.loanType,
               loanPurpose: loan.loanPurpose || "Unknown",
               loanAmount: loan.loanAmount,

@@ -132,7 +132,7 @@ export default function LoanDetailsModal({ isOpen, onClose, application }: LoanD
                 label="Employment Info"
                 value={application.employmentInformation}
               />
-              <DetailItem label="Address" value={application.residentType} />
+              <DetailItem label="Address" value={application.detailedAddress} />
             </div>
           </div>
         </div>

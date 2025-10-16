@@ -5,6 +5,7 @@ export interface Application {
   highestEducation: string;
   employmentInformation: string;
   residentType: string;
+  detailedAddress: string;
   loanType: string;
   loanPurpose: string;
   loanAmount: string;
