@@ -26,6 +26,8 @@ interface LoginResponse {
 interface UserData {
   uid: string;
   fullName?: string;
+  firstName?: string;
+  lastName?: string;
   email?: string;
   phoneNumber?: string;
   username?: string;

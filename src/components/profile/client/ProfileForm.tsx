@@ -7,7 +7,7 @@ import sendEmailWithLink from "@/utils/sendEmailWithLink";
 
 export default function ProfileForm() {
   const [isEditing, setIsEditing] = useState(false);
-  const { profile, isLoading, updateProfile, error } = useProfile();
+  const { profile, isLoading, updateProfile, error, fetchUserData } = useProfile();
   const [formData, setFormData] = useState<UserProfile>({
     firstName: "",
     lastName: "",
@@ -19,6 +19,8 @@ export default function ProfileForm() {
   });
   const [storedUser, setStoredUser] = useState<{
     fullName?: string;
+    firstName?: string;
+    lastName?: string;
     profilePicture?: string;
     email?: string;
     phoneNumber?: string;
@@ -34,8 +36,26 @@ export default function ProfileForm() {
   useEffect(() => {
     const user = localStorage.getItem("user");
     if (user) {
-      setStoredUser(JSON.parse(user));
+      const parsedUser = JSON.parse(user);
+      setStoredUser(parsedUser);
+      
+      // Populate formData with storedUser data if profile is not available
+      if (!profile) {
+        setFormData(prev => ({
+          ...prev,
+          firstName: parsedUser.firstName || "",
+          lastName: parsedUser.lastName || "",
+          email: parsedUser.email || "",
+          phoneNumber: parsedUser.phoneNumber || "",
+          profilePicture: parsedUser.profilePicture || "",
+        }));
+      }
     }
+  }, [profile]);
+
+  // Fetch user data from API on component mount
+  useEffect(() => {
+    fetchUserData();
   }, []);
 
   const handleInputChange = (
