@@ -64,6 +64,56 @@ export const useProfile = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const fetchUserData = async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const token = getCookie("session_token");
+      if (!token) throw new Error("No authentication token found");
+
+      const response = await axios.get("/proxy/Auth/GetUserLoggedInInfo", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.data?.success && response.data?.data) {
+        const userData = response.data.data;
+        
+        // Update profile state with fetched data
+        setProfile({
+          firstName: userData.firstName || "",
+          lastName: userData.lastName || "",
+          email: userData.email || "",
+          phoneNumber: userData.phoneNumber || "",
+          profilePicture: userData.profilePicture || "",
+          newPassword: "",
+          confirmPassword: "",
+        });
+
+        // Update localStorage with fresh data
+        localStorage.setItem("user", JSON.stringify(userData));
+      }
+    } catch (err: unknown) {
+      let message = "Failed to fetch user data";
+      
+      if (err && typeof err === "object" && "response" in err) {
+        const error = err as {
+          response?: { data?: { message?: string } };
+          message?: string;
+        };
+        message = error.response?.data?.message || error.message || message;
+      } else if (err instanceof Error) {
+        message = err.message;
+      }
+
+      setError(message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const updateProfile = async (
     updatedProfile: Partial<UserProfile>
   ): Promise<true | false | EmailChangeResponse> => {
@@ -220,5 +270,6 @@ export const useProfile = () => {
     error,
     updateProfile,
     setProfile,
+    fetchUserData,
   };
 };
