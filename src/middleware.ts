@@ -73,9 +73,8 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL("/", request.url));
     }
 
-    if (pathname.startsWith("/profile") && role !== "Borrower") {
-      return NextResponse.redirect(new URL("/", request.url));
-    }
+    // Profile page is accessible to all authenticated users
+    // Removed role restriction to allow all users to access their profile
   }
 
   return NextResponse.next();
