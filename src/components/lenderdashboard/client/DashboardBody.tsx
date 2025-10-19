@@ -6,6 +6,7 @@ import { chatClient } from "@/utils/streamClient";
 import { useUpdateLoanStatus } from "@/hooks/lend/requestUpdateLoan";
 import SelectedLoan from "./SelectedLoan";
 import { IoEyeOutline } from "react-icons/io5";
+import { LoanWithUserInfo } from "@/types/lendings";
 
 const statusColor = {
   Pending: "bg-yellow-100 text-yellow-700 border border-yellow-300",
@@ -20,8 +21,8 @@ const ITEMS_PER_PAGE = 10;
 export default function DashboardBody() {
   const { updateLoanStatus } = useUpdateLoanStatus();
   const [showModal, setShowModal] = useState(false);
-  const [selectedLoan, setSelectedLoan] = useState<any | null>(null);
-  const [loans, setLoans] = useState<any[]>([]);
+  const [selectedLoan, setSelectedLoan] = useState<LoanWithUserInfo | null>(null);
+  const [loans, setLoans] = useState<LoanWithUserInfo[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const { fetchAllLoans, loading } = useFetchAllLoans();
@@ -48,7 +49,7 @@ export default function DashboardBody() {
     if (user) setStoredUser(JSON.parse(user));
   }, []);
 
-  const openModal = (loan: any) => {
+  const openModal = (loan: LoanWithUserInfo) => {
     setSelectedLoan(loan);
     setShowModal(true);
   };
@@ -59,6 +60,8 @@ export default function DashboardBody() {
   };
 
   const sendMessage = async () => {
+    if (!selectedLoan) return;
+    
     await sendLoanApplicationMessage({
       borrowerId: selectedLoan.loanInfo.uid,
       lenderId: storedUser.uid,

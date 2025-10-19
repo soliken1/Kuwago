@@ -1,9 +1,13 @@
 "use client";
 import toast from "react-hot-toast";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import X from "../../../../assets/actions/X";
 import sendDocumentLink from "@/utils/document/send";
+import { LoanWithUserInfo } from "@/types/lendings";
+import { useFetchPaymentSummary, PaymentSummary } from "@/hooks/lend/fetchPaymentSummary";
+import { useFetchPaymentSchedule, PaymentSchedule } from "@/hooks/lend/fetchPaymentSchedule";
+import { useRequestPayment, PaymentRequest } from "@/hooks/lend/requestPayment";
 
 const statusColor = {
   Pending: "bg-yellow-100 text-yellow-700 border border-yellow-300",
@@ -13,7 +17,7 @@ const statusColor = {
   Completed: "bg-gray-100 text-gray-700 border border-gray-300",
 };
 interface Props {
-  selectedLoan: any;
+  selectedLoan: LoanWithUserInfo;
   closeModal: () => void;
   sendMessage: () => void;
   updateLoanStatus: (
@@ -24,7 +28,12 @@ interface Props {
     termsofMonths: number,
     paymentType: number
   ) => void;
-  storedUser: any;
+  storedUser: {
+    uid?: string;
+    username?: string;
+    email?: string;
+    fullname?: string;
+  };
 }
 
 export default function SelectedLoan({
@@ -43,6 +52,55 @@ export default function SelectedLoan({
   const [showPaymentModal, setShowPaymentModal] = useState<boolean>(false);
   const [paymentAmount, setPaymentAmount] = useState<number>(0);
   const [showPaymentHistoryModal, setShowPaymentHistoryModal] = useState<boolean>(false);
+  
+  // Payment data states
+  const [paymentSummary, setPaymentSummary] = useState<PaymentSummary | null>(null);
+  const [paymentSchedule, setPaymentSchedule] = useState<PaymentSchedule | null>(null);
+  const { fetchPaymentSummary, loading: summaryLoading } = useFetchPaymentSummary();
+  const { fetchPaymentSchedule, loading: scheduleLoading } = useFetchPaymentSchedule();
+  const { submitPayment, loading: paymentLoading } = useRequestPayment();
+  const hasFetchedPaymentData = useRef(false);
+
+  // Fetch payment data when loan is Approved or Completed
+  useEffect(() => {
+    const fetchPaymentData = async () => {
+      if (
+        (selectedLoan.loanInfo.loanStatus === "Approved" || 
+         selectedLoan.loanInfo.loanStatus === "Completed") &&
+        !hasFetchedPaymentData.current
+      ) {
+        // Check for payableID in different possible locations
+        const payableID = selectedLoan.loanInfo.payableID || 
+                         selectedLoan.loanInfo.payable_id || 
+                         selectedLoan.loanInfo.payableId ||
+                         selectedLoan.payableID ||
+                         selectedLoan.payable_id ||
+                         selectedLoan.payableId;
+        
+        if (payableID) {
+          hasFetchedPaymentData.current = true;
+          try {
+            // Fetch payment summary
+            const summary = await fetchPaymentSummary(payableID);
+            setPaymentSummary(summary);
+
+            // Fetch payment schedule
+            const schedule = await fetchPaymentSchedule(
+              selectedLoan.userInfo.uid,
+              payableID
+            );
+            setPaymentSchedule(schedule);
+          } catch (error) {
+            console.error("Failed to fetch payment data:", error);
+            toast.error("Failed to load payment information");
+            hasFetchedPaymentData.current = false; // Reset on error to allow retry
+          }
+        }
+      }
+    };
+
+    fetchPaymentData();
+  }, [selectedLoan.loanInfo.loanStatus, selectedLoan.loanInfo.payableID, selectedLoan.userInfo.uid]);
   const handleApprove = async () => {
     const confirm = window.confirm(
       `Are you sure you want to approve this loan with ₱${finalAmount}, an Interest of ${interestRate}%, Terms of Month of ${termsOfMonths} Months and a Payment Method of ${
@@ -103,8 +161,8 @@ export default function SelectedLoan({
 
       const url = `https://app.pandadoc.com/a/#/documents/${response.data.uuid}`;
       await sendDocumentLink(
-        storedUser.email,
-        storedUser.fullname,
+        storedUser.email || "",
+        storedUser.fullname || "",
         url,
         `Generated Document For ${selectedLoan.loanInfo.firstName} ${selectedLoan.loanInfo.lastName}`
       );
@@ -131,17 +189,58 @@ export default function SelectedLoan({
     toast.error("Loan denied");
   };
 
-  const handlePaymentSubmit = () => {
+  const handlePaymentSubmit = async () => {
     if (paymentAmount <= 0) {
       toast.error("Please enter a valid payment amount");
       return;
     }
-    
-    // TODO: Replace with real API call to record payment
-    toast.success(`Payment of ₱${paymentAmount.toLocaleString()} recorded successfully`);
-    setShowPaymentModal(false);
-    setPaymentAmount(0);
-    // window.location.reload(); // Uncomment when real API is implemented
+
+    if (!selectedLoan.loanInfo.payableID) {
+      toast.error("No payable ID found for this loan");
+      return;
+    }
+
+    try {
+      const paymentData: PaymentRequest = {
+        payableID: selectedLoan.loanInfo.payableID,
+        borrowerUID: selectedLoan.userInfo.uid,
+        amountPaid: paymentAmount,
+        paymentDate: new Date().toISOString(),
+        notes: `Payment recorded by lender`,
+        paymentType: String(selectedLoan.loanInfo.paymentType || "Cash")
+      };
+
+      await submitPayment(paymentData);
+      
+      toast.success(`Payment of ₱${paymentAmount.toLocaleString()} recorded successfully`);
+      setShowPaymentModal(false);
+      setPaymentAmount(0);
+      
+      // Refresh payment data
+      hasFetchedPaymentData.current = false;
+      setPaymentSummary(null);
+      setPaymentSchedule(null);
+      
+      // Trigger refetch of payment data
+      const payableID = selectedLoan.loanInfo.payableID;
+      if (payableID) {
+        try {
+          const summary = await fetchPaymentSummary(payableID);
+          setPaymentSummary(summary);
+
+          const schedule = await fetchPaymentSchedule(
+            selectedLoan.userInfo.uid,
+            payableID
+          );
+          setPaymentSchedule(schedule);
+        } catch (error) {
+          console.error("Failed to refresh payment data:", error);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to submit payment:", error);
+      toast.error("Failed to record payment. Please try again.");
+    }
   };
 
   return (
@@ -363,19 +462,55 @@ export default function SelectedLoan({
                   <div className="flex flex-col">
                     <span className="text-sm text-gray-500">Loan Amount</span>
                     <span className="mt-1 text-gray-800 font-medium">
-                      ₱{selectedLoan.loanInfo.loanAmount.toLocaleString()}
+                      {summaryLoading ? (
+                        "Loading..."
+                      ) : paymentSummary ? (
+                        `₱${paymentSummary.totalPayableAmount.toLocaleString()}`
+                      ) : (
+                        `₱${selectedLoan.loanInfo.loanAmount.toLocaleString()}`
+                      )}
                     </span>
                   </div>
                   <div className="flex flex-col">
                     <span className="text-sm text-gray-500">Total Paid</span>
                     <span className="mt-1 text-gray-800 font-medium">
-                      ₱7,500.00
+                      {summaryLoading ? (
+                        "Loading..."
+                      ) : paymentSummary ? (
+                        `₱${paymentSummary.totalPaid.toLocaleString()}`
+                      ) : (
+                        "₱0.00"
+                      )}
                     </span>
                   </div>
                   <div className="flex flex-col">
                     <span className="text-sm text-gray-500">Remaining Balance</span>
                     <span className="mt-1 text-gray-800 font-medium">
-                      ₱2,500.00
+                      {summaryLoading ? (
+                        "Loading..."
+                      ) : paymentSummary ? (
+                        `₱${paymentSummary.remainingBalance.toLocaleString()}`
+                      ) : (
+                        `₱${selectedLoan.loanInfo.loanAmount.toLocaleString()}`
+                      )}
+                    </span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-sm text-gray-500">Monthly Payment</span>
+                    <span className="mt-1 text-gray-800 font-medium">
+                      {scheduleLoading ? (
+                        "Loading..."
+                      ) : paymentSchedule ? (
+                        `₱${paymentSchedule.monthlyPayment.toLocaleString()}`
+                      ) : (
+                        "N/A"
+                      )}
+                    </span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-sm text-gray-500">Payment Type</span>
+                    <span className="mt-1 text-gray-800 font-medium">
+                      {selectedLoan.loanInfo.paymentType || "N/A"}
                     </span>
                   </div>
                 </div>
@@ -396,46 +531,34 @@ export default function SelectedLoan({
                   </button>
                 </div>
                 <div className="grid gap-3">
-                  {/* TODO: Replace with real API data */}
-                  {/* Dummy data for Paid payments */}
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <p className="text-sm text-green-600 font-medium">Payment Date</p>
-                        <p className="text-gray-800 font-semibold">January 15, 2024</p>
+                  {scheduleLoading ? (
+                    <div className="text-center text-gray-500 py-4">Loading payments...</div>
+                  ) : paymentSchedule && paymentSchedule.paidDates.length > 0 ? (
+                    paymentSchedule.paidDates.map((date, index) => (
+                      <div key={`paid-${index}`} className="bg-green-50 border border-green-200 rounded-lg p-4">
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <p className="text-sm text-green-600 font-medium">Due Date</p>
+                            <p className="text-gray-800 font-semibold">
+                              {new Date(date).toLocaleDateString("en-US", {
+                                year: "numeric",
+                                month: "long",
+                                day: "numeric",
+                              })}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm text-green-600 font-medium">Amount Paid</p>
+                            <p className="text-green-700 font-bold text-lg">
+                              ₱{paymentSchedule.monthlyPayment.toLocaleString()}
+                            </p>
+                          </div>
+                        </div>
                       </div>
-                      <div className="text-right">
-                        <p className="text-sm text-green-600 font-medium">Amount Paid</p>
-                        <p className="text-green-700 font-bold text-lg">₱2,500.00</p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <p className="text-sm text-green-600 font-medium">Payment Date</p>
-                        <p className="text-gray-800 font-semibold">February 15, 2024</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm text-green-600 font-medium">Amount Paid</p>
-                        <p className="text-green-700 font-bold text-lg">₱2,500.00</p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <p className="text-sm text-green-600 font-medium">Payment Date</p>
-                        <p className="text-gray-800 font-semibold">March 15, 2024</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm text-green-600 font-medium">Amount Paid</p>
-                        <p className="text-green-700 font-bold text-lg">₱2,500.00</p>
-                      </div>
-                    </div>
-                  </div>
+                    ))
+                  ) : (
+                    <div className="text-center text-gray-500 py-4">No payments made yet</div>
+                  )}
                 </div>
               </div>
 
@@ -446,54 +569,55 @@ export default function SelectedLoan({
                     <span className="w-3 h-3 rounded-full bg-red-500"></span>
                     Unpaid Payments
                   </h3>
-                  <button
-                    onClick={() => setShowPaymentModal(true)}
-                    className="px-4 py-2 bg-[#2c8068] text-white rounded-lg hover:bg-[#1f5a4a] transition-colors text-sm font-medium"
-                  >
-                    Record Payment
-                  </button>
+                  {selectedLoan.loanInfo.paymentType === "Cash" && (
+                    <button
+                      onClick={() => setShowPaymentModal(true)}
+                      className="px-4 py-2 bg-[#2c8068] text-white rounded-lg hover:bg-[#1f5a4a] transition-colors text-sm font-medium"
+                    >
+                      Record Payment
+                    </button>
+                  )}
                 </div>
                 <div className="grid gap-3">
-                  {/* TODO: Replace with real API data */}
-                  {/* Dummy data for Unpaid payments */}
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <p className="text-sm text-red-600 font-medium">Due Date</p>
-                        <p className="text-gray-800 font-semibold">April 15, 2024</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm text-red-600 font-medium">Amount Due</p>
-                        <p className="text-red-700 font-bold text-lg">₱2,500.00</p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <p className="text-sm text-red-600 font-medium">Due Date</p>
-                        <p className="text-gray-800 font-semibold">May 15, 2024</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm text-red-600 font-medium">Amount Due</p>
-                        <p className="text-red-700 font-bold text-lg">₱2,500.00</p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <p className="text-sm text-red-600 font-medium">Due Date</p>
-                        <p className="text-gray-800 font-semibold">June 15, 2024</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm text-red-600 font-medium">Amount Due</p>
-                        <p className="text-red-700 font-bold text-lg">₱2,500.00</p>
-                      </div>
-                    </div>
-                  </div>
+                  {scheduleLoading ? (
+                    <div className="text-center text-gray-500 py-4">Loading schedule...</div>
+                  ) : paymentSchedule ? (
+                    (() => {
+                      // Filter out paid dates from scheduled dates
+                      const unpaidDates = paymentSchedule.scheduledDates.filter(
+                        (scheduledDate) => !paymentSchedule.paidDates.includes(scheduledDate)
+                      );
+                      
+                      return unpaidDates.length > 0 ? (
+                        unpaidDates.map((date, index) => (
+                          <div key={`unpaid-${index}`} className="bg-red-50 border border-red-200 rounded-lg p-4">
+                            <div className="flex justify-between items-center">
+                              <div>
+                                <p className="text-sm text-red-600 font-medium">Due Date</p>
+                                <p className="text-gray-800 font-semibold">
+                                  {new Date(date).toLocaleDateString("en-US", {
+                                    year: "numeric",
+                                    month: "long",
+                                    day: "numeric",
+                                  })}
+                                </p>
+                              </div>
+                              <div className="text-right">
+                                <p className="text-sm text-red-600 font-medium">Amount Due</p>
+                                <p className="text-red-700 font-bold text-lg">
+                                  ₱{paymentSchedule.monthlyPayment.toLocaleString()}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="text-center text-gray-500 py-4">All payments completed!</div>
+                      );
+                    })()
+                  ) : (
+                    <div className="text-center text-gray-500 py-4">No payment schedule available</div>
+                  )}
                 </div>
               </div>
             </div>
@@ -572,13 +696,6 @@ export default function SelectedLoan({
                   step="0.01"
                 />
               </div>
-
-              <div className="bg-gray-50 rounded-lg p-4">
-                <p className="text-sm text-gray-600">
-                  <strong>Note:</strong> This will record a payment for the selected loan. 
-                  The payment will be added to the borrower's payment history.
-                </p>
-              </div>
             </div>
 
             {/* Payment Modal Footer */}
@@ -591,9 +708,10 @@ export default function SelectedLoan({
               </button>
               <button
                 onClick={handlePaymentSubmit}
-                className="px-6 py-2 bg-[#2c8068] text-white rounded-lg hover:bg-[#1f5a4a] transition-colors"
+                disabled={paymentLoading}
+                className="px-6 py-2 bg-[#2c8068] text-white rounded-lg hover:bg-[#1f5a4a] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Record Payment
+                {paymentLoading ? "Recording..." : "Record Payment"}
               </button>
             </div>
           </div>
@@ -626,47 +744,40 @@ export default function SelectedLoan({
                   Payment Records
                 </h3>
                 
-                {/* TODO: Replace with real API data */}
-                {/* Dummy payment history data */}
                 <div className="grid gap-4">
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <p className="text-sm text-green-600 font-medium">Payment Date</p>
-                        <p className="text-gray-800 font-semibold">January 15, 2024</p>
+                  {summaryLoading ? (
+                    <div className="text-center text-gray-500 py-4">Loading payment history...</div>
+                  ) : paymentSummary && paymentSummary.payments.length > 0 ? (
+                    paymentSummary.payments.map((payment) => (
+                      <div key={payment.paymentID} className="bg-green-50 border border-green-200 rounded-lg p-4">
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <p className="text-sm text-green-600 font-medium">Payment Date</p>
+                            <p className="text-gray-800 font-semibold">
+                              {new Date(payment.paymentDate).toLocaleDateString("en-US", {
+                                year: "numeric",
+                                month: "long",
+                                day: "numeric",
+                              })}
+                            </p>
+                            {payment.notes && (
+                              <p className="text-xs text-gray-600 mt-2">
+                                <span className="font-medium">Notes:</span> {payment.notes}
+                              </p>
+                            )}
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm text-green-600 font-medium">Amount Paid</p>
+                            <p className="text-green-700 font-bold text-lg">
+                              ₱{payment.amountPaid.toLocaleString()}
+                            </p>
+                          </div>
+                        </div>
                       </div>
-                      <div className="text-right">
-                        <p className="text-sm text-green-600 font-medium">Amount Paid</p>
-                        <p className="text-green-700 font-bold text-lg">₱2,500.00</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <p className="text-sm text-green-600 font-medium">Payment Date</p>
-                        <p className="text-gray-800 font-semibold">February 15, 2024</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm text-green-600 font-medium">Amount Paid</p>
-                        <p className="text-green-700 font-bold text-lg">₱2,500.00</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <p className="text-sm text-green-600 font-medium">Payment Date</p>
-                        <p className="text-gray-800 font-semibold">March 15, 2024</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm text-green-600 font-medium">Amount Paid</p>
-                        <p className="text-green-700 font-bold text-lg">₱2,500.00</p>
-                      </div>
-                    </div>
-                  </div>
+                    ))
+                  ) : (
+                    <div className="text-center text-gray-500 py-4">No payment history available</div>
+                  )}
                 </div>
               </div>
             </div>

@@ -90,7 +90,7 @@ export default function LoginForm() {
               <input
                 type="email"
                 id="email"
-                placeholder="Username"
+                placeholder="Email"
                 className="px-4 py-3 border border-gray-300 rounded-2xl focus:outline-none focus:border-gray-400 bg-white"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}

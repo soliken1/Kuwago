@@ -1,14 +1,32 @@
 import { useState } from "react";
 import { getCookie } from "cookies-next";
 import axios, { AxiosError } from "axios";
-import { LoanWithUserInfo } from "@/types/lendings";
 
-export const useFetchAllLoans = () => {
+export interface Payment {
+  paymentID: string;
+  payableID: string;
+  borrowerUID: string;
+  amountPaid: number;
+  paymentDate: string;
+  notes: string;
+}
+
+export interface PaymentSummary {
+  payableID: string;
+  totalPayableAmount: number;
+  totalPaid: number;
+  remainingBalance: number;
+  isFullyPaid: boolean;
+  paymentCount: number;
+  payments: Payment[];
+}
+
+export const useFetchPaymentSummary = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  const fetchAllLoans = async (): Promise<LoanWithUserInfo[]> => {
+  const fetchPaymentSummary = async (payableID: string): Promise<PaymentSummary> => {
     setLoading(true);
     setError(null);
     setSuccess(false);
@@ -16,7 +34,7 @@ export const useFetchAllLoans = () => {
     try {
       const token = getCookie("session_token");
 
-      const response = await axios.get("/proxy/Loan/AllLoans", {
+      const response = await axios.get(`/proxy/Payments/summary/${payableID}`, {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
@@ -31,7 +49,7 @@ export const useFetchAllLoans = () => {
       if (axiosError.response && axiosError.response.data) {
         const message =
           (axiosError.response.data as any).message ||
-          "All Loan request failed.";
+          "Payment summary request failed.";
         setError(message);
       } else {
         setError(axiosError.message);
@@ -44,9 +62,10 @@ export const useFetchAllLoans = () => {
   };
 
   return {
-    fetchAllLoans,
+    fetchPaymentSummary,
     loading,
     error,
     success,
   };
 };
+
