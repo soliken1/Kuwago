@@ -40,6 +40,9 @@ export default function SelectedLoan({
   const [interestRate, setInterestRate] = useState<number>(0);
   const [termsOfMonths, setTermsOfMonths] = useState<number>(3);
   const [paymentType, setPaymentType] = useState<number>(1);
+  const [showPaymentModal, setShowPaymentModal] = useState<boolean>(false);
+  const [paymentAmount, setPaymentAmount] = useState<number>(0);
+  const [showPaymentHistoryModal, setShowPaymentHistoryModal] = useState<boolean>(false);
   const handleApprove = async () => {
     const confirm = window.confirm(
       `Are you sure you want to approve this loan with ₱${finalAmount}, an Interest of ${interestRate}%, Terms of Month of ${termsOfMonths} Months and a Payment Method of ${
@@ -126,6 +129,19 @@ export default function SelectedLoan({
     );
     window.location.reload();
     toast.error("Loan denied");
+  };
+
+  const handlePaymentSubmit = () => {
+    if (paymentAmount <= 0) {
+      toast.error("Please enter a valid payment amount");
+      return;
+    }
+    
+    // TODO: Replace with real API call to record payment
+    toast.success(`Payment of ₱${paymentAmount.toLocaleString()} recorded successfully`);
+    setShowPaymentModal(false);
+    setPaymentAmount(0);
+    // window.location.reload(); // Uncomment when real API is implemented
   };
 
   return (
@@ -246,9 +262,10 @@ export default function SelectedLoan({
                   </label>
                   <input
                     type="number"
-                    value={interestRate}
+                    value={interestRate === 0 ? "" : interestRate}
+                    placeholder="0"
                     className="w-full rounded-md border border-gray-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2c8068]"
-                    onChange={(e) => setInterestRate(Number(e.target.value))}
+                    onChange={(e) => setInterestRate(Number(e.target.value) || 0)}
                     min={0}
                   />
                 </div>
@@ -329,6 +346,158 @@ export default function SelectedLoan({
               </div>
             </div>
           )}
+
+          {/* Section 4: Payment Tracking (if Approved/Completed) */}
+          {(selectedLoan.loanInfo.loanStatus === "Approved" || selectedLoan.loanInfo.loanStatus === "Completed") && (
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <span className="inline-block w-2 h-5 rounded bg-green-400" />
+                <span className="font-semibold text-sm text-gray-700">
+                  Payment Tracking
+                </span>
+              </div>
+              
+              {/* Loan Information Section */}
+              <div className="mb-6">
+                <div className="grid grid-cols-2 gap-4 bg-gray-50 rounded-lg p-4">
+                  <div className="flex flex-col">
+                    <span className="text-sm text-gray-500">Loan Amount</span>
+                    <span className="mt-1 text-gray-800 font-medium">
+                      ₱{selectedLoan.loanInfo.loanAmount.toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-sm text-gray-500">Total Paid</span>
+                    <span className="mt-1 text-gray-800 font-medium">
+                      ₱7,500.00
+                    </span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-sm text-gray-500">Remaining Balance</span>
+                    <span className="mt-1 text-gray-800 font-medium">
+                      ₱2,500.00
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Paid Payments Section */}
+              <div className="mb-6">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                    <span className="w-3 h-3 rounded-full bg-green-500"></span>
+                    Paid Payments
+                  </h3>
+                  <button
+                    onClick={() => setShowPaymentHistoryModal(true)}
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
+                  >
+                    View Payment History
+                  </button>
+                </div>
+                <div className="grid gap-3">
+                  {/* TODO: Replace with real API data */}
+                  {/* Dummy data for Paid payments */}
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="text-sm text-green-600 font-medium">Payment Date</p>
+                        <p className="text-gray-800 font-semibold">January 15, 2024</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm text-green-600 font-medium">Amount Paid</p>
+                        <p className="text-green-700 font-bold text-lg">₱2,500.00</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="text-sm text-green-600 font-medium">Payment Date</p>
+                        <p className="text-gray-800 font-semibold">February 15, 2024</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm text-green-600 font-medium">Amount Paid</p>
+                        <p className="text-green-700 font-bold text-lg">₱2,500.00</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="text-sm text-green-600 font-medium">Payment Date</p>
+                        <p className="text-gray-800 font-semibold">March 15, 2024</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm text-green-600 font-medium">Amount Paid</p>
+                        <p className="text-green-700 font-bold text-lg">₱2,500.00</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Unpaid Payments Section */}
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                    <span className="w-3 h-3 rounded-full bg-red-500"></span>
+                    Unpaid Payments
+                  </h3>
+                  <button
+                    onClick={() => setShowPaymentModal(true)}
+                    className="px-4 py-2 bg-[#2c8068] text-white rounded-lg hover:bg-[#1f5a4a] transition-colors text-sm font-medium"
+                  >
+                    Record Payment
+                  </button>
+                </div>
+                <div className="grid gap-3">
+                  {/* TODO: Replace with real API data */}
+                  {/* Dummy data for Unpaid payments */}
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="text-sm text-red-600 font-medium">Due Date</p>
+                        <p className="text-gray-800 font-semibold">April 15, 2024</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm text-red-600 font-medium">Amount Due</p>
+                        <p className="text-red-700 font-bold text-lg">₱2,500.00</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="text-sm text-red-600 font-medium">Due Date</p>
+                        <p className="text-gray-800 font-semibold">May 15, 2024</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm text-red-600 font-medium">Amount Due</p>
+                        <p className="text-red-700 font-bold text-lg">₱2,500.00</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="text-sm text-red-600 font-medium">Due Date</p>
+                        <p className="text-gray-800 font-semibold">June 15, 2024</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm text-red-600 font-medium">Amount Due</p>
+                        <p className="text-red-700 font-bold text-lg">₱2,500.00</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Modal Footer */}
@@ -361,13 +530,159 @@ export default function SelectedLoan({
             selectedLoan.loanInfo.loanStatus === "Denied") && (
             <button
               onClick={sendMessage}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              className="px-6 py-2 bg-[#2c8068] text-white rounded-lg hover:bg-[#1f5a4a] transition-colors"
             >
               Send a Message
             </button>
           )}
         </div>
       </div>
+
+      {/* Payment Modal */}
+      {showPaymentModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full">
+            {/* Payment Modal Header */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <h2 className="text-xl font-bold text-gray-800">
+                Record Payment
+              </h2>
+              <button
+                onClick={() => setShowPaymentModal(false)}
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <X />
+              </button>
+            </div>
+
+            {/* Payment Modal Content */}
+            <div className="p-6 space-y-4">
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Payment Amount (₱)
+                </label>
+                <input
+                  type="number"
+                  value={paymentAmount === 0 ? "" : paymentAmount}
+                  placeholder="Enter payment amount"
+                  className="w-full rounded-md border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#2c8068]"
+                  onChange={(e) => setPaymentAmount(Number(e.target.value) || 0)}
+                  min={0}
+                  step="0.01"
+                />
+              </div>
+
+              <div className="bg-gray-50 rounded-lg p-4">
+                <p className="text-sm text-gray-600">
+                  <strong>Note:</strong> This will record a payment for the selected loan. 
+                  The payment will be added to the borrower's payment history.
+                </p>
+              </div>
+            </div>
+
+            {/* Payment Modal Footer */}
+            <div className="flex justify-end gap-3 p-6 border-t border-gray-200">
+              <button
+                onClick={() => setShowPaymentModal(false)}
+                className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handlePaymentSubmit}
+                className="px-6 py-2 bg-[#2c8068] text-white rounded-lg hover:bg-[#1f5a4a] transition-colors"
+              >
+                Record Payment
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Payment History Modal */}
+      {showPaymentHistoryModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[70] p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+            {/* Payment History Modal Header */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <h2 className="text-xl font-bold text-gray-800">
+                Payment History
+              </h2>
+              <button
+                onClick={() => setShowPaymentHistoryModal(false)}
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <X />
+              </button>
+            </div>
+
+            {/* Payment History Modal Content */}
+            <div className="p-6">
+
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                  <span className="w-3 h-3 rounded-full bg-green-500"></span>
+                  Payment Records
+                </h3>
+                
+                {/* TODO: Replace with real API data */}
+                {/* Dummy payment history data */}
+                <div className="grid gap-4">
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="text-sm text-green-600 font-medium">Payment Date</p>
+                        <p className="text-gray-800 font-semibold">January 15, 2024</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm text-green-600 font-medium">Amount Paid</p>
+                        <p className="text-green-700 font-bold text-lg">₱2,500.00</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="text-sm text-green-600 font-medium">Payment Date</p>
+                        <p className="text-gray-800 font-semibold">February 15, 2024</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm text-green-600 font-medium">Amount Paid</p>
+                        <p className="text-green-700 font-bold text-lg">₱2,500.00</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="text-sm text-green-600 font-medium">Payment Date</p>
+                        <p className="text-gray-800 font-semibold">March 15, 2024</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm text-green-600 font-medium">Amount Paid</p>
+                        <p className="text-green-700 font-bold text-lg">₱2,500.00</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Payment History Modal Footer */}
+            <div className="flex justify-end p-6 border-t border-gray-200">
+              <button
+                onClick={() => setShowPaymentHistoryModal(false)}
+                className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
