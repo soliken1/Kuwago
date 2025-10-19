@@ -1,17 +1,30 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import UserListChat from "@/components/messaging/client/UserListChat";
 import { useFetchAllLoans } from "@/hooks/lend/fetchAllLoans";
 import toast from "react-hot-toast";
 import { chatClient } from "@/utils/streamClient";
 import { useUpdateLoanStatus } from "@/hooks/lend/requestUpdateLoan";
 import SelectedLoan from "./SelectedLoan";
+import { IoEyeOutline } from "react-icons/io5";
+import { LoanWithUserInfo } from "@/types/lendings";
+
+const statusColor = {
+  Pending: "bg-yellow-100 text-yellow-700 border border-yellow-300",
+  InProgress: "bg-blue-100 text-blue-700 border border-blue-300",
+  Approved: "bg-green-100 text-green-700 border border-green-300",
+  Denied: "bg-red-100 text-red-700 border border-red-300",
+  Completed: "bg-gray-100 text-gray-700 border border-gray-300",
+};
+
+const ITEMS_PER_PAGE = 10;
+
 export default function DashboardBody() {
   const { updateLoanStatus } = useUpdateLoanStatus();
   const [showModal, setShowModal] = useState(false);
-  const [selectedLoan, setSelectedLoan] = useState<any | null>(null);
-  const [loans, setLoans] = useState<any[]>([]);
+  const [selectedLoan, setSelectedLoan] = useState<LoanWithUserInfo | null>(null);
+  const [loans, setLoans] = useState<LoanWithUserInfo[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
   const { fetchAllLoans, loading } = useFetchAllLoans();
   const [storedUser, setStoredUser] = useState<{
     uid?: string;
@@ -36,7 +49,7 @@ export default function DashboardBody() {
     if (user) setStoredUser(JSON.parse(user));
   }, []);
 
-  const openModal = (loan: any) => {
+  const openModal = (loan: LoanWithUserInfo) => {
     setSelectedLoan(loan);
     setShowModal(true);
   };
@@ -47,6 +60,8 @@ export default function DashboardBody() {
   };
 
   const sendMessage = async () => {
+    if (!selectedLoan) return;
+    
     await sendLoanApplicationMessage({
       borrowerId: selectedLoan.loanInfo.uid,
       lenderId: storedUser.uid,
@@ -118,75 +133,165 @@ export default function DashboardBody() {
     );
   });
 
+  const totalPages = Math.ceil(filteredLoans.length / ITEMS_PER_PAGE);
+  const paginatedLoans = filteredLoans.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
   return (
-    <div
-      className={`flex w-full relative h-full ${
-        showModal ? "opacity-90" : ""
-      } flex-row gap-5 px-6 pb-6`}
-    >
-      <UserListChat />
-
-      <div className="space-y-4 w-full overflow-y-auto max-h-[90vh] pr-3">
-        {/* 🔍 Search Field */}
-        <input
-          type="text"
-          placeholder="Search by name or email..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full px-4 py-2 border border-gray-300 rounded-md mb-2"
-        />
-
-        {loading ? (
-          <p className="text-gray-500">Loading loan requests...</p>
-        ) : filteredLoans.length === 0 ? (
-          <p className="text-gray-500">
-            No matching pending loan requests found.
-          </p>
-        ) : (
-          filteredLoans.map((loan) => {
-            const { loanInfo, userInfo } = loan;
-            return (
-              <div
-                key={loanInfo.loanRequestID}
-                onClick={() => openModal(loan)}
-                className="border p-4 rounded-lg shadow-sm bg-white cursor-pointer hover:bg-gray-50 transition"
-              >
-                <h3 className="text-lg font-semibold mb-1">
-                  {userInfo.firstName} {userInfo.lastName} — ₱
-                  {loanInfo.loanAmount}
-                </h3>
-                <p className="text-sm text-gray-600 mb-1">
-                  Type: {loanInfo.loanType} | Status:{" "}
-                  <span
-                    className={`font-medium ${
-                      loanInfo.loanStatus === "Approved"
-                        ? "px-2 py-1 rounded-full"
-                        : loanInfo.loanStatus === "Denied"
-                        ? "bg-red-100 text-red-700 border border-red-300 px-2 py-1 rounded-full"
-                        : loanInfo.loanStatus === "InProgress"
-                        ? "bg-blue-100 text-blue-700 border border-blue-300 px-2 py-1 rounded-full"
-                        : loanInfo.loanStatus === "Completed"
-                        ? "bg-gray-100 text-gray-700 border border-gray-300 px-2 py-1 rounded-full"
-                        : "bg-yellow-100 text-yellow-700 border border-yellow-300 px-2 py-1 rounded-full"
-                    }`}
-                    style={loanInfo.loanStatus === "Approved" ? { backgroundColor: '#f0f9f4', color: '#2d5a3d', border: '1px solid #85d4a4' } : {}}
-                  >
-                    {loanInfo.loanStatus}
-                  </span>
-                </p>
-                <p className="text-sm">Purpose: {loanInfo.loanPurpose}</p>
-                <p className="text-sm">
-                  Education: {loanInfo.highestEducation}
-                </p>
-                <p className="text-sm">Address: {loanInfo.detailedAddress}</p>
-                <p className="text-sm mt-1 text-gray-500">
-                  Requested: {loanInfo.createdAt}
-                </p>
-              </div>
-            );
-          })
-        )}
+    <div className="bg-white rounded-2xl shadow-lg">
+      {/* Table Header */}
+      <div className="px-6 py-4 border-b border-gray-200">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-xl font-bold text-gray-800">Loan Applications</h3>
+            <p className="text-gray-600 text-sm">Review and manage loan requests</p>
+          </div>
+          <div className="w-80">
+            <input
+              type="text"
+              placeholder="Search by name or email..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#2c8068]"
+            />
+          </div>
+        </div>
       </div>
+
+      {/* Table */}
+      <div className="overflow-x-auto">
+        <table className="w-full">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Applicant
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Amount
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Type
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Purpose
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Education
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Address
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Status
+              </th>
+              <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {loading && (
+              <tr>
+                <td colSpan={8} className="px-6 py-4 text-center text-gray-500">
+                  Loading loan requests...
+                </td>
+              </tr>
+            )}
+            {!loading && filteredLoans.length === 0 && (
+              <tr>
+                <td colSpan={8} className="px-6 py-4 text-center text-gray-500">
+                  No loan applications found.
+                </td>
+              </tr>
+            )}
+            {paginatedLoans.map((loan) => {
+              const { loanInfo, userInfo } = loan;
+              return (
+                <tr key={loanInfo.loanRequestID} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <div className="w-8 h-8 bg-[#2c8068] rounded-full flex items-center justify-center mr-3">
+                        <span className="text-white text-sm font-bold">
+                          {userInfo.firstName.charAt(0)}
+                        </span>
+                      </div>
+                      <div className="text-sm font-medium text-gray-900">
+                        {userInfo.firstName} {userInfo.lastName}
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    ₱{loanInfo.loanAmount.toLocaleString()}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {loanInfo.loanType}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {loanInfo.loanPurpose}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {loanInfo.highestEducation}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 max-w-xs truncate">
+                    {loanInfo.detailedAddress}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span
+                      className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${statusColor[loanInfo.loanStatus as keyof typeof statusColor] || statusColor.Pending}`}
+                    >
+                      {loanInfo.loanStatus === "InProgress" ? "In Progress" : loanInfo.loanStatus}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-center">
+                    <button
+                      onClick={() => openModal(loan)}
+                      className="text-gray-400 hover:text-gray-600 transition-colors"
+                    >
+                      <IoEyeOutline size={20} />
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Pagination */}
+      {filteredLoans.length > ITEMS_PER_PAGE && (
+        <div className="px-6 py-4 border-t border-gray-200">
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-gray-700">
+              Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1} to{" "}
+              {Math.min(currentPage * ITEMS_PER_PAGE, filteredLoans.length)} of{" "}
+              {filteredLoans.length} results
+            </div>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-200 transition-colors"
+              >
+                Previous
+              </button>
+              <span className="px-3 py-1 text-sm text-gray-700">
+                Page {currentPage} of {totalPages}
+              </span>
+              <button
+                onClick={() =>
+                  setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                }
+                disabled={currentPage === totalPages}
+                className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-200 transition-colors"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal */}
       {showModal && selectedLoan && (

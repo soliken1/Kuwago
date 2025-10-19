@@ -1,14 +1,26 @@
 import { useState } from "react";
 import { getCookie } from "cookies-next";
 import axios, { AxiosError } from "axios";
-import { LoanWithUserInfo } from "@/types/lendings";
 
-export const useFetchAllLoans = () => {
+export interface PaymentSchedule {
+  payableID: string;
+  borrowerUID: string;
+  monthlyPayment: number;
+  totalAmount: number;
+  terms: number;
+  scheduledDates: string[];
+  paidDates: string[];
+}
+
+export const useFetchPaymentSchedule = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  const fetchAllLoans = async (): Promise<LoanWithUserInfo[]> => {
+  const fetchPaymentSchedule = async (
+    borrowerUid: string,
+    payableID: string
+  ): Promise<PaymentSchedule> => {
     setLoading(true);
     setError(null);
     setSuccess(false);
@@ -16,12 +28,15 @@ export const useFetchAllLoans = () => {
     try {
       const token = getCookie("session_token");
 
-      const response = await axios.get("/proxy/Loan/AllLoans", {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await axios.get(
+        `/proxy/Payments/schedule/${borrowerUid}/${payableID}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       setSuccess(true);
       return response.data.data;
@@ -31,7 +46,7 @@ export const useFetchAllLoans = () => {
       if (axiosError.response && axiosError.response.data) {
         const message =
           (axiosError.response.data as any).message ||
-          "All Loan request failed.";
+          "Payment schedule request failed.";
         setError(message);
       } else {
         setError(axiosError.message);
@@ -44,9 +59,10 @@ export const useFetchAllLoans = () => {
   };
 
   return {
-    fetchAllLoans,
+    fetchPaymentSchedule,
     loading,
     error,
     success,
   };
 };
+
