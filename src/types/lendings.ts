@@ -29,7 +29,7 @@ export interface LoanInfo {
   payableID?: string;
   payable_id?: string;
   payableId?: string;
-  paymentType?: number;
+  paymentType?: string;
   firstName?: string;
   lastName?: string;
 }
