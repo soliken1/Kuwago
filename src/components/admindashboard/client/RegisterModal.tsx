@@ -53,55 +53,62 @@ export default function RegisterModal({ isOpen, onClose }: Props) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center">
-      <div className="bg-white p-6 rounded-xl w-full max-w-lg">
-        <h2 className="text-2xl font-bold mb-4">Register New User</h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {[
-            "firstName",
-            "lastName",
-            "email",
-            "username",
-            "phoneNumber",
-            "password",
-          ].map((field) => (
-            <input
-              key={field}
-              name={field}
-              type={field === "password" ? "password" : "text"}
-              placeholder={field.charAt(0).toUpperCase() + field.slice(1)}
-              value={formData[field as keyof typeof formData]}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-2 border rounded"
-            />
-          ))}
+    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-xl w-full max-w-lg shadow-md overflow-hidden">
+        <div className="p-8">
+          <h2 className="poppins-bold text-3xl text-center text-gray-700 mb-8">
+            Register New User
+          </h2>
+          
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="flex flex-col space-y-4">
+              {[
+                "firstName",
+                "lastName",
+                "email",
+                "username",
+                "phoneNumber",
+                "password",
+              ].map((field) => (
+                <input
+                  key={field}
+                  name={field}
+                  type={field === "password" ? "password" : "text"}
+                  placeholder={field.charAt(0).toUpperCase() + field.slice(1)}
+                  value={formData[field as keyof typeof formData]}
+                  onChange={handleChange}
+                  required
+                  className="px-4 py-3 border border-gray-300 rounded-2xl focus:outline-none focus:border-gray-400 bg-white"
+                />
+              ))}
 
-          {error && <p className="text-red-500 text-sm">{error}</p>}
-          {showSuccess && (
-            <p className="text-sm" style={{ color: '#85d4a4' }}>Registration successful!</p>
-          )}
+              {error && <p className="text-red-500 text-sm">{error}</p>}
+              {showSuccess && (
+                <p className="text-sm" style={{ color: '#85d4a4' }}>Registration successful!</p>
+              )}
 
-          <div className="flex justify-end gap-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="px-4 py-2 rounded text-white"
-              style={{ backgroundColor: '#85d4a4' }}
-              onMouseEnter={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#6bc48a'}
-              onMouseLeave={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#85d4a4'}
-            >
-              {loading ? "Registering..." : "Register"}
-            </button>
-          </div>
-        </form>
+              <div className="flex justify-end gap-3 mt-6">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="px-6 py-3 rounded-2xl bg-gray-300 hover:bg-gray-400 transition duration-200 font-bold"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="px-6 py-3 text-white font-bold rounded-2xl transition duration-200"
+                  style={{ backgroundColor: '#2c8068' }}
+                  onMouseEnter={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#1a5a4a'}
+                  onMouseLeave={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#2c8068'}
+                >
+                  {loading ? "Registering..." : "Register"}
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
       </div>
     </div>
   );
