@@ -91,7 +91,6 @@ export default function SelectedLoan({
             );
             setPaymentSchedule(schedule);
           } catch (error) {
-            console.error("Failed to fetch payment data:", error);
             toast.error("Failed to load payment information");
             hasFetchedPaymentData.current = false; // Reset on error to allow retry
           }
@@ -169,7 +168,6 @@ export default function SelectedLoan({
       toast.success("Loan approved and document sent to recipients.");
       window.location.reload();
     } catch (error) {
-      console.error("PandaDoc error", error);
       toast.error("Loan approved but failed to send document.");
     }
   };
@@ -234,11 +232,10 @@ export default function SelectedLoan({
           );
           setPaymentSchedule(schedule);
         } catch (error) {
-          console.error("Failed to refresh payment data:", error);
+          // Failed to refresh payment data
         }
       }
     } catch (error) {
-      console.error("Failed to submit payment:", error);
       toast.error("Failed to record payment. Please try again.");
     }
   };
