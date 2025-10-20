@@ -11,6 +11,16 @@ export default function PaymentFailed() {
   
   const { paymentData, loading, error } = usePaymentFailed(paymentId);
 
+  // Show loading state during SSR or when no paymentId
+  if (!paymentId) {
+    return (
+      <div className="max-w-md w-full bg-white rounded-2xl shadow-lg p-8 text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+        <p className="text-gray-600">Loading payment details...</p>
+      </div>
+    );
+  }
+
   // Format currency
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-PH", {
