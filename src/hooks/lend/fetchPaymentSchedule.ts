@@ -6,7 +6,9 @@ export interface PaymentScheduleItem {
   dueDate: string;
   paymentDate: string | null;
   amountPaid: number;
-  status: "Paid" | "Unpaid" | "Advance";
+  requiredToPayEveryMonth: number;
+  actualPayment: number;
+  status: "Unpaid" | "Paid" | "Advance" | "Advance Applied";
 }
 
 export interface PaymentSchedule {

@@ -22,6 +22,9 @@ export interface PaymentResponse {
     paymentDate: string;
     notes: string;
     paymentType: string;
+    requiredPerInstallment?: number;
+    checkoutUrl?: string;
+    status?: string;
   };
 }
 

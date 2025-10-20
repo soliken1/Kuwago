@@ -41,6 +41,7 @@ export default function ApprovedComponent() {
   const [paymentSchedule, setPaymentSchedule] = useState<PaymentSchedule | null>(null);
   const [showPaymentModal, setShowPaymentModal] = useState<boolean>(false);
   const [paymentAmount, setPaymentAmount] = useState<number>(0);
+  const [paymentNotes, setPaymentNotes] = useState<string>("");
   const [showPaymentHistoryModal, setShowPaymentHistoryModal] = useState<boolean>(false);
   
   const { fetchPaymentSummary, loading: summaryLoading } = useFetchPaymentSummary();
@@ -114,31 +115,63 @@ export default function ApprovedComponent() {
         borrowerUID: uid,
         amountPaid: paymentAmount,
         paymentDate: new Date().toISOString(),
-        notes: `Payment recorded by lender`,
+        notes: paymentNotes.trim() || "Payment recorded through ECash",
         paymentType: String(selectedLoan.paymentType || "Cash")
       };
 
-      await submitPayment(paymentData);
+      const response = await submitPayment(paymentData);
       
-      toast.success(`Payment of ₱${paymentAmount.toLocaleString()} recorded successfully`);
-      setShowPaymentModal(false);
-      setPaymentAmount(0);
-      
-      // Refresh payment data
-      hasFetchedPaymentData.current = false;
-      setPaymentSummary(null);
-      setPaymentSchedule(null);
-      
-      // Trigger refetch of payment data
-      if (selectedLoan.payableID) {
-        try {
-          const summary = await fetchPaymentSummary(selectedLoan.payableID);
-          setPaymentSummary(summary);
+      // Check if this is an ECash payment and has a checkout URL
+      if (selectedLoan.paymentType === "ECash" && response.data?.checkoutUrl) {
+        toast.success(`Payment of ₱${paymentAmount.toLocaleString()} initiated. Redirecting to payment gateway...`);
+        setShowPaymentModal(false);
+        setPaymentAmount(0);
+        setPaymentNotes("");
+        
+        // Redirect to the checkout URL in the same tab
+        window.location.href = response.data.checkoutUrl;
+        
+        // Refresh payment data after a short delay
+        setTimeout(async () => {
+          hasFetchedPaymentData.current = false;
+          setPaymentSummary(null);
+          setPaymentSchedule(null);
+          
+          if (selectedLoan.payableID) {
+            try {
+              const summary = await fetchPaymentSummary(selectedLoan.payableID);
+              setPaymentSummary(summary);
 
-          const schedule = await fetchPaymentSchedule(uid, selectedLoan.payableID);
-          setPaymentSchedule(schedule);
-        } catch (error) {
-          // Failed to refresh payment data
+              const schedule = await fetchPaymentSchedule(uid, selectedLoan.payableID);
+              setPaymentSchedule(schedule);
+            } catch (error) {
+              // Failed to refresh payment data
+            }
+          }
+        }, 2000);
+      } else {
+        // For non-ECash payments or ECash without checkout URL
+        toast.success(`Payment of ₱${paymentAmount.toLocaleString()} recorded successfully`);
+        setShowPaymentModal(false);
+        setPaymentAmount(0);
+        setPaymentNotes("");
+        
+        // Refresh payment data
+        hasFetchedPaymentData.current = false;
+        setPaymentSummary(null);
+        setPaymentSchedule(null);
+        
+        // Trigger refetch of payment data
+        if (selectedLoan.payableID) {
+          try {
+            const summary = await fetchPaymentSummary(selectedLoan.payableID);
+            setPaymentSummary(summary);
+
+            const schedule = await fetchPaymentSchedule(uid, selectedLoan.payableID);
+            setPaymentSchedule(schedule);
+          } catch (error) {
+            // Failed to refresh payment data
+          }
         }
       }
     } catch (error) {
@@ -497,31 +530,50 @@ export default function ApprovedComponent() {
                   <div className="grid gap-3">
                     {scheduleLoading ? (
                       <div className="text-center text-gray-500 py-4">Loading payments...</div>
-                    ) : paymentSchedule && paymentSchedule.paidDates.length > 0 ? (
-                      paymentSchedule.paidDates.map((date, index) => (
-                        <div key={`paid-${index}`} className="bg-green-50 border border-green-200 rounded-lg p-4">
-                          <div className="flex justify-between items-center">
-                            <div>
-                              <p className="text-sm text-green-600 font-medium">Due Date</p>
-                              <p className="text-gray-800 font-semibold">
-                                {new Date(date).toLocaleDateString("en-US", {
-                                  year: "numeric",
-                                  month: "long",
-                                  day: "numeric",
-                                })}
-                              </p>
+                    ) : paymentSchedule && paymentSchedule.schedule ? (
+                      (() => {
+                        const paidPayments = paymentSchedule.schedule.filter(
+                          (item) => item.status === "Paid" || item.status === "Advance"
+                        );
+                        
+                        return paidPayments.length > 0 ? (
+                          paidPayments.map((payment, index) => (
+                            <div key={`paid-${index}`} className="bg-green-50 border border-green-200 rounded-lg p-4">
+                              <div className="flex justify-between items-center">
+                                <div>
+                                  <p className="text-sm text-green-600 font-medium">Due Date</p>
+                                  <p className="text-gray-800 font-semibold">
+                                    {new Date(payment.dueDate).toLocaleDateString("en-US", {
+                                      year: "numeric",
+                                      month: "long",
+                                      day: "numeric",
+                                    })}
+                                  </p>
+                                  {payment.paymentDate && (
+                                    <p className="text-xs text-gray-500 mt-1">
+                                      Paid on: {new Date(payment.paymentDate).toLocaleDateString("en-US", {
+                                        year: "numeric",
+                                        month: "long",
+                                        day: "numeric",
+                                      })}
+                                    </p>
+                                  )}
+                                </div>
+                                <div className="text-right">
+                                  <p className="text-sm text-green-600 font-medium">Amount Due</p>
+                                  <p className="text-green-700 font-bold text-lg">
+                                    ₱{payment.actualPayment.toLocaleString()}
+                                  </p>
+                                </div>
+                              </div>
                             </div>
-                            <div className="text-right">
-                              <p className="text-sm text-green-600 font-medium">Amount Paid</p>
-                              <p className="text-green-700 font-bold text-lg">
-                                ₱{paymentSchedule.monthlyPayment.toLocaleString()}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      ))
+                          ))
+                        ) : (
+                          <div className="text-center text-gray-500 py-4">No payments made yet</div>
+                        );
+                      })()
                     ) : (
-                      <div className="text-center text-gray-500 py-4">No payments made yet</div>
+                      <div className="text-center text-gray-500 py-4">No payment schedule available</div>
                     )}
                   </div>
                 </div>
@@ -545,31 +597,40 @@ export default function ApprovedComponent() {
                   <div className="grid gap-3">
                     {scheduleLoading ? (
                       <div className="text-center text-gray-500 py-4">Loading schedule...</div>
-                    ) : paymentSchedule ? (
+                    ) : paymentSchedule && paymentSchedule.schedule ? (
                       (() => {
-                        // Filter out paid dates from scheduled dates
-                        const unpaidDates = paymentSchedule.scheduledDates.filter(
-                          (scheduledDate) => !paymentSchedule.paidDates.includes(scheduledDate)
+                        const unpaidPayments = paymentSchedule.schedule.filter(
+                          (item) => item.status === "Unpaid" || item.status === "Advance Applied"
                         );
                         
-                        return unpaidDates.length > 0 ? (
-                          unpaidDates.map((date, index) => (
+                        return unpaidPayments.length > 0 ? (
+                          unpaidPayments.map((payment, index) => (
                             <div key={`unpaid-${index}`} className="bg-red-50 border border-red-200 rounded-lg p-4">
                               <div className="flex justify-between items-center">
                                 <div>
                                   <p className="text-sm text-red-600 font-medium">Due Date</p>
                                   <p className="text-gray-800 font-semibold">
-                                    {new Date(date).toLocaleDateString("en-US", {
+                                    {new Date(payment.dueDate).toLocaleDateString("en-US", {
                                       year: "numeric",
                                       month: "long",
                                       day: "numeric",
                                     })}
                                   </p>
+                                  {payment.status === "Advance Applied" && (
+                                    <p className="text-xs text-orange-600 mt-1 font-medium">
+                                      Advance Applied
+                                    </p>
+                                  )}
                                 </div>
                                 <div className="text-right">
-                                  <p className="text-sm text-red-600 font-medium">Amount Due</p>
+                                  <p className="text-sm text-red-600 font-medium">
+                                    {payment.status === "Advance Applied" ? "Amount Applied" : "Amount Due"}
+                                  </p>
                                   <p className="text-red-700 font-bold text-lg">
-                                    ₱{paymentSchedule.monthlyPayment.toLocaleString()}
+                                    ₱{payment.status === "Advance Applied" 
+                                      ? payment.actualPayment.toLocaleString() 
+                                      : payment.requiredToPayEveryMonth.toLocaleString()
+                                    }
                                   </p>
                                 </div>
                               </div>
@@ -604,52 +665,41 @@ export default function ApprovedComponent() {
       {showPaymentModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full">
-            {/* Payment Modal Header */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-200">
-              <h2 className="text-xl font-bold text-gray-800">
-                Record Payment
-              </h2>
-              <button
-                onClick={() => setShowPaymentModal(false)}
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-              >
-                <X />
-              </button>
-            </div>
-
-            {/* Payment Modal Content */}
-            <div className="p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Payment Amount (₱)
-                </label>
-                <input
-                  type="number"
-                  value={paymentAmount === 0 ? "" : paymentAmount}
-                  placeholder="Enter payment amount"
-                  className="w-full rounded-md border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#2c8068]"
-                  onChange={(e) => setPaymentAmount(Number(e.target.value) || 0)}
-                  min={0}
-                  step="0.01"
-                />
+            <div className="p-6">
+              <h2 className="text-xl font-bold text-gray-800 mb-4">Record Payment</h2>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Payment Amount (₱)
+                  </label>
+                  <input
+                    type="number"
+                    value={paymentAmount === 0 ? "" : paymentAmount}
+                    placeholder="Enter payment amount"
+                    className="w-full rounded-md border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#2c8068]"
+                    onChange={(e) => setPaymentAmount(Number(e.target.value) || 0)}
+                    min={0}
+                    step="0.01"
+                  />
+                </div>
               </div>
-            </div>
-
-            {/* Payment Modal Footer */}
-            <div className="flex justify-end gap-3 p-6 border-t border-gray-200">
-              <button
-                onClick={() => setShowPaymentModal(false)}
-                className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handlePaymentSubmit}
-                disabled={paymentLoading}
-                className="px-6 py-2 bg-[#2c8068] text-white rounded-lg hover:bg-[#1f5a4a] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {paymentLoading ? "Recording..." : "Record Payment"}
-              </button>
+              
+              <div className="flex justify-end gap-3 mt-6">
+                <button
+                  onClick={() => setShowPaymentModal(false)}
+                  className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handlePaymentSubmit}
+                  disabled={paymentLoading}
+                  className="px-6 py-2 bg-[#2c8068] text-white rounded-lg hover:bg-[#1f5a4a] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {paymentLoading ? "Recording..." : "Record Payment"}
+                </button>
+              </div>
             </div>
           </div>
         </div>

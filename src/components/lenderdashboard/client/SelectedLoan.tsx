@@ -51,6 +51,7 @@ export default function SelectedLoan({
   const [paymentType, setPaymentType] = useState<number>(1);
   const [showPaymentModal, setShowPaymentModal] = useState<boolean>(false);
   const [paymentAmount, setPaymentAmount] = useState<number>(0);
+  const [paymentNotes, setPaymentNotes] = useState<string>("");
   const [showPaymentHistoryModal, setShowPaymentHistoryModal] = useState<boolean>(false);
   
   // Payment data states
@@ -204,7 +205,7 @@ export default function SelectedLoan({
         borrowerUID: selectedLoan.userInfo.uid,
         amountPaid: paymentAmount,
         paymentDate: new Date().toISOString(),
-        notes: `Payment recorded by lender`,
+        notes: paymentNotes.trim() || "Payment recorded by lender",
         paymentType: String(selectedLoan.loanInfo.paymentType || "Cash")
       };
 
@@ -213,6 +214,7 @@ export default function SelectedLoan({
       toast.success(`Payment of ₱${paymentAmount.toLocaleString()} recorded successfully`);
       setShowPaymentModal(false);
       setPaymentAmount(0);
+      setPaymentNotes("");
       
       // Refresh payment data
       hasFetchedPaymentData.current = false;
@@ -532,9 +534,8 @@ export default function SelectedLoan({
                     <div className="text-center text-gray-500 py-4">Loading payments...</div>
                   ) : paymentSchedule && paymentSchedule.schedule ? (
                     (() => {
-                      // Filter for Paid and Advance status payments
                       const paidPayments = paymentSchedule.schedule.filter(
-                        (payment) => payment.status === "Paid" || payment.status === "Advance"
+                        (item) => item.status === "Paid" || item.status === "Advance"
                       );
                       
                       return paidPayments.length > 0 ? (
@@ -551,8 +552,8 @@ export default function SelectedLoan({
                                   })}
                                 </p>
                                 {payment.paymentDate && (
-                                  <p className="text-xs text-gray-600 mt-1">
-                                    <span className="font-medium">Payment Date:</span> {new Date(payment.paymentDate).toLocaleDateString("en-US", {
+                                  <p className="text-xs text-gray-500 mt-1">
+                                    Paid on: {new Date(payment.paymentDate).toLocaleDateString("en-US", {
                                       year: "numeric",
                                       month: "long",
                                       day: "numeric",
@@ -561,13 +562,10 @@ export default function SelectedLoan({
                                 )}
                               </div>
                               <div className="text-right">
-                                <p className="text-sm text-green-600 font-medium">Amount Paid</p>
+                                <p className="text-sm text-green-600 font-medium">Amount Due</p>
                                 <p className="text-green-700 font-bold text-lg">
-                                  ₱{payment.amountPaid.toLocaleString()}
+                                  ₱{payment.actualPayment.toLocaleString()}
                                 </p>
-                                {payment.status === "Advance" && (
-                                  <p className="text-xs text-blue-600 font-medium">Advance Payment</p>
-                                )}
                               </div>
                             </div>
                           </div>
@@ -603,9 +601,8 @@ export default function SelectedLoan({
                     <div className="text-center text-gray-500 py-4">Loading schedule...</div>
                   ) : paymentSchedule && paymentSchedule.schedule ? (
                     (() => {
-                      // Filter for Unpaid status payments
                       const unpaidPayments = paymentSchedule.schedule.filter(
-                        (payment) => payment.status === "Unpaid"
+                        (item) => item.status === "Unpaid" || item.status === "Advance Applied"
                       );
                       
                       return unpaidPayments.length > 0 ? (
@@ -621,11 +618,21 @@ export default function SelectedLoan({
                                     day: "numeric",
                                   })}
                                 </p>
+                                {payment.status === "Advance Applied" && (
+                                  <p className="text-xs text-orange-600 mt-1 font-medium">
+                                    Advance Applied
+                                  </p>
+                                )}
                               </div>
                               <div className="text-right">
-                                <p className="text-sm text-red-600 font-medium">Amount Due</p>
+                                <p className="text-sm text-red-600 font-medium">
+                                  {payment.status === "Advance Applied" ? "Amount Applied" : "Amount Due"}
+                                </p>
                                 <p className="text-red-700 font-bold text-lg">
-                                  ₱{payment.amountPaid.toLocaleString()}
+                                  ₱{payment.status === "Advance Applied" 
+                                    ? payment.actualPayment.toLocaleString() 
+                                    : payment.requiredToPayEveryMonth.toLocaleString()
+                                  }
                                 </p>
                               </div>
                             </div>
@@ -686,53 +693,54 @@ export default function SelectedLoan({
       {showPaymentModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full">
-            {/* Payment Modal Header */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-200">
-              <h2 className="text-xl font-bold text-gray-800">
-                Record Payment
-              </h2>
-              <button
-                onClick={() => setShowPaymentModal(false)}
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-              >
-                <X />
-              </button>
-            </div>
-
-            {/* Payment Modal Content */}
-            <div className="p-6 space-y-4">
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Payment Amount (₱)
-                </label>
-                <input
-                  type="number"
-                  value={paymentAmount === 0 ? "" : paymentAmount}
-                  placeholder="Enter payment amount"
-                  className="w-full rounded-md border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#2c8068]"
-                  onChange={(e) => setPaymentAmount(Number(e.target.value) || 0)}
-                  min={0}
-                  step="0.01"
-                />
+            <div className="p-6">
+              <h2 className="text-xl font-bold text-gray-800 mb-4">Record Payment</h2>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Payment Amount (₱)
+                  </label>
+                  <input
+                    type="number"
+                    value={paymentAmount === 0 ? "" : paymentAmount}
+                    placeholder="Enter payment amount"
+                    className="w-full rounded-md border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#2c8068]"
+                    onChange={(e) => setPaymentAmount(Number(e.target.value) || 0)}
+                    min={0}
+                    step="0.01"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Payment Notes (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={paymentNotes}
+                    placeholder="Enter payment notes (optional)"
+                    className="w-full rounded-md border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#2c8068]"
+                    onChange={(e) => setPaymentNotes(e.target.value)}
+                  />
+                </div>
               </div>
-            </div>
-
-            {/* Payment Modal Footer */}
-            <div className="flex justify-end gap-3 p-6 border-t border-gray-200">
-              <button
-                onClick={() => setShowPaymentModal(false)}
-                className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handlePaymentSubmit}
-                disabled={paymentLoading}
-                className="px-6 py-2 bg-[#2c8068] text-white rounded-lg hover:bg-[#1f5a4a] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {paymentLoading ? "Recording..." : "Record Payment"}
-              </button>
+              
+              <div className="flex justify-end gap-3 mt-6">
+                <button
+                  onClick={() => setShowPaymentModal(false)}
+                  className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handlePaymentSubmit}
+                  disabled={paymentLoading}
+                  className="px-6 py-2 bg-[#2c8068] text-white rounded-lg hover:bg-[#1f5a4a] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {paymentLoading ? "Recording..." : "Record Payment"}
+                </button>
+              </div>
             </div>
           </div>
         </div>
