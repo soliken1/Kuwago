@@ -8,7 +8,7 @@ export default function PaymentSuccess() {
 
   // Mock data - in a real app, this would come from props or state
   const paymentData = {
-    amount: "₱15,000.00",
+    amount: "₱4,000.00",
     paymentDate: "December 15, 2024",
     dueDate: "December 20, 2024",
   };

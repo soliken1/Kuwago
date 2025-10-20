@@ -2,14 +2,12 @@
 import React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { usePaymentSuccess } from "@/hooks/payment/usePaymentSuccess";
 
 export default function PaymentFailed() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const paymentId = searchParams.get("paymentId");
   
-  const { paymentData, loading, error } = usePaymentSuccess(paymentId);
 
   // Format currency
   const formatCurrency = (amount: number) => {
