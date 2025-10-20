@@ -2,14 +2,22 @@ import { useState } from "react";
 import { getCookie } from "cookies-next";
 import axios, { AxiosError } from "axios";
 
+export interface PaymentScheduleItem {
+  dueDate: string;
+  paymentDate: string | null;
+  amountPaid: number;
+  requiredToPayEveryMonth: number;
+  actualPayment: number;
+  status: "Unpaid" | "Paid" | "Advance" | "Advance Applied";
+}
+
 export interface PaymentSchedule {
   payableID: string;
   borrowerUID: string;
   monthlyPayment: number;
   totalAmount: number;
   terms: number;
-  scheduledDates: string[];
-  paidDates: string[];
+  schedule: PaymentScheduleItem[];
 }
 
 export const useFetchPaymentSchedule = () => {
