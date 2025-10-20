@@ -14,7 +14,8 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith("/login") ||
     pathname.startsWith("/register") ||
     pathname.startsWith("/forgotpassword") ||
-    pathname.startsWith("/proxy")
+    pathname.startsWith("/proxy") ||
+    pathname.startsWith("/payment")
   ) {
     return NextResponse.next();
   }
