@@ -530,31 +530,54 @@ export default function SelectedLoan({
                 <div className="grid gap-3">
                   {scheduleLoading ? (
                     <div className="text-center text-gray-500 py-4">Loading payments...</div>
-                  ) : paymentSchedule && paymentSchedule.paidDates.length > 0 ? (
-                    paymentSchedule.paidDates.map((date, index) => (
-                      <div key={`paid-${index}`} className="bg-green-50 border border-green-200 rounded-lg p-4">
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <p className="text-sm text-green-600 font-medium">Due Date</p>
-                            <p className="text-gray-800 font-semibold">
-                              {new Date(date).toLocaleDateString("en-US", {
-                                year: "numeric",
-                                month: "long",
-                                day: "numeric",
-                              })}
-                            </p>
+                  ) : paymentSchedule && paymentSchedule.schedule ? (
+                    (() => {
+                      // Filter for Paid and Advance status payments
+                      const paidPayments = paymentSchedule.schedule.filter(
+                        (payment) => payment.status === "Paid" || payment.status === "Advance"
+                      );
+                      
+                      return paidPayments.length > 0 ? (
+                        paidPayments.map((payment, index) => (
+                          <div key={`paid-${index}`} className="bg-green-50 border border-green-200 rounded-lg p-4">
+                            <div className="flex justify-between items-center">
+                              <div>
+                                <p className="text-sm text-green-600 font-medium">Due Date</p>
+                                <p className="text-gray-800 font-semibold">
+                                  {new Date(payment.dueDate).toLocaleDateString("en-US", {
+                                    year: "numeric",
+                                    month: "long",
+                                    day: "numeric",
+                                  })}
+                                </p>
+                                {payment.paymentDate && (
+                                  <p className="text-xs text-gray-600 mt-1">
+                                    <span className="font-medium">Payment Date:</span> {new Date(payment.paymentDate).toLocaleDateString("en-US", {
+                                      year: "numeric",
+                                      month: "long",
+                                      day: "numeric",
+                                    })}
+                                  </p>
+                                )}
+                              </div>
+                              <div className="text-right">
+                                <p className="text-sm text-green-600 font-medium">Amount Paid</p>
+                                <p className="text-green-700 font-bold text-lg">
+                                  ₱{payment.amountPaid.toLocaleString()}
+                                </p>
+                                {payment.status === "Advance" && (
+                                  <p className="text-xs text-blue-600 font-medium">Advance Payment</p>
+                                )}
+                              </div>
+                            </div>
                           </div>
-                          <div className="text-right">
-                            <p className="text-sm text-green-600 font-medium">Amount Paid</p>
-                            <p className="text-green-700 font-bold text-lg">
-                              ₱{paymentSchedule.monthlyPayment.toLocaleString()}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    ))
+                        ))
+                      ) : (
+                        <div className="text-center text-gray-500 py-4">No payments made yet</div>
+                      );
+                    })()
                   ) : (
-                    <div className="text-center text-gray-500 py-4">No payments made yet</div>
+                    <div className="text-center text-gray-500 py-4">No payment schedule available</div>
                   )}
                 </div>
               </div>
@@ -578,21 +601,21 @@ export default function SelectedLoan({
                 <div className="grid gap-3">
                   {scheduleLoading ? (
                     <div className="text-center text-gray-500 py-4">Loading schedule...</div>
-                  ) : paymentSchedule ? (
+                  ) : paymentSchedule && paymentSchedule.schedule ? (
                     (() => {
-                      // Filter out paid dates from scheduled dates
-                      const unpaidDates = paymentSchedule.scheduledDates.filter(
-                        (scheduledDate) => !paymentSchedule.paidDates.includes(scheduledDate)
+                      // Filter for Unpaid status payments
+                      const unpaidPayments = paymentSchedule.schedule.filter(
+                        (payment) => payment.status === "Unpaid"
                       );
                       
-                      return unpaidDates.length > 0 ? (
-                        unpaidDates.map((date, index) => (
+                      return unpaidPayments.length > 0 ? (
+                        unpaidPayments.map((payment, index) => (
                           <div key={`unpaid-${index}`} className="bg-red-50 border border-red-200 rounded-lg p-4">
                             <div className="flex justify-between items-center">
                               <div>
                                 <p className="text-sm text-red-600 font-medium">Due Date</p>
                                 <p className="text-gray-800 font-semibold">
-                                  {new Date(date).toLocaleDateString("en-US", {
+                                  {new Date(payment.dueDate).toLocaleDateString("en-US", {
                                     year: "numeric",
                                     month: "long",
                                     day: "numeric",
@@ -602,7 +625,7 @@ export default function SelectedLoan({
                               <div className="text-right">
                                 <p className="text-sm text-red-600 font-medium">Amount Due</p>
                                 <p className="text-red-700 font-bold text-lg">
-                                  ₱{paymentSchedule.monthlyPayment.toLocaleString()}
+                                  ₱{payment.amountPaid.toLocaleString()}
                                 </p>
                               </div>
                             </div>

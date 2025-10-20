@@ -57,7 +57,7 @@ export default function Overview() {
         <div className="bg-white p-6 rounded-lg shadow-md">
           <h3 className="text-lg font-semibold mb-2">Total Revenue</h3>
           <p className="text-3xl font-bold text-purple-600">
-            ${data?.TotalRevenue?.toLocaleString() || '0'}
+          ₱{data?.TotalRevenue?.toLocaleString() || '0'}
           </p>
         </div>
       </div>

@@ -290,7 +290,7 @@ export default function ApplyLoanForm() {
               className={`px-6 py-3 rounded-2xl text-white font-bold transition ${
                 isValid ? "" : "bg-gray-300 cursor-not-allowed"
               }`}
-              style={isValid ? { backgroundColor: '#85d4a4' } : {}}
+              style={isValid ? { backgroundColor: '#2c8068' } : {}}
               onMouseEnter={isValid ? (e) => (e.target as HTMLButtonElement).style.backgroundColor = '#236653' : undefined}
               onMouseLeave={isValid ? (e) => (e.target as HTMLButtonElement).style.backgroundColor = '#2c8068' : undefined}
             >
