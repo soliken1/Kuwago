@@ -2,14 +2,14 @@
 import React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { usePaymentSuccess } from "@/hooks/payment/usePaymentSuccess";
+import { usePaymentFailed } from "@/hooks/payment/usePaymentFailed";
 
 export default function PaymentFailed() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const paymentId = searchParams.get("paymentId");
   
-  const { paymentData, loading, error } = usePaymentSuccess(paymentId);
+  const { paymentData, loading, error } = usePaymentFailed(paymentId);
 
   // Format currency
   const formatCurrency = (amount: number) => {
@@ -93,9 +93,25 @@ export default function PaymentFailed() {
             <div className="flex justify-between items-center">
               <span className="text-gray-600 poppins-normal">Status:</span>
               <span className="text-red-600 poppins-normal">
-                Failed
+                {paymentData.status || "Failed"}
               </span>
             </div>
+            {paymentData.failureReason && (
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600 poppins-normal">Reason:</span>
+                <span className="text-red-600 poppins-normal text-sm">
+                  {paymentData.failureReason}
+                </span>
+              </div>
+            )}
+            {paymentData.errorMessage && (
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600 poppins-normal">Error:</span>
+                <span className="text-red-600 poppins-normal text-sm">
+                  {paymentData.errorMessage}
+                </span>
+              </div>
+            )}
           </div>
         </div>
       ) : null}
