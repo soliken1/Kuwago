@@ -2,24 +2,14 @@
 import React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { usePaymentFailed } from "@/hooks/payment/usePaymentFailed";
+import { usePaymentSuccess } from "@/hooks/payment/usePaymentSuccess";
 
 export default function PaymentFailed() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const paymentId = searchParams.get("paymentId");
   
-  const { paymentData, loading, error } = usePaymentFailed(paymentId);
-
-  // Show loading state during SSR or when no paymentId
-  if (!paymentId) {
-    return (
-      <div className="max-w-md w-full bg-white rounded-2xl shadow-lg p-8 text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-        <p className="text-gray-600">Loading payment details...</p>
-      </div>
-    );
-  }
+  const { paymentData, loading, error } = usePaymentSuccess(paymentId);
 
   // Format currency
   const formatCurrency = (amount: number) => {
@@ -65,66 +55,6 @@ export default function PaymentFailed() {
       <h1 className="text-2xl font-bold text-gray-900 mb-2 poppins-bold">
         Payment Failed
       </h1>
-
-      {/* Payment Details */}
-      {loading ? (
-        <div className="bg-gray-50 rounded-lg p-4 mb-6">
-          <div className="animate-pulse space-y-3">
-            <div className="h-4 bg-gray-300 rounded"></div>
-            <div className="h-4 bg-gray-300 rounded"></div>
-            <div className="h-4 bg-gray-300 rounded"></div>
-          </div>
-        </div>
-      ) : error ? (
-        <div className="bg-red-50 rounded-lg p-4 mb-6">
-          <p className="text-red-600 poppins-normal">{error}</p>
-        </div>
-      ) : paymentData ? (
-        <div className="bg-gray-50 rounded-lg p-4 mb-6">
-          <div className="space-y-3">
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600 poppins-normal">Amount:</span>
-              <span className="text-lg font-semibold text-gray-900 poppins-bold">
-                {formatCurrency(paymentData.amountPaid)}
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600 poppins-normal">Attempted Date:</span>
-              <span className="text-gray-900 poppins-normal">
-                {formatDate(paymentData.paymentDate)}
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600 poppins-normal">Due Date:</span>
-              <span className="text-gray-900 poppins-normal">
-                {formatDate(paymentData.dueDate)}
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600 poppins-normal">Status:</span>
-              <span className="text-red-600 poppins-normal">
-                {paymentData.status || "Failed"}
-              </span>
-            </div>
-            {paymentData.failureReason && (
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600 poppins-normal">Reason:</span>
-                <span className="text-red-600 poppins-normal text-sm">
-                  {paymentData.failureReason}
-                </span>
-              </div>
-            )}
-            {paymentData.errorMessage && (
-              <div className="flex justify-between items-center">
-                <span className="text-gray-600 poppins-normal">Error:</span>
-                <span className="text-red-600 poppins-normal text-sm">
-                  {paymentData.errorMessage}
-                </span>
-              </div>
-            )}
-          </div>
-        </div>
-      ) : null}
 
       {/* Error Message */}
       <p className="text-gray-600 mb-8 poppins-normal">
