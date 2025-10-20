@@ -9,7 +9,7 @@ export default function PaymentSuccess() {
   // Mock data - in a real app, this would come from props or state
   const paymentData = {
     amount: "₱4,000.00",
-    paymentDate: "December 15, 2024",
+    paymentDate: "October 15, 2024",
     dueDate: "December 20, 2024",
   };
 
@@ -39,8 +39,7 @@ export default function PaymentSuccess() {
       <h1 className="text-2xl font-bold text-gray-900 mb-2 poppins-bold">
         Payment Successful
       </h1>
-
-
+      
       {/* Thank You Message */}
       <p className="text-gray-600 mb-8 poppins-normal">
         Thank you for your payment. Your loan will be processed shortly.
@@ -49,7 +48,10 @@ export default function PaymentSuccess() {
       {/* Action Button */}
       <Link
         href="/approvedloans"
-        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200 poppins-bold"
+        className="w-full text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200 poppins-bold"
+        style={{ backgroundColor: '#2c8068' }}
+        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#256b56'}
+        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#2c8068'}
       >
         Go to Approved Loans
       </Link>

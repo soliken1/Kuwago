@@ -1,30 +1,16 @@
 "use client";
 import React from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 export default function PaymentFailed() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const paymentId = searchParams.get("paymentId");
-  
 
-  // Format currency
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-PH", {
-      style: "currency",
-      currency: "PHP",
-    }).format(amount);
-  };
-
-  // Format date
-  const formatDate = (dateString: string) => {
-    if (!dateString) return "N/A";
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
+  // Mock data - in a real app, this would come from props or state
+  const paymentData = {
+    amount: "₱15,000.00",
+    paymentDate: "December 15, 2024",
+    dueDate: "December 20, 2024",
   };
 
   return (
@@ -61,15 +47,12 @@ export default function PaymentFailed() {
 
       {/* Action Buttons */}
       <div className="space-y-3">
-        <button
-          onClick={() => router.back()}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200 poppins-bold"
-        >
-          Try Again
-        </button>
         <Link
           href="/approvedloans"
-          className="w-full bg-gray-500 hover:bg-gray-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200 poppins-bold inline-block"
+          className="w-full text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200 poppins-bold inline-block"
+          style={{ backgroundColor: '#2c8068' }}
+          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#256b56'}
+          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#2c8068'}
         >
           Go to Approved Loans
         </Link>
