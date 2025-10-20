@@ -18,6 +18,10 @@ export interface CreditScoreCategoryData {
   category: string;
 }
 
+export interface AIAssessmentData {
+  aiSuggestion: string;
+}
+
 interface CreditScoreResponse {
   success?: boolean;
   message?: string;
@@ -32,9 +36,17 @@ interface CreditScoreCategoryResponse {
   data?: CreditScoreCategoryData;
 }
 
+interface AIAssessmentResponse {
+  success?: boolean;
+  message?: string;
+  statusCode?: number;
+  data?: AIAssessmentData;
+}
+
 export default function useCreditScore() {
   const [creditScoreData, setCreditScoreData] = useState<CreditScoreData | null>(null);
   const [creditScoreCategory, setCreditScoreCategory] = useState<CreditScoreCategoryData | null>(null);
+  const [aiAssessment, setAiAssessment] = useState<AIAssessmentData | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -48,8 +60,8 @@ export default function useCreditScore() {
         throw new Error("Token missing in session.");
       }
 
-      // Fetch both credit score data and category in parallel
-      const [scoreResponse, categoryResponse] = await Promise.all([
+      // Fetch credit score data, category, and AI assessment in parallel
+      const [scoreResponse, categoryResponse, aiResponse] = await Promise.all([
         axios.get<CreditScoreResponse>(
           `/proxy/Score/GetCreditScore/${uid}`,
           {
@@ -60,6 +72,14 @@ export default function useCreditScore() {
         ),
         axios.get<CreditScoreCategoryResponse>(
           `/proxy/Score/GetCreditScoreCategory/${uid}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        ),
+        axios.get<AIAssessmentResponse>(
+          `/proxy/AIAssessment/ImprovedScore/${uid}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -76,9 +96,14 @@ export default function useCreditScore() {
         setCreditScoreCategory(categoryResponse.data.data);
       }
 
+      if (aiResponse.data && aiResponse.data.data) {
+        setAiAssessment(aiResponse.data.data);
+      }
+
       return {
         scoreData: scoreResponse.data?.data,
-        categoryData: categoryResponse.data?.data
+        categoryData: categoryResponse.data?.data,
+        aiData: aiResponse.data?.data
       };
     } catch (error: unknown) {
       const err = error as AxiosError<{ message: string }>;
@@ -88,6 +113,6 @@ export default function useCreditScore() {
     }
   };
 
-  return { fetchCreditScore, creditScoreData, creditScoreCategory, loading, error };
+  return { fetchCreditScore, creditScoreData, creditScoreCategory, aiAssessment, loading, error };
 }
 

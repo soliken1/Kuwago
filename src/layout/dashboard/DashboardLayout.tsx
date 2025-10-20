@@ -8,7 +8,7 @@ import UserListChat from "@/components/messaging/client/UserListChat";
 import useCreditScore, { CreditScoreData } from "@/hooks/users/useCreditScore";
 
 export default function DashboardLayout() {
-  const { fetchCreditScore, creditScoreData, creditScoreCategory, loading } = useCreditScore();
+  const { fetchCreditScore, creditScoreData, creditScoreCategory, aiAssessment, loading } = useCreditScore();
   const [userData, setUserData] = useState<{ uid?: string } | null>(null);
 
   useEffect(() => {
@@ -43,6 +43,7 @@ export default function DashboardLayout() {
           <NewCreditScore 
             creditScoreData={creditScoreData}
             creditScoreCategory={creditScoreCategory}
+            aiAssessment={aiAssessment}
             loading={loading}
           />
           

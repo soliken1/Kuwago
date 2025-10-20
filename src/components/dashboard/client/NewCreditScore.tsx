@@ -1,20 +1,23 @@
 "use client";
 import React, { useState } from "react";
-import { CreditScoreData, CreditScoreCategoryData } from "@/hooks/users/useCreditScore";
+import { CreditScoreData, CreditScoreCategoryData, AIAssessmentData } from "@/hooks/users/useCreditScore";
 import X from "../../../../assets/actions/X";
 
 interface NewCreditScoreProps {
   creditScoreData?: CreditScoreData | null;
   creditScoreCategory?: CreditScoreCategoryData | null;
+  aiAssessment?: AIAssessmentData | null;
   loading?: boolean;
 }
 
 export default function NewCreditScore({ 
   creditScoreData,
   creditScoreCategory,
+  aiAssessment,
   loading = false 
 }: NewCreditScoreProps) {
   const [showModal, setShowModal] = useState(false);
+  const [showAIModal, setShowAIModal] = useState(false);
   
   // Use fetched score or default
   const score = creditScoreData?.score || 93;
@@ -34,6 +37,19 @@ export default function NewCreditScore({
     } catch {
       return dateString;
     }
+  };
+
+  const handleImproveScore = () => {
+    if (aiAssessment) {
+      setShowAIModal(true);
+    }
+  };
+
+  const formatAISuggestion = (suggestion: string) => {
+    return suggestion
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\n\n/g, '</p><p>')
+      .replace(/\n/g, '<br>');
   };
 
   return (
@@ -60,9 +76,13 @@ export default function NewCreditScore({
               >
                 View Details
               </button>
-              <button className="px-6 py-2 bg-white/10 text-white rounded-lg font-medium hover:bg-white/20 transition-colors">
-                Improve Score
-              </button>
+               <button 
+                 onClick={handleImproveScore}
+                 disabled={!aiAssessment || loading}
+                 className="px-6 py-2 bg-white/10 text-white rounded-lg font-medium hover:bg-white/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+               >
+                 Improve Score
+               </button>
             </div>
           </div>
 
@@ -191,9 +211,58 @@ export default function NewCreditScore({
                 Close
               </button>
             </div>
-          </div>
-        </div>
-      )}
-    </>
-  );
-}
+           </div>
+         </div>
+       )}
+
+       {/* AI Assessment Modal */}
+       {showAIModal && aiAssessment && (
+         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+           <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+             {/* AI Modal Header */}
+             <div className="flex items-center justify-between p-6 border-b border-gray-200">
+               <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-3">
+                 <span className="w-8 h-8 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center">
+                   <span className="text-white text-sm font-bold">AI</span>
+                 </span>
+                 AI Credit Score Improvement Suggestions
+               </h2>
+               <button
+                 onClick={() => setShowAIModal(false)}
+                 className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+               >
+                 <X />
+               </button>
+             </div>
+
+             {/* AI Modal Content */}
+             <div className="p-6">
+               <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg p-6 border border-purple-200">
+                 <div className="flex items-center gap-2 mb-4">
+                   <span className="w-3 h-3 rounded-full bg-gradient-to-r from-purple-500 to-blue-500"></span>
+                   <span className="font-semibold text-lg text-gray-800">Personalized AI Analysis</span>
+                 </div>
+                 <div 
+                   className="prose prose-lg max-w-none text-gray-700 leading-relaxed"
+                   dangerouslySetInnerHTML={{ 
+                     __html: `<p>${formatAISuggestion(aiAssessment.aiSuggestion)}</p>` 
+                   }}
+                 />
+               </div>
+             </div>
+
+             {/* AI Modal Footer */}
+             <div className="flex justify-end gap-3 p-6 border-t border-gray-200">
+               <button
+                 onClick={() => setShowAIModal(false)}
+                 className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+               >
+                 Close
+               </button>
+             </div>
+           </div>
+         </div>
+       )}
+     </>
+   );
+ }
