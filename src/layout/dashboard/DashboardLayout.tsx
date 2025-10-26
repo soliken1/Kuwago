@@ -6,10 +6,18 @@ import NewCreditScore from "@/components/dashboard/client/NewCreditScore";
 import NewAppliedLendings from "@/components/dashboard/client/NewAppliedLendings";
 import UserListChat from "@/components/messaging/client/UserListChat";
 import useCreditScore, { CreditScoreData } from "@/hooks/users/useCreditScore";
+import { Application } from "@/types/lendings";
 
 export default function DashboardLayout() {
-  const { fetchCreditScore, creditScoreData, creditScoreCategory, aiAssessment, loading } = useCreditScore();
+  const {
+    fetchCreditScore,
+    creditScoreData,
+    creditScoreCategory,
+    aiAssessment,
+    loading,
+  } = useCreditScore();
   const [userData, setUserData] = useState<{ uid?: string } | null>(null);
+  const [userLoans, setUserLoans] = useState<Application[] | null>(null);
 
   useEffect(() => {
     // Get user data from localStorage
@@ -17,7 +25,7 @@ export default function DashboardLayout() {
     if (storedUser) {
       const parsedUser = JSON.parse(storedUser);
       setUserData(parsedUser);
-      
+
       // Fetch credit score
       if (parsedUser.uid) {
         fetchCreditScore(parsedUser.uid);
@@ -31,24 +39,24 @@ export default function DashboardLayout() {
       <div className="w-80 flex-shrink-0">
         <NewSidebar />
       </div>
-      
+
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Header */}
-        <NewHeader />
-        
+        <NewHeader userLoans={userLoans} />
+
         {/* Content Area */}
         <div className="flex-1 p-8 space-y-6 overflow-auto">
           {/* Credit Score Card */}
-          <NewCreditScore 
+          <NewCreditScore
             creditScoreData={creditScoreData}
             creditScoreCategory={creditScoreCategory}
             aiAssessment={aiAssessment}
             loading={loading}
           />
-          
+
           {/* Applied Lendings Table */}
-          <NewAppliedLendings />
+          <NewAppliedLendings setUserLoans={setUserLoans} />
         </div>
       </div>
 

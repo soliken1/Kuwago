@@ -1,7 +1,9 @@
 "use client";
-import React from "react";
-import { useRouter } from "next/navigation";
+import React, { useEffect } from "react";
+import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
+import failedPayment from "@/utils/FailedPayment";
+import successfulPayment from "@/utils/successfulPayment";
 
 export default function PaymentSuccess() {
   const router = useRouter();
@@ -12,6 +14,35 @@ export default function PaymentSuccess() {
     paymentDate: "October 15, 2024",
     dueDate: "December 20, 2024",
   };
+
+  //On this part, maybe backend will have a fetch request of the payment details and status based on an Id
+  //to check if its completed, failed or successful. based on maybe params being passed from the backend from paymongo
+  //e.g paymongo redirect => backend sends => success||failed?payableId=12345 => frontend requests payableId=12345 =>
+  //backend receives the request and return status, details => frontend checks if payment is successful or failed plus details
+
+  // Proposed solution (if applicable)
+  // useEffect(() => {
+  //   const { payableId } = useParams();
+
+  //   const loadPayable = async () => {
+  //     const response = await fetchPayableData(payableId)
+
+  //     //maybe:
+  //     const payableStatus = response.loanStatus === "Completed" ? true : false
+
+  //     setStatus(payableStatus)
+
+  //     //Then component body should be dynamic based on status
+  //     {status ? (
+  //       <PaymentSuccess/>
+  //     ): (
+  //       <PaymentFailed/>
+  //     )}
+  //   }
+  // }, []);
+
+  //This part should also send a notification to BOTH admin and lenders via email use: (if applicable)
+  // successfulPayment(admin_email(s), admin_names(s), redirectUrl, "subject") || failedPayment(lender_email, lender_name, redirectUrl, "subject")
 
   return (
     <div className="max-w-md w-full bg-white rounded-2xl shadow-lg p-8 text-center">
@@ -39,7 +70,7 @@ export default function PaymentSuccess() {
       <h1 className="text-2xl font-bold text-gray-900 mb-2 poppins-bold">
         Payment Successful
       </h1>
-      
+
       {/* Thank You Message */}
       <p className="text-gray-600 mb-8 poppins-normal">
         Thank you for your payment. Your loan will be processed shortly.
@@ -49,9 +80,13 @@ export default function PaymentSuccess() {
       <Link
         href="/approvedloans"
         className="w-full text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200 poppins-bold"
-        style={{ backgroundColor: '#2c8068' }}
-        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#256b56'}
-        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#2c8068'}
+        style={{ backgroundColor: "#2c8068" }}
+        onMouseEnter={(e) =>
+          (e.currentTarget.style.backgroundColor = "#256b56")
+        }
+        onMouseLeave={(e) =>
+          (e.currentTarget.style.backgroundColor = "#2c8068")
+        }
       >
         Go to Approved Loans
       </Link>
