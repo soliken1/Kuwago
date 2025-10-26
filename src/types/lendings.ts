@@ -32,6 +32,7 @@ export interface LoanInfo {
   paymentType?: string;
   firstName?: string;
   lastName?: string;
+  email: string;
 }
 
 export interface UserInfo {

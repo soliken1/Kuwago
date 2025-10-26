@@ -4,7 +4,7 @@ import { useFetchUserLoans } from "@/hooks/lend/requestUserLoan";
 import { Application } from "@/types/lendings";
 import { IoEyeOutline } from "react-icons/io5";
 import LoanDetailsModal from "./LoanDetailsModal";
-
+import { LoanInfo } from "@/types/lendings";
 const statusColor = {
   Pending: "bg-yellow-100 text-yellow-700 border border-yellow-300",
   InProgress: "bg-blue-100 text-blue-700 border border-blue-300",
@@ -15,11 +15,12 @@ const statusColor = {
 
 interface Props {
   onSelect?: (app: Application) => void;
+  setUserLoans?: React.Dispatch<React.SetStateAction<Application[] | null>>;
 }
 
 const ITEMS_PER_PAGE = 5;
 
-export default function NewAppliedLendings({ onSelect }: Props) {
+export default function NewAppliedLendings({ setUserLoans, onSelect }: Props) {
   const { getUserLoans, loading, error } = useFetchUserLoans();
   const [applications, setApplications] = useState<Application[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -29,6 +30,7 @@ export default function NewAppliedLendings({ onSelect }: Props) {
   useEffect(() => {
     const fetchLoans = async () => {
       const storedUser = localStorage.getItem("user");
+
       if (!storedUser) return;
 
       try {
@@ -40,36 +42,41 @@ export default function NewAppliedLendings({ onSelect }: Props) {
             (loan) => loan.loanStatus !== "Approved"
           );
 
-          const mappedLoans: Application[] = filteredLoans.map(
-            (loan, index) => ({
-              loanRequestID: loan.loanRequestID,
-              uid: loan.uid,
-              maritalStatus: loan.maritalStatus,
-              highestEducation: loan.highestEducation,
-              employmentInformation: loan.employmentInformation,
-              residentType: loan.residentType,
-              detailedAddress: loan.detailedAddress || "Address not provided",
-              loanType: loan.loanType,
-              loanPurpose: loan.loanPurpose || "Unknown",
-              loanAmount: loan.loanAmount,
-              loanStatus:
-                loan.loanStatus === "Approved"
-                  ? "Approved"
-                  : loan.loanStatus === "Denied"
-                  ? "Denied"
-                  : loan.loanStatus === "Completed"
-                  ? "Completed"
-                  : loan.loanStatus === "InProgress"
-                  ? "InProgress"
-                  : "Pending",
-              createdAt: new Date(loan.createdAt).toLocaleDateString("en-PH", {
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              }),
-            })
+          const mappedLoans: Application[] = filteredLoans.map((loan) => ({
+            loanRequestID: loan.loanRequestID,
+            uid: loan.uid,
+            maritalStatus: loan.maritalStatus,
+            highestEducation: loan.highestEducation,
+            employmentInformation: loan.employmentInformation,
+            residentType: loan.residentType,
+            detailedAddress: loan.detailedAddress || "Address not provided",
+            loanType: loan.loanType,
+            loanPurpose: loan.loanPurpose || "Unknown",
+            loanAmount: loan.loanAmount,
+            loanStatus:
+              loan.loanStatus === "Approved"
+                ? "Approved"
+                : loan.loanStatus === "Denied"
+                ? "Denied"
+                : loan.loanStatus === "Completed"
+                ? "Completed"
+                : loan.loanStatus === "InProgress"
+                ? "InProgress"
+                : "Pending",
+            createdAt: new Date(loan.createdAt).toLocaleDateString("en-PH", {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            }),
+          }));
+
+          const hasActiveLoans = mappedLoans.some((loan) =>
+            ["Approved", "InProgress", "Pending"].includes(loan.loanStatus)
           );
 
+          localStorage.setItem("active_loans", JSON.stringify(hasActiveLoans));
+
+          setUserLoans?.(mappedLoans);
           setApplications(mappedLoans);
         }
       } catch (err) {
@@ -106,7 +113,9 @@ export default function NewAppliedLendings({ onSelect }: Props) {
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-xl font-bold text-gray-800">All Loans</h3>
-            <p className="text-gray-600 text-sm">Check all your loan applications</p>
+            <p className="text-gray-600 text-sm">
+              Check all your loan applications
+            </p>
           </div>
         </div>
       </div>
@@ -177,9 +186,13 @@ export default function NewAppliedLendings({ onSelect }: Props) {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span
-                    className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${statusColor[app.loanStatus]}`}
+                    className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                      statusColor[app.loanStatus]
+                    }`}
                   >
-                    {app.loanStatus === "InProgress" ? "In Progress" : app.loanStatus}
+                    {app.loanStatus === "InProgress"
+                      ? "In Progress"
+                      : app.loanStatus}
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-center">
@@ -201,7 +214,7 @@ export default function NewAppliedLendings({ onSelect }: Props) {
         <div className="px-6 py-4 border-t border-gray-200">
           <div className="flex items-center justify-between">
             <div className="text-sm text-gray-700">
-              Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1} to{" "}
+              Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1} to{" "}
               {Math.min(currentPage * ITEMS_PER_PAGE, applications.length)} of{" "}
               {applications.length} results
             </div>

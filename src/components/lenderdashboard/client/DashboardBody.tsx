@@ -7,6 +7,7 @@ import { useUpdateLoanStatus } from "@/hooks/lend/requestUpdateLoan";
 import SelectedLoan from "./SelectedLoan";
 import { IoEyeOutline } from "react-icons/io5";
 import { LoanWithUserInfo } from "@/types/lendings";
+import notifyAcknowledgeLoan from "@/utils/notifyAcknowledgeLoan";
 
 const statusColor = {
   Pending: "bg-yellow-100 text-yellow-700 border border-yellow-300",
@@ -21,7 +22,9 @@ const ITEMS_PER_PAGE = 10;
 export default function DashboardBody() {
   const { updateLoanStatus } = useUpdateLoanStatus();
   const [showModal, setShowModal] = useState(false);
-  const [selectedLoan, setSelectedLoan] = useState<LoanWithUserInfo | null>(null);
+  const [selectedLoan, setSelectedLoan] = useState<LoanWithUserInfo | null>(
+    null
+  );
   const [loans, setLoans] = useState<LoanWithUserInfo[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -61,9 +64,16 @@ export default function DashboardBody() {
 
   const sendMessage = async () => {
     if (!selectedLoan) return;
-    
+
+    const borrowerName =
+      selectedLoan.loanInfo.firstName ||
+      "" + selectedLoan.loanInfo.lastName ||
+      "";
+
     await sendLoanApplicationMessage({
       borrowerId: selectedLoan.loanInfo.uid,
+      borrowerName: borrowerName,
+      email: selectedLoan.userInfo.email,
       lenderId: storedUser.uid,
       lenderName: storedUser.username,
       loanPurpose: selectedLoan.loanInfo.loanPurpose,
@@ -89,6 +99,8 @@ export default function DashboardBody() {
 
   const sendLoanApplicationMessage = async ({
     borrowerId,
+    borrowerName,
+    email,
     lenderId,
     lenderName,
     loanPurpose,
@@ -96,6 +108,8 @@ export default function DashboardBody() {
     loanDate,
   }: {
     borrowerId: string;
+    borrowerName: string | any;
+    email: string | any;
     lenderId: string | any;
     lenderName: string | any;
     loanPurpose: string;
@@ -119,6 +133,13 @@ export default function DashboardBody() {
           `.trim();
 
       await channel.sendMessage({ text: messageText });
+
+      await notifyAcknowledgeLoan(
+        email,
+        borrowerName,
+        "https://kuwago.vercel.app/dashboard",
+        "Loan Acknowledgement"
+      );
     } catch (error) {
       console.error("Failed to send loan application message:", error);
     }
@@ -145,8 +166,12 @@ export default function DashboardBody() {
       <div className="px-6 py-4 border-b border-gray-200">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-xl font-bold text-gray-800">Loan Applications</h3>
-            <p className="text-gray-600 text-sm">Review and manage loan requests</p>
+            <h3 className="text-xl font-bold text-gray-800">
+              Loan Applications
+            </h3>
+            <p className="text-gray-600 text-sm">
+              Review and manage loan requests
+            </p>
           </div>
           <div className="w-80">
             <input
@@ -239,9 +264,15 @@ export default function DashboardBody() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
-                      className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${statusColor[loanInfo.loanStatus as keyof typeof statusColor] || statusColor.Pending}`}
+                      className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                        statusColor[
+                          loanInfo.loanStatus as keyof typeof statusColor
+                        ] || statusColor.Pending
+                      }`}
                     >
-                      {loanInfo.loanStatus === "InProgress" ? "In Progress" : loanInfo.loanStatus}
+                      {loanInfo.loanStatus === "InProgress"
+                        ? "In Progress"
+                        : loanInfo.loanStatus}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-center">
@@ -264,7 +295,7 @@ export default function DashboardBody() {
         <div className="px-6 py-4 border-t border-gray-200">
           <div className="flex items-center justify-between">
             <div className="text-sm text-gray-700">
-              Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1} to{" "}
+              Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1} to{" "}
               {Math.min(currentPage * ITEMS_PER_PAGE, filteredLoans.length)} of{" "}
               {filteredLoans.length} results
             </div>
