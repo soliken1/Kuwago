@@ -6,6 +6,9 @@ import NewCreditScore from "@/components/dashboard/client/NewCreditScore";
 import NewAppliedLendings from "@/components/dashboard/client/NewAppliedLendings";
 import UserListChat from "@/components/messaging/client/UserListChat";
 import useCreditScore, { CreditScoreData } from "@/hooks/users/useCreditScore";
+import useIDSelfieUploaded from "@/hooks/auth/requestIDSelfieUploaded";
+import UploadIDandSelfieModal from "@/components/profile/client/UploadIDandSelfie";
+import { getCookie } from "cookies-next";
 import { Application } from "@/types/lendings";
 
 export default function DashboardLayout() {
@@ -16,8 +19,10 @@ export default function DashboardLayout() {
     aiAssessment,
     loading,
   } = useCreditScore();
+  const { forceVerificationModal } = useIDSelfieUploaded();
   const [userData, setUserData] = useState<{ uid?: string } | null>(null);
   const [userLoans, setUserLoans] = useState<Application[] | null>(null);
+  const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
     // Get user data from localStorage
@@ -33,8 +38,23 @@ export default function DashboardLayout() {
     }
   }, []);
 
+  useEffect(() => {
+    const role = getCookie("user_role");
+    if (forceVerificationModal && role === "Borrower") {
+      setShowModal(true);
+    }
+  }, [forceVerificationModal]);
+
   return (
-    <div className="w-full h-screen flex bg-gray-50 relative">
+    <div
+      className={`w-full h-screen flex bg-gray-50 relative ${
+        showModal ? "opacity-90" : ""
+      }`}
+    >
+      {showModal && (
+        <UploadIDandSelfieModal onClose={() => setShowModal(false)} />
+      )}
+
       {/* Sidebar */}
       <div className="w-80 flex-shrink-0">
         <NewSidebar />
@@ -61,7 +81,7 @@ export default function DashboardLayout() {
       </div>
 
       {/* Chat Component - Fixed positioning outside content flow */}
-      <UserListChat />
+      {!showModal && <UserListChat />}
     </div>
   );
 }

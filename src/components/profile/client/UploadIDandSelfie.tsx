@@ -1,7 +1,8 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import useIDSelfieUploadRequest from "@/hooks/auth/requestIDSelfieUpload";
 import Image from "next/image";
+import CustomAlertModal from "./CustomAlertModal";
 
 export default function UploadIDandSelfieModal({
   onClose,
@@ -13,10 +14,49 @@ export default function UploadIDandSelfieModal({
   const [idPreview, setIdPreview] = useState<string | null>(null);
   const [selfiePreview, setSelfiePreview] = useState<string | null>(null);
   const { idSelfieUpload, loading, error } = useIDSelfieUploadRequest();
+  
+  // Alert modal state
+  const [alertModal, setAlertModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    type: "success" | "error" | "warning" | "info";
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+    type: "info",
+  });
+
+  // Cleanup object URLs on component unmount
+  useEffect(() => {
+    return () => {
+      if (idPreview) {
+        URL.revokeObjectURL(idPreview);
+      }
+      if (selfiePreview) {
+        URL.revokeObjectURL(selfiePreview);
+      }
+    };
+  }, [idPreview, selfiePreview]);
+
+  // Helper function to show custom alert
+  const showAlert = (title: string, message: string, type: "success" | "error" | "warning" | "info") => {
+    setAlertModal({
+      isOpen: true,
+      title,
+      message,
+      type,
+    });
+  };
 
   const handleIdChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Clean up previous preview URL to prevent memory leaks
+      if (idPreview) {
+        URL.revokeObjectURL(idPreview);
+      }
       setIdPhoto(file);
       setIdPreview(URL.createObjectURL(file));
     }
@@ -25,6 +65,10 @@ export default function UploadIDandSelfieModal({
   const handleSelfieChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Clean up previous preview URL to prevent memory leaks
+      if (selfiePreview) {
+        URL.revokeObjectURL(selfiePreview);
+      }
       setSelfiePhoto(file);
       setSelfiePreview(URL.createObjectURL(file));
     }
@@ -34,7 +78,7 @@ export default function UploadIDandSelfieModal({
     e.preventDefault();
 
     if (!idPhoto || !selfiePhoto) {
-      alert("Please select both ID and Selfie photos.");
+      showAlert("Missing Photos", "Please select both ID and Selfie photos.", "warning");
       return;
     }
 
@@ -44,20 +88,37 @@ export default function UploadIDandSelfieModal({
       formData.append("selfiePhoto", selfiePhoto);
 
       await idSelfieUpload(formData, () => {
-        alert("Upload successful!");
+        // Clear the form data
         setIdPhoto(null);
         setSelfiePhoto(null);
         setIdPreview(null);
         setSelfiePreview(null);
-        onClose();
+        
+        // Show success alert and close modal after user acknowledges
+        showAlert("Upload Successful!", "Your ID and selfie have been uploaded successfully.", "success");
       });
     } catch (err) {
-      alert(`Upload failed: ${err}`);
+      showAlert("Upload Failed", `There was an error uploading your photos. Please try again. Error: ${err}`, "error");
     }
   };
 
   return (
     <>
+      {/* Custom Alert Modal */}
+      <CustomAlertModal
+        isOpen={alertModal.isOpen}
+        onClose={() => setAlertModal(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={() => {
+          // If it's a success alert, close the main modal after user confirms
+          if (alertModal.type === "success") {
+            onClose();
+          }
+        }}
+        title={alertModal.title}
+        message={alertModal.message}
+        type={alertModal.type}
+      />
+
       <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center px-4">
         <div className="bg-white max-w-2xl w-full rounded-xl shadow-lg p-8 relative">
           <h2 className="poppins-bold text-4xl mb-8 text-center text-gray-700">
@@ -70,20 +131,65 @@ export default function UploadIDandSelfieModal({
                 <label className="block mb-3 poppins-bold text-gray-700">
                   Upload Valid ID
                 </label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleIdChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:outline-none focus:border-gray-400 bg-white"
-                />
-                {idPreview && (
-                  <Image
-                    src={idPreview}
-                    alt="ID Preview"
-                    width={1920}
-                    height={1080}
-                    className="mt-3 w-full h-40 object-contain rounded-2xl border border-gray-300"
-                  />
+                {!idPreview ? (
+                  <div className="relative">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleIdChange}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                      id="id-upload"
+                    />
+                    <label
+                      htmlFor="id-upload"
+                      className="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-gray-300 rounded-2xl cursor-pointer hover:border-gray-400 hover:bg-gray-50 transition-all duration-200 bg-white"
+                    >
+                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                        <svg
+                          className="w-8 h-8 mb-4 text-gray-500"
+                          aria-hidden="true"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 20 16"
+                        >
+                          <path
+                            stroke="currentColor"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"
+                          />
+                        </svg>
+                        <p className="mb-2 text-sm text-gray-500 poppins-medium">
+                          <span className="font-semibold">Click to upload</span> your ID
+                        </p>
+                        <p className="text-xs text-gray-500">PNG, JPG or JPEG (MAX. 10MB)</p>
+                      </div>
+                    </label>
+                  </div>
+                ) : (
+                  <div className="relative">
+                    <Image
+                      src={idPreview}
+                      alt="ID Preview"
+                      width={1920}
+                      height={1080}
+                      className="w-full h-40 object-contain rounded-2xl border border-gray-300"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (idPreview) {
+                          URL.revokeObjectURL(idPreview);
+                        }
+                        setIdPhoto(null);
+                        setIdPreview(null);
+                      }}
+                      className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-600 transition-colors"
+                    >
+                      ×
+                    </button>
+                  </div>
                 )}
               </div>
 
@@ -91,20 +197,65 @@ export default function UploadIDandSelfieModal({
                 <label className="block mb-3 poppins-bold text-gray-700">
                   Upload Selfie with ID
                 </label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleSelfieChange}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-2xl focus:outline-none focus:border-gray-400 bg-white"
-                />
-                {selfiePreview && (
-                  <Image
-                    alt="Selfie Preview"
-                    src={selfiePreview}
-                    width={1920}
-                    height={1080}
-                    className="mt-3 w-full h-40 object-contain rounded-2xl border border-gray-300"
-                  />
+                {!selfiePreview ? (
+                  <div className="relative">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleSelfieChange}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                      id="selfie-upload"
+                    />
+                    <label
+                      htmlFor="selfie-upload"
+                      className="flex flex-col items-center justify-center w-full h-40 border-2 border-dashed border-gray-300 rounded-2xl cursor-pointer hover:border-gray-400 hover:bg-gray-50 transition-all duration-200 bg-white"
+                    >
+                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                        <svg
+                          className="w-8 h-8 mb-4 text-gray-500"
+                          aria-hidden="true"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 20 16"
+                        >
+                          <path
+                            stroke="currentColor"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"
+                          />
+                        </svg>
+                        <p className="mb-2 text-sm text-gray-500 poppins-medium">
+                          <span className="font-semibold">Click to upload</span> your selfie
+                        </p>
+                        <p className="text-xs text-gray-500">PNG, JPG or JPEG (MAX. 10MB)</p>
+                      </div>
+                    </label>
+                  </div>
+                ) : (
+                  <div className="relative">
+                    <Image
+                      alt="Selfie Preview"
+                      src={selfiePreview}
+                      width={1920}
+                      height={1080}
+                      className="w-full h-40 object-contain rounded-2xl border border-gray-300"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (selfiePreview) {
+                          URL.revokeObjectURL(selfiePreview);
+                        }
+                        setSelfiePhoto(null);
+                        setSelfiePreview(null);
+                      }}
+                      className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-600 transition-colors"
+                    >
+                      ×
+                    </button>
+                  </div>
                 )}
               </div>
             </div>
