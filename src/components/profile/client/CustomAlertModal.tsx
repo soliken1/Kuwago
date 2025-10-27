@@ -11,6 +11,7 @@ interface CustomAlertModalProps {
   onConfirm?: () => void;
   confirmText?: string;
   cancelText?: string;
+  confidence?: number;
 }
 
 export default function CustomAlertModal({
@@ -23,6 +24,7 @@ export default function CustomAlertModal({
   onConfirm,
   confirmText = "OK",
   cancelText = "Cancel",
+  confidence,
 }: CustomAlertModalProps) {
   if (!isOpen) return null;
 
@@ -158,7 +160,7 @@ export default function CustomAlertModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-[60] flex items-center justify-center px-4">
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-[70] flex items-center justify-center px-4">
       <div className="bg-white max-w-md w-full rounded-2xl shadow-2xl p-8 relative animate-in fade-in-0 zoom-in-95 duration-200">
         <div className="flex flex-col items-center text-center">
           {getIcon()}
@@ -167,9 +169,36 @@ export default function CustomAlertModal({
             {title}
           </h2>
           
-          <p className="text-gray-600 mb-8 poppins-normal">
+          <p className="text-gray-600 mb-4 poppins-normal">
             {message}
           </p>
+          
+          {confidence !== undefined && (
+            <div className="mb-8 p-4 bg-gray-50 rounded-xl border-2 border-gray-200">
+              <div className="flex items-center justify-center mb-2">
+                <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                  <svg
+                    className="w-6 h-6 text-green-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                </div>
+              </div>
+              <p className="text-center text-gray-700 poppins-medium">
+                <span className="text-2xl font-bold text-green-600">{confidence}%</span>
+                <br />
+                <span className="text-sm">Face Match Confidence</span>
+              </p>
+            </div>
+          )}
 
           <div className="flex gap-3 w-full">
             {showCancel && (

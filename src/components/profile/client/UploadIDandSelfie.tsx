@@ -1,8 +1,10 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import useIDSelfieUploadRequest from "@/hooks/auth/requestIDSelfieUpload";
+import useFaceVerifyRequest from "@/hooks/auth/requestFaceVerify";
 import Image from "next/image";
 import CustomAlertModal from "./CustomAlertModal";
+import LegalDocumentsUpload from "./LegalDocumentsUpload";
 
 export default function UploadIDandSelfieModal({
   onClose,
@@ -14,6 +16,7 @@ export default function UploadIDandSelfieModal({
   const [idPreview, setIdPreview] = useState<string | null>(null);
   const [selfiePreview, setSelfiePreview] = useState<string | null>(null);
   const { idSelfieUpload, loading, error } = useIDSelfieUploadRequest();
+  const { faceVerify, faceVerifyData, loading: faceVerifyLoading } = useFaceVerifyRequest();
   
   // Alert modal state
   const [alertModal, setAlertModal] = useState<{
@@ -21,12 +24,16 @@ export default function UploadIDandSelfieModal({
     title: string;
     message: string;
     type: "success" | "error" | "warning" | "info";
+    confidence?: number;
   }>({
     isOpen: false,
     title: "",
     message: "",
     type: "info",
   });
+
+  // Legal documents modal state
+  const [showLegalDocumentsModal, setShowLegalDocumentsModal] = useState(false);
 
   // Cleanup object URLs on component unmount
   useEffect(() => {
@@ -41,12 +48,13 @@ export default function UploadIDandSelfieModal({
   }, [idPreview, selfiePreview]);
 
   // Helper function to show custom alert
-  const showAlert = (title: string, message: string, type: "success" | "error" | "warning" | "info") => {
+  const showAlert = (title: string, message: string, type: "success" | "error" | "warning" | "info", confidence?: number) => {
     setAlertModal({
       isOpen: true,
       title,
       message,
       type,
+      confidence,
     });
   };
 
@@ -87,15 +95,28 @@ export default function UploadIDandSelfieModal({
       formData.append("idPhoto", idPhoto);
       formData.append("selfiePhoto", selfiePhoto);
 
-      await idSelfieUpload(formData, () => {
+      await idSelfieUpload(formData, async () => {
         // Clear the form data
         setIdPhoto(null);
         setSelfiePhoto(null);
         setIdPreview(null);
         setSelfiePreview(null);
         
-        // Show success alert and close modal after user acknowledges
-        showAlert("Upload Successful!", "Your ID and selfie have been uploaded successfully.", "success");
+        // Call face verification after successful upload
+        try {
+          await faceVerify((data) => {
+            const confidencePercentage = Math.round(data.data.confidence);
+            showAlert(
+              "Upload & Verification Successful!", 
+              `Your ID and selfie have been uploaded successfully. Face verification completed.`, 
+              "success",
+              confidencePercentage
+            );
+          });
+        } catch (err) {
+          // If face verification fails, still show upload success but without confidence
+          showAlert("Upload Successful!", "Your ID and selfie have been uploaded successfully, but face verification failed.", "warning");
+        }
       });
     } catch (err) {
       showAlert("Upload Failed", `There was an error uploading your photos. Please try again. Error: ${err}`, "error");
@@ -109,15 +130,26 @@ export default function UploadIDandSelfieModal({
         isOpen={alertModal.isOpen}
         onClose={() => setAlertModal(prev => ({ ...prev, isOpen: false }))}
         onConfirm={() => {
-          // If it's a success alert, close the main modal after user confirms
+          // If it's a success alert, show legal documents modal
           if (alertModal.type === "success") {
-            onClose();
+            setShowLegalDocumentsModal(true);
           }
         }}
         title={alertModal.title}
         message={alertModal.message}
         type={alertModal.type}
+        confidence={alertModal.confidence}
       />
+
+      {/* Legal Documents Upload Modal */}
+      {showLegalDocumentsModal && (
+        <LegalDocumentsUpload
+          onClose={() => {
+            setShowLegalDocumentsModal(false);
+            onClose(); // Close the main modal after legal documents are uploaded
+          }}
+        />
+      )}
 
       <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center px-4">
         <div className="bg-white max-w-2xl w-full rounded-xl shadow-lg p-8 relative">
@@ -195,7 +227,7 @@ export default function UploadIDandSelfieModal({
 
               <div className="w-1/2">
                 <label className="block mb-3 poppins-bold text-gray-700">
-                  Upload Selfie with ID
+                  Upload Selfie
                 </label>
                 {!selfiePreview ? (
                   <div className="relative">
@@ -262,13 +294,13 @@ export default function UploadIDandSelfieModal({
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || faceVerifyLoading}
               className="w-full py-3 text-white font-bold rounded-2xl transition duration-200 mt-6 disabled:opacity-50"
               style={{ backgroundColor: '#2c8068' }}
               onMouseEnter={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#1f5a4a'}
               onMouseLeave={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#2c8068'}
             >
-              {loading ? "Uploading..." : "Submit for Verification"}
+              {loading ? "Uploading..." : faceVerifyLoading ? "Verifying..." : "Submit for Verification"}
             </button>
 
             {error && (

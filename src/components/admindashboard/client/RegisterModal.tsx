@@ -17,7 +17,11 @@ export default function RegisterModal({ isOpen, onClose }: Props) {
     username: "",
     phoneNumber: "",
     password: "",
-    role: 1, // 👈 set to 1 for this modal
+    role: 1,
+    lenderInstitution: "",
+    lenderAddress: "",
+    businessName: "",
+    businessAddress: "",
   });
   const [showSuccess, setShowSuccess] = useState(false);
 
@@ -57,7 +61,7 @@ export default function RegisterModal({ isOpen, onClose }: Props) {
       <div className="bg-white rounded-xl w-full max-w-lg shadow-md overflow-hidden">
         <div className="p-8">
           <h2 className="poppins-bold text-3xl text-center text-gray-700 mb-8">
-            Register New User
+            Register New Lender
           </h2>
           
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -69,12 +73,20 @@ export default function RegisterModal({ isOpen, onClose }: Props) {
                 "username",
                 "phoneNumber",
                 "password",
+                "lenderInstitution",
+                "lenderAddress",
               ].map((field) => (
                 <input
                   key={field}
                   name={field}
                   type={field === "password" ? "password" : "text"}
-                  placeholder={field.charAt(0).toUpperCase() + field.slice(1)}
+                  placeholder={
+                    field === "lenderInstitution" 
+                      ? "Lender Institution" 
+                      : field === "lenderAddress"
+                      ? "Lender Address"
+                      : field.charAt(0).toUpperCase() + field.slice(1)
+                  }
                   value={formData[field as keyof typeof formData]}
                   onChange={handleChange}
                   required
