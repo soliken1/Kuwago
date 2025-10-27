@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import sendEmailWithLink from "@/utils/sendEmailWithLink";
 import RegisterVector from "../../../../assets/images/RegisterVector.png";
+import TermsAndConditionsModal from "./TermsAndConditionsModal";
 
 export default function RegisterForm() {
   const router = useRouter();
@@ -18,9 +19,16 @@ export default function RegisterForm() {
     phoneNumber: "",
     password: "",
     role: 2,
+    lenderInstitution: "",
+    lenderAddress: "",
+    businessName: "",
+    businessAddress: "",
   });
+  const [selectedRole, setSelectedRole] = useState<"lender" | "borrower">("borrower");
   const [showError, setShowError] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [agreeToTerms, setAgreeToTerms] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
   const placeholderMap: Record<string, string> = {
     firstName: "'Juan'",
     lastName: "'Dela Cruz'",
@@ -72,7 +80,7 @@ export default function RegisterForm() {
 
   return (
     <div className="flex flex-col items-center w-full bg-black/25 justify-center min-h-screen p-4 poppins-normal">
-      <div className="flex w-[820px] h-[650px] bg-white rounded-xl shadow-md overflow-hidden">
+      <div className="flex w-[900px] bg-white rounded-xl shadow-md overflow-hidden">
         {/* LEFT SIDE: IMAGE - 1/2 width */}
         <div className="hidden sm:block sm:w-1/2 relative min-h-[300px]">
           <Image
@@ -91,6 +99,44 @@ export default function RegisterForm() {
           <h2 className="poppins-bold pt-6 mb-12 text-4xl text-center text-gray-700">
             Create Account
           </h2>
+
+          {/* Role Selection Buttons */}
+          <div className="flex space-x-4 mb-6">
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedRole("lender");
+                setFormData(prev => ({ ...prev, role: 1 }));
+              }}
+              className={`flex-1 py-3 px-4 rounded-2xl font-medium transition duration-200 ${
+                selectedRole === "lender"
+                  ? "text-white"
+                  : "text-gray-600 bg-gray-100 hover:bg-gray-200"
+              }`}
+              style={{
+                backgroundColor: selectedRole === "lender" ? '#85d4a4' : undefined
+              }}
+            >
+              Lender
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedRole("borrower");
+                setFormData(prev => ({ ...prev, role: 2 }));
+              }}
+              className={`flex-1 py-3 px-4 rounded-2xl font-medium transition duration-200 ${
+                selectedRole === "borrower"
+                  ? "text-white"
+                  : "text-gray-600 bg-gray-100 hover:bg-gray-200"
+              }`}
+              style={{
+                backgroundColor: selectedRole === "borrower" ? '#85d4a4' : undefined
+              }}
+            >
+              Borrower
+            </button>
+          </div>
 
           <div className="flex flex-col space-y-4">
             <div className="grid grid-cols-2 gap-4">
@@ -122,15 +168,100 @@ export default function RegisterForm() {
                 required
               />
             ))}
+
+            {/* Conditional fields based on role selection */}
+            {selectedRole === "lender" && (
+              <>
+                <input
+                  type="text"
+                  id="lenderInstitution"
+                  name="lenderInstitution"
+                  placeholder="Lender Institution"
+                  className="px-4 py-3 border border-gray-300 rounded-2xl focus:outline-none focus:border-gray-400 bg-white"
+                  value={formData.lenderInstitution}
+                  onChange={handleChange}
+                  required
+                />
+                <input
+                  type="text"
+                  id="lenderAddress"
+                  name="lenderAddress"
+                  placeholder="Lender Address"
+                  className="px-4 py-3 border border-gray-300 rounded-2xl focus:outline-none focus:border-gray-400 bg-white"
+                  value={formData.lenderAddress}
+                  onChange={handleChange}
+                  required
+                />
+              </>
+            )}
+
+            {selectedRole === "borrower" && (
+              <>
+                <input
+                  type="text"
+                  id="businessName"
+                  name="businessName"
+                  placeholder="Business Name"
+                  className="px-4 py-3 border border-gray-300 rounded-2xl focus:outline-none focus:border-gray-400 bg-white"
+                  value={formData.businessName}
+                  onChange={handleChange}
+                  required
+                />
+                <input
+                  type="text"
+                  id="businessAddress"
+                  name="businessAddress"
+                  placeholder="Business Address"
+                  className="px-4 py-3 border border-gray-300 rounded-2xl focus:outline-none focus:border-gray-400 bg-white"
+                  value={formData.businessAddress}
+                  onChange={handleChange}
+                  required
+                />
+              </>
+            )}
+          </div>
+
+          {/* Terms and Conditions Checkbox */}
+          <div className="flex items-start space-x-3 mt-6">
+            <input
+              type="checkbox"
+              id="agreeToTerms"
+              checked={agreeToTerms}
+              onChange={(e) => setAgreeToTerms(e.target.checked)}
+              className="mt-1 h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+            />
+            <label htmlFor="agreeToTerms" className="text-sm text-gray-600">
+              I agree to the{" "}
+              <button
+                type="button"
+                onClick={() => setShowTermsModal(true)}
+                className="text-green-600 hover:text-green-700 underline font-medium"
+                style={{ color: '#85d4a4' }}
+              >
+                Terms and Conditions
+              </button>
+            </label>
           </div>
 
           <button
             type="submit"
-            disabled={loading}
-            className="w-full py-3 text-white font-bold rounded-2xl transition duration-200 mt-6"
-            style={{ backgroundColor: '#85d4a4' }}
-            onMouseEnter={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#6bc48a'}
-            onMouseLeave={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#85d4a4'}
+            disabled={loading || !agreeToTerms}
+            className={`w-full py-3 text-white font-bold rounded-2xl transition duration-200 mt-4 ${
+              !agreeToTerms ? "opacity-50 cursor-not-allowed" : ""
+            }`}
+            style={{ 
+              backgroundColor: agreeToTerms ? '#85d4a4' : '#cccccc'
+            }}
+            onMouseEnter={(e) => {
+              if (agreeToTerms) {
+                (e.target as HTMLButtonElement).style.backgroundColor = '#6bc48a';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (agreeToTerms) {
+                (e.target as HTMLButtonElement).style.backgroundColor = '#85d4a4';
+              }
+            }}
           >
             {loading ? "Registering..." : "Register"}
           </button>
@@ -191,6 +322,12 @@ export default function RegisterForm() {
           </p>
         </form>
       </div>
+
+      {/* Terms and Conditions Modal */}
+      <TermsAndConditionsModal
+        isOpen={showTermsModal}
+        onClose={() => setShowTermsModal(false)}
+      />
     </div>
   );
 }

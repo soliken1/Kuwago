@@ -23,6 +23,10 @@ interface RegisterPayload {
   phoneNumber: string;
   password: string;
   role: number;
+  lenderInstitution: string;
+  lenderAddress: string;
+  businessName: string;
+  businessAddress: string;
 }
 
 interface RegisterData {
