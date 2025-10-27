@@ -7,7 +7,9 @@ import NewAppliedLendings from "@/components/dashboard/client/NewAppliedLendings
 import UserListChat from "@/components/messaging/client/UserListChat";
 import useCreditScore, { CreditScoreData } from "@/hooks/users/useCreditScore";
 import useIDSelfieUploaded from "@/hooks/auth/requestIDSelfieUploaded";
+import useCheckDocuments from "@/hooks/auth/requestCheckDocuments";
 import UploadIDandSelfieModal from "@/components/profile/client/UploadIDandSelfie";
+import LegalDocumentsUploadModal from "@/components/profile/client/LegalDocumentsUpload";
 import { getCookie } from "cookies-next";
 import { Application } from "@/types/lendings";
 
@@ -20,9 +22,11 @@ export default function DashboardLayout() {
     loading,
   } = useCreditScore();
   const { forceVerificationModal } = useIDSelfieUploaded();
+  const { forceDocumentModal } = useCheckDocuments();
   const [userData, setUserData] = useState<{ uid?: string } | null>(null);
   const [userLoans, setUserLoans] = useState<Application[] | null>(null);
-  const [showModal, setShowModal] = useState(false);
+  const [showIdModal, setShowIdModal] = useState(false);
+  const [showDocumentModal, setShowDocumentModal] = useState(false);
 
   useEffect(() => {
     // Get user data from localStorage
@@ -40,19 +44,36 @@ export default function DashboardLayout() {
 
   useEffect(() => {
     const role = getCookie("user_role");
-    if (forceVerificationModal && role === "Borrower") {
-      setShowModal(true);
+    if (role === "Borrower") {
+      // Priority logic: If both ID verification and documents are 404, show ID modal only
+      // If only documents are 404, show document modal
+      if (forceVerificationModal && forceDocumentModal) {
+        // Both are 404 - show ID verification modal only (which leads to document modal)
+        setShowIdModal(true);
+        setShowDocumentModal(false); // Explicitly prevent document modal
+      } else if (forceDocumentModal && !forceVerificationModal) {
+        // Only documents are 404 - show document modal directly
+        setShowDocumentModal(true);
+        setShowIdModal(false); // Explicitly prevent ID modal
+      } else if (forceVerificationModal && !forceDocumentModal) {
+        // Only ID verification is 404 - show ID modal
+        setShowIdModal(true);
+        setShowDocumentModal(false); // Explicitly prevent document modal
+      }
     }
-  }, [forceVerificationModal]);
+  }, [forceVerificationModal, forceDocumentModal]);
 
   return (
     <div
       className={`w-full h-screen flex bg-gray-50 relative ${
-        showModal ? "opacity-90" : ""
+        showIdModal || showDocumentModal ? "opacity-90" : ""
       }`}
     >
-      {showModal && (
-        <UploadIDandSelfieModal onClose={() => setShowModal(false)} />
+      {showIdModal && (
+        <UploadIDandSelfieModal onClose={() => setShowIdModal(false)} />
+      )}
+      {showDocumentModal && (
+        <LegalDocumentsUploadModal onClose={() => setShowDocumentModal(false)} />
       )}
 
       {/* Sidebar */}
@@ -81,7 +102,7 @@ export default function DashboardLayout() {
       </div>
 
       {/* Chat Component - Fixed positioning outside content flow */}
-      {!showModal && <UserListChat />}
+      {!showIdModal && !showDocumentModal && <UserListChat />}
     </div>
   );
 }

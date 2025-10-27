@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import useDocumentUploadRequest from "@/hooks/auth/requestDocumentUpload";
 import Image from "next/image";
 import CustomAlertModal from "./CustomAlertModal";
+import { getCookie } from "cookies-next";
 
 export default function LegalDocumentsUploadModal({
   onClose,
@@ -11,6 +12,7 @@ export default function LegalDocumentsUploadModal({
 }) {
   const [documents, setDocuments] = useState<File[]>([]);
   const [previews, setPreviews] = useState<{ file: File; preview: string }[]>([]);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const { uploadDocuments, uploadData, loading, error } = useDocumentUploadRequest();
   
   // Alert modal state
@@ -25,6 +27,12 @@ export default function LegalDocumentsUploadModal({
     message: "",
     type: "info",
   });
+
+  // Get user role on component mount
+  useEffect(() => {
+    const role = getCookie("user_role");
+    setUserRole(role as string);
+  }, []);
 
   // Cleanup object URLs on component unmount
   useEffect(() => {
@@ -61,6 +69,27 @@ export default function LegalDocumentsUploadModal({
       type,
     });
   };
+
+  // Document requirements for borrowers
+  const borrowerDocumentRequirements = [
+    "SEC/DTI Registration",
+    "BIR 2303 Certificate of Registration (if available)",
+    "Business/ Barangay Permit",
+    "3-month Bank Statement",
+    "Bank Account Information (Gcash No, Bank Account Number, Bank Account Name)",
+    "Government-Issued ID for representative"
+  ];
+
+  // Document requirements for lenders
+  const lenderDocumentRequirements = [
+    "SEC Registration",
+    "BIR 2303 Certificate of Registration",
+    "Business/ Barangay Permit",
+    "3-month Bank Statement",
+    "Bank Account Information (Gcash No, Bank Account Number, Bank Account Name)",
+    "Certificate of Authority to Operate",
+    "Government-Issued ID for representative"
+  ];
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -121,11 +150,63 @@ export default function LegalDocumentsUploadModal({
         type={alertModal.type}
       />
 
-      <div className="fixed inset-0 bg-black bg-opacity-50 z-[60] flex items-center justify-center px-4">
-        <div className="bg-white max-w-4xl w-full rounded-xl shadow-lg p-8 relative">
-          <h2 className="poppins-bold text-4xl mb-8 text-center text-gray-700">
-            Upload Legal Documents
-          </h2>
+      <div className="fixed inset-0 bg-black bg-opacity-50 z-[60] flex items-center justify-center px-4 py-4">
+        <div className="bg-white max-w-4xl w-full rounded-xl shadow-lg relative max-h-[90vh] flex flex-col">
+          <div className="p-8 pb-4">
+            <h2 className="poppins-bold text-4xl mb-8 text-center text-gray-700">
+              Upload Legal Documents
+            </h2>
+          </div>
+          
+          <div className="flex-1 overflow-y-auto px-8 pb-8">
+
+          {/* Document Requirements for Borrowers */}
+          {userRole === "Borrower" && (
+            <div className="mb-8 p-6 bg-gray-50 border border-gray-300 rounded-2xl">
+              <h3 className="poppins-bold text-lg text-gray-700 mb-4">
+                Required Documents for Borrowers:
+              </h3>
+              <ol className="space-y-2 text-gray-700">
+                {borrowerDocumentRequirements.map((requirement, index) => (
+                  <li key={index} className="flex items-start">
+                    <span 
+                      className="flex-shrink-0 w-6 h-6 text-white text-sm font-bold rounded-full flex items-center justify-center mr-3 mt-0.5"
+                      style={{ backgroundColor: '#2c8068' }}
+                    >
+                      {index + 1}
+                    </span>
+                    <span className="poppins-medium text-sm leading-relaxed">
+                      {requirement}
+                    </span>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          )}
+
+          {/* Document Requirements for Lenders */}
+          {userRole === "Lenders" && (
+            <div className="mb-8 p-6 bg-gray-50 border border-gray-300 rounded-2xl">
+              <h3 className="poppins-bold text-lg text-gray-700 mb-4">
+                Required Documents for Lenders:
+              </h3>
+              <ol className="space-y-2 text-gray-700">
+                {lenderDocumentRequirements.map((requirement, index) => (
+                  <li key={index} className="flex items-start">
+                    <span 
+                      className="flex-shrink-0 w-6 h-6 text-white text-sm font-bold rounded-full flex items-center justify-center mr-3 mt-0.5"
+                      style={{ backgroundColor: '#2c8068' }}
+                    >
+                      {index + 1}
+                    </span>
+                    <span className="poppins-medium text-sm leading-relaxed">
+                      {requirement}
+                    </span>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-6 flex flex-col">
             {/* File Upload Area */}
@@ -242,6 +323,7 @@ export default function LegalDocumentsUploadModal({
               <p className="text-red-600 text-center poppins-bold">{error}</p>
             )}
           </form>
+          </div>
         </div>
       </div>
     </>
