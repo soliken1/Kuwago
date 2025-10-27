@@ -1,11 +1,11 @@
 "use client";
-import React, { useEffect } from "react";
+import React, { useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { usePaymentDetails } from "@/hooks/payment/usePaymentDetails";
 import successfulPayment from "@/utils/successfulPayment";
 
-export default function PaymentSuccess() {
+function PaymentSuccessContent() {
   const searchParams = useSearchParams();
   const paymentId = searchParams.get("paymentId");
 
@@ -17,29 +17,25 @@ export default function PaymentSuccess() {
         "kennethrex456@gmail.com",
         "Admin",
         window.location.href,
-        "Payment Failed"
+        "Payment Successful"
       );
     }
   }, [paymentData]);
 
   // Format currency
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-PH", {
+  const formatCurrency = (amount: number) =>
+    new Intl.NumberFormat("en-PH", {
       style: "currency",
       currency: "PHP",
     }).format(amount);
-  };
 
-  // Format date
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
+  const formatDate = (dateString: string) =>
+    new Date(dateString).toLocaleDateString("en-US", {
       year: "numeric",
       month: "long",
       day: "numeric",
     });
-  };
 
-  // Loading state
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -54,7 +50,6 @@ export default function PaymentSuccess() {
     );
   }
 
-  // Error state
   if (error || !paymentId) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -94,24 +89,10 @@ export default function PaymentSuccess() {
     );
   }
 
-  // Success state - only show if status is "Completed"
   if (paymentData?.status === "Completed") {
-    // Optional: Send success notification
-    // useEffect(() => {
-    //   if (paymentData) {
-    //     successfulPayment(
-    //       adminEmails,
-    //       adminNames,
-    //       window.location.href,
-    //       "Payment Successful"
-    //     );
-    //   }
-    // }, [paymentData]);
-
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="max-w-md w-full bg-white rounded-2xl shadow-lg p-8 text-center">
-          {/* Success Icon */}
           <div className="mb-6">
             <div className="w-20 h-20 mx-auto bg-green-100 rounded-full flex items-center justify-center">
               <svg
@@ -130,18 +111,14 @@ export default function PaymentSuccess() {
             </div>
           </div>
 
-          {/* Success Message */}
           <h1 className="text-2xl font-bold text-gray-900 mb-2 poppins-bold">
             Payment Successful
           </h1>
-
-          {/* Thank You Message */}
           <p className="text-gray-600 mb-6 poppins-normal">
             Thank you for your payment. Your transaction has been processed
             successfully.
           </p>
 
-          {/* Payment Details */}
           <div className="bg-gray-50 rounded-lg p-4 mb-6 text-left">
             <div className="flex justify-between mb-3">
               <span className="text-gray-600 poppins-normal">Amount Paid:</span>
@@ -175,17 +152,10 @@ export default function PaymentSuccess() {
             </div>
           </div>
 
-          {/* Action Button */}
           <Link
             href="/approvedloans"
             className="inline-block w-full text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200 poppins-bold"
             style={{ backgroundColor: "#2c8068" }}
-            onMouseEnter={(e) =>
-              (e.currentTarget.style.backgroundColor = "#256b56")
-            }
-            onMouseLeave={(e) =>
-              (e.currentTarget.style.backgroundColor = "#2c8068")
-            }
           >
             Go to Approved Loans
           </Link>
@@ -194,7 +164,6 @@ export default function PaymentSuccess() {
     );
   }
 
-  // If payment exists but status is not "Completed"
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="max-w-md w-full bg-white rounded-2xl shadow-lg p-8 text-center">
@@ -210,5 +179,19 @@ export default function PaymentSuccess() {
         </Link>
       </div>
     </div>
+  );
+}
+
+export default function PaymentSuccess() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <p className="text-gray-600">Loading payment details...</p>
+        </div>
+      }
+    >
+      <PaymentSuccessContent />
+    </Suspense>
   );
 }

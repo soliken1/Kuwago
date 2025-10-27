@@ -1,11 +1,11 @@
 "use client";
-import React, { useEffect } from "react";
+import React, { useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { usePaymentDetails } from "@/hooks/payment/usePaymentDetails";
 import failedPayment from "@/utils/FailedPayment";
 
-export default function PaymentFailed() {
+function PaymentFailedContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const paymentId = searchParams.get("paymentId");
@@ -19,7 +19,17 @@ export default function PaymentFailed() {
     }).format(amount);
   };
 
-  // Loading state
+  useEffect(() => {
+    if (paymentData && paymentData.status === "Cancelled") {
+      failedPayment(
+        "kennethrex456@gmail.com",
+        "Admin",
+        window.location.href,
+        "Payment Failed"
+      );
+    }
+  }, [paymentData]);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -33,17 +43,6 @@ export default function PaymentFailed() {
       </div>
     );
   }
-
-  useEffect(() => {
-    if (paymentData && paymentData.status === "Cancelled") {
-      failedPayment(
-        "kennethrex456@gmail.com",
-        "Admin",
-        window.location.href,
-        "Payment Failed"
-      );
-    }
-  }, [paymentData]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -78,7 +77,7 @@ export default function PaymentFailed() {
             "Your payment could not be processed. Please try again or contact support."}
         </p>
 
-        {/* Payment Details (if available) */}
+        {/* Payment Details */}
         {paymentData && (
           <div className="bg-gray-50 rounded-lg p-4 mb-6 text-left">
             <div className="flex justify-between mb-3">
@@ -129,5 +128,13 @@ export default function PaymentFailed() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function PaymentFailed() {
+  return (
+    <Suspense fallback={<div className="text-center mt-10">Loading...</div>}>
+      <PaymentFailedContent />
+    </Suspense>
   );
 }
