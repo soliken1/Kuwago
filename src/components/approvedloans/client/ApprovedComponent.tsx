@@ -43,6 +43,7 @@ export default function ApprovedComponent() {
   const [paymentAmount, setPaymentAmount] = useState<number>(0);
   const [paymentNotes, setPaymentNotes] = useState<string>("");
   const [showPaymentHistoryModal, setShowPaymentHistoryModal] = useState<boolean>(false);
+  const [minimumPaymentAmount, setMinimumPaymentAmount] = useState<number>(0);
   
   const { fetchPaymentSummary, loading: summaryLoading } = useFetchPaymentSummary();
   const { fetchPaymentSchedule, loading: scheduleLoading } = useFetchPaymentSchedule();
@@ -60,6 +61,7 @@ export default function ApprovedComponent() {
     // Reset payment data when closing modal
     setPaymentSummary(null);
     setPaymentSchedule(null);
+    setMinimumPaymentAmount(0);
     hasFetchedPaymentData.current = false;
   };
 
@@ -80,6 +82,8 @@ export default function ApprovedComponent() {
             const { uid } = JSON.parse(storedUser);
             const schedule = await fetchPaymentSchedule(uid, selectedLoan.payableID);
             setPaymentSchedule(schedule);
+            // Set minimum payment amount from the schedule
+            setMinimumPaymentAmount(schedule.monthlyPayment);
           }
         } catch (error) {
           toast.error("Failed to load payment information");
@@ -94,6 +98,11 @@ export default function ApprovedComponent() {
   const handlePaymentSubmit = async () => {
     if (paymentAmount <= 0) {
       toast.error("Please enter a valid payment amount");
+      return;
+    }
+
+    if (paymentAmount < minimumPaymentAmount) {
+      toast.error(`Payment amount must be at least ₱${minimumPaymentAmount.toLocaleString()}`);
       return;
     }
 
@@ -587,7 +596,10 @@ export default function ApprovedComponent() {
                     </h3>
                     {selectedLoan.paymentType === "ECash" && (
                       <button
-                        onClick={() => setShowPaymentModal(true)}
+                        onClick={() => {
+                          setPaymentAmount(0);
+                          setShowPaymentModal(true);
+                        }}
                         className="px-4 py-2 bg-[#2c8068] text-white rounded-lg hover:bg-[#1f5a4a] transition-colors text-sm font-medium"
                       >
                         Record Payment
@@ -676,25 +688,38 @@ export default function ApprovedComponent() {
                   <input
                     type="number"
                     value={paymentAmount === 0 ? "" : paymentAmount}
-                    placeholder="Enter payment amount"
-                    className="w-full rounded-md border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#2c8068]"
+                    placeholder={`Minimum: ₱${minimumPaymentAmount.toLocaleString()}`}
+                    className={`w-full rounded-md border px-4 py-3 text-sm focus:outline-none focus:ring-2 ${
+                      paymentAmount > 0 && paymentAmount < minimumPaymentAmount
+                        ? "border-red-300 focus:ring-red-500"
+                        : "border-gray-300 focus:ring-[#2c8068]"
+                    }`}
                     onChange={(e) => setPaymentAmount(Number(e.target.value) || 0)}
-                    min={0}
+                    min={minimumPaymentAmount}
                     step="0.01"
                   />
+                  
+                  {paymentAmount > 0 && paymentAmount < minimumPaymentAmount && (
+                    <p className="text-xs text-red-600 mt-1">
+                      Payment amount must be at least ₱{minimumPaymentAmount.toLocaleString()}
+                    </p>
+                  )}
                 </div>
               </div>
               
               <div className="flex justify-end gap-3 mt-6">
                 <button
-                  onClick={() => setShowPaymentModal(false)}
+                  onClick={() => {
+                    setShowPaymentModal(false);
+                    setPaymentAmount(0);
+                  }}
                   className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handlePaymentSubmit}
-                  disabled={paymentLoading}
+                  disabled={paymentLoading || paymentAmount <= 0 || paymentAmount < minimumPaymentAmount}
                   className="px-6 py-2 bg-[#2c8068] text-white rounded-lg hover:bg-[#1f5a4a] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {paymentLoading ? "Recording..." : "Record Payment"}
