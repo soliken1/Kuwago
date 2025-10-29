@@ -128,17 +128,20 @@ export const useProfile = () => {
       if (!userData) throw new Error("No user data in localStorage");
 
       const { uid } = JSON.parse(userData);
+      const originalUser = JSON.parse(userData);
 
-      if (
-        updatedProfile.firstName ||
-        updatedProfile.lastName ||
-        updatedProfile.phoneNumber
-      ) {
+      // Check if name or phone number fields were actually changed
+      const nameOrPhoneChanged = 
+        (updatedProfile.firstName !== undefined && updatedProfile.firstName !== originalUser.firstName) ||
+        (updatedProfile.lastName !== undefined && updatedProfile.lastName !== originalUser.lastName) ||
+        (updatedProfile.phoneNumber !== undefined && updatedProfile.phoneNumber !== originalUser.phoneNumber);
+
+      if (nameOrPhoneChanged) {
         const userInfoBody = {
           uid,
-          firstName: updatedProfile.firstName || "",
-          lastName: updatedProfile.lastName || "",
-          phoneNumber: updatedProfile.phoneNumber || "",
+          firstName: updatedProfile.firstName !== undefined ? updatedProfile.firstName : originalUser.firstName || "",
+          lastName: updatedProfile.lastName !== undefined ? updatedProfile.lastName : originalUser.lastName || "",
+          phoneNumber: updatedProfile.phoneNumber !== undefined ? updatedProfile.phoneNumber : originalUser.phoneNumber || "",
           status: 0,
         };
 
@@ -154,7 +157,13 @@ export const useProfile = () => {
         );
       }
 
-      if (updatedProfile.newPassword && updatedProfile.confirmPassword) {
+      // Check if password was actually changed
+      const passwordChanged = 
+        updatedProfile.newPassword && 
+        updatedProfile.confirmPassword && 
+        updatedProfile.newPassword.trim() !== "";
+
+      if (passwordChanged) {
         if (updatedProfile.newPassword !== updatedProfile.confirmPassword) {
           throw new Error("New password and confirmation do not match.");
         }
@@ -178,7 +187,13 @@ export const useProfile = () => {
         alert(passwordResponse.data.message);
       }
 
-      if (updatedProfile.email) {
+      // Check if email was actually changed
+      const emailChanged = 
+        updatedProfile.email && 
+        updatedProfile.email !== originalUser.email &&
+        updatedProfile.email.trim() !== "";
+
+      if (emailChanged) {
         const tokenResponse = await axios.get<TokenResponse>(
           "/proxy/Auth/CheckToken",
           {
@@ -211,12 +226,14 @@ export const useProfile = () => {
         return emailResponse.data;
       }
 
-      if (
+      // Check if profile picture was actually changed
+      const profilePictureChanged = 
         updatedProfile.profilePicture &&
-        typeof updatedProfile.profilePicture !== "string"
-      ) {
+        typeof updatedProfile.profilePicture !== "string";
+
+      if (profilePictureChanged) {
         const formData = new FormData();
-        formData.append("profilePicture", updatedProfile.profilePicture);
+        formData.append("profilePicture", updatedProfile.profilePicture as File);
 
         const profileResponse = await axios.post(
           "/proxy/Auth/UploadProfilePicture",
