@@ -2,22 +2,29 @@
 import axios, { AxiosError } from "axios";
 import { useState } from "react";
 import { getCookie } from "cookies-next";
-interface UserData {
+export interface UserData {
   uid: string;
   fullName?: string;
+  firstName?: string | null;
+  lastName?: string | null;
   email?: string;
   phoneNumber?: string;
   username?: string;
   profilePicture?: string;
   role?: string;
   createdAt?: string;
+  status?: string;
+  lenderInstitution?: string;
+  lenderAddress?: string;
+  businessName?: string | null;
+  businessAddress?: string | null;
 }
 
 interface UserResponse {
   success?: string;
   message?: string;
   statusCode?: string;
-  data?: UserData;
+  data?: UserData[];
 }
 
 export default function useGetAllUsers() {
