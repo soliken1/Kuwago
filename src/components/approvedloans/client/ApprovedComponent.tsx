@@ -6,6 +6,7 @@ import X from "../../../../assets/actions/X";
 import { useFetchPaymentSummary, PaymentSummary } from "@/hooks/lend/fetchPaymentSummary";
 import { useFetchPaymentSchedule, PaymentSchedule } from "@/hooks/lend/fetchPaymentSchedule";
 import { useRequestPayment, PaymentRequest } from "@/hooks/lend/requestPayment";
+import { getLoanTypeLabel } from "@/types/loanTypes";
 import toast from "react-hot-toast";
 
 interface ApprovedLoan {
@@ -312,7 +313,7 @@ export default function ApprovedComponent() {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {loan.type}
+                    {getLoanTypeLabel(Number(loan.type))}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     ₱{loan.amount.toLocaleString()}
@@ -387,7 +388,7 @@ export default function ApprovedComponent() {
                   <div className="flex flex-col">
                     <span className="text-sm text-gray-500">Loan Type</span>
                     <span className="mt-1 text-gray-800 font-medium">
-                      {selectedLoan.type}
+                      {getLoanTypeLabel(Number(selectedLoan.type))}
                     </span>
                   </div>
                   <div className="flex flex-col">
@@ -436,18 +437,6 @@ export default function ApprovedComponent() {
                     <span className="text-sm text-gray-500">Agreement Date</span>
                     <span className="mt-1 text-gray-800 font-medium">
                       {selectedLoan.agreementDate}
-                    </span>
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-sm text-gray-500">Payment Type</span>
-                    <span className="mt-1 text-gray-800 font-medium">
-                      {selectedLoan.paymentType}
-                    </span>
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-sm text-gray-500">Payable ID</span>
-                    <span className="mt-1 text-gray-800 font-medium font-mono text-xs">
-                      {selectedLoan.payableID}
                     </span>
                   </div>
                 </div>
@@ -511,12 +500,6 @@ export default function ApprovedComponent() {
                         ) : (
                           "N/A"
                         )}
-                      </span>
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-sm text-gray-500">Payment Type</span>
-                      <span className="mt-1 text-gray-800 font-medium">
-                        {selectedLoan.paymentType || "N/A"}
                       </span>
                     </div>
                   </div>
