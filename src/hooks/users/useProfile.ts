@@ -144,7 +144,7 @@ export const useProfile = () => {
           firstName: updatedProfile.firstName !== undefined ? updatedProfile.firstName : originalUser.firstName || "",
           lastName: updatedProfile.lastName !== undefined ? updatedProfile.lastName : originalUser.lastName || "",
           phoneNumber: updatedProfile.phoneNumber !== undefined ? updatedProfile.phoneNumber : originalUser.phoneNumber || "",
-          status: 0,
+          status: 1,
         };
 
         await axios.put<ProfileResponse>(
