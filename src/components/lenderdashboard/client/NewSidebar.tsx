@@ -1,27 +1,17 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { IoLogOutOutline } from "react-icons/io5";
 import useLogoutRequest from "@/hooks/auth/requestLogout";
+import { useUserData } from "@/hooks/users/useUserData";
 import KuwagoLogo from "../../../../assets/images/KuwagoLogoWhite.png";
 
 export default function NewSidebar() {
-  const [storedUser, setStoredUser] = useState<{
-    uid?: string;
-    fullName?: string;
-    profilePicture?: string;
-    role?: string;
-    email?: string;
-  }>({});
+  const { storedUser } = useUserData();
   const { logout } = useLogoutRequest();
   const router = useRouter();
-
-  useEffect(() => {
-    const user = localStorage.getItem("user");
-    if (user) setStoredUser(JSON.parse(user));
-  }, []);
 
   const handleLogout = async () => {
     await logout();

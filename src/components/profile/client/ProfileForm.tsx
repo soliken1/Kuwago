@@ -115,6 +115,10 @@ export default function ProfileForm() {
 
     if (response && (response === true || response.success)) {
       setIsEditing(false);
+      // Reload user data after successful update
+      fetchUserData();
+      // Dispatch custom event to notify other components
+      window.dispatchEvent(new CustomEvent("userDataUpdated"));
     }
   };
 

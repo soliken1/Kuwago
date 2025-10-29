@@ -8,6 +8,7 @@ import { LoanWithUserInfo } from "@/types/lendings";
 import { useFetchPaymentSummary, PaymentSummary } from "@/hooks/lend/fetchPaymentSummary";
 import { useFetchPaymentSchedule, PaymentSchedule } from "@/hooks/lend/fetchPaymentSchedule";
 import { useRequestPayment, PaymentRequest } from "@/hooks/lend/requestPayment";
+import { getBusinessTypeLabel, getLoanTypeLabel } from "@/types/loanTypes";
 
 const statusColor = {
   Pending: "bg-yellow-100 text-yellow-700 border border-yellow-300",
@@ -72,8 +73,6 @@ export default function SelectedLoan({
       ) {
         // Check for payableID in different possible locations
         const payableID = selectedLoan.loanInfo.payableID || 
-                         selectedLoan.loanInfo.payable_id || 
-                         selectedLoan.loanInfo.payableId ||
                          selectedLoan.payableID ||
                          selectedLoan.payable_id ||
                          selectedLoan.payableId;
@@ -290,7 +289,7 @@ export default function SelectedLoan({
               <div className="flex flex-col">
                 <span className="text-sm text-gray-500">Loan Type</span>
                 <span className="mt-1 text-gray-800 font-medium">
-                  {selectedLoan.loanInfo.loanType}
+                  {getLoanTypeLabel(selectedLoan.loanInfo.loanType)}
                 </span>
               </div>
               <div className="flex flex-col">
@@ -308,25 +307,25 @@ export default function SelectedLoan({
             </div>
           </div>
 
-          {/* Section 2: Personal Info */}
+          {/* Section 2: Business Info */}
           <div>
             <div className="flex items-center gap-2 mb-3">
               <span className="inline-block w-2 h-5 rounded bg-blue-400" />
               <span className="font-semibold text-sm text-gray-700">
-                Personal Information
+                Business Information
               </span>
             </div>
             <div className="grid grid-cols-2 gap-4 bg-gray-50 rounded-lg p-4">
               <div className="flex flex-col">
-                <span className="text-sm text-gray-500">Education</span>
+                <span className="text-sm text-gray-500">Business TIN</span>
                 <span className="mt-1 text-gray-800 font-medium">
-                  {selectedLoan.loanInfo.highestEducation}
+                  {selectedLoan.loanInfo.businessTIN || "N/A"}
                 </span>
               </div>
               <div className="flex flex-col">
-                <span className="text-sm text-gray-500">Address</span>
+                <span className="text-sm text-gray-500">Business Type</span>
                 <span className="mt-1 text-gray-800 font-medium">
-                  {selectedLoan.loanInfo.detailedAddress}
+                  {getBusinessTypeLabel(selectedLoan.loanInfo.businessType)}
                 </span>
               </div>
             </div>
@@ -506,12 +505,12 @@ export default function SelectedLoan({
                       )}
                     </span>
                   </div>
-                  <div className="flex flex-col">
+                  {/* <div className="flex flex-col">
                     <span className="text-sm text-gray-500">Payment Type</span>
                     <span className="mt-1 text-gray-800 font-medium">
                       {selectedLoan.loanInfo.paymentType || "N/A"}
                     </span>
-                  </div>
+                  </div> */}
                 </div>
               </div>
 
