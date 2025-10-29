@@ -1,27 +1,17 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
 import { IoLogOutOutline } from "react-icons/io5";
 import { deleteCookie } from "cookies-next";
+import { useUserData } from "@/hooks/users/useUserData";
 import KuwagoLogo from "../../../../assets/images/KuwagoLogoWhite.png";
 
 export default function AdminSidebar() {
-  const [storedUser, setStoredUser] = useState<{
-    uid?: string;
-    fullName?: string;
-    profilePicture?: string;
-    role?: string;
-    email?: string;
-  }>({});
+  const { storedUser } = useUserData();
   const router = useRouter();
   const pathname = usePathname();
-
-  useEffect(() => {
-    const user = localStorage.getItem("user");
-    if (user) setStoredUser(JSON.parse(user));
-  }, []);
 
   const handleLogout = async () => {
     deleteCookie("session_token");

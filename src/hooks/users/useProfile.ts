@@ -94,6 +94,8 @@ export const useProfile = () => {
 
         // Update localStorage with fresh data
         localStorage.setItem("user", JSON.stringify(userData));
+        // Dispatch custom event to notify other components
+        window.dispatchEvent(new CustomEvent("userDataUpdated"));
       }
     } catch (err: unknown) {
       let message = "Failed to fetch user data";
@@ -254,6 +256,8 @@ export const useProfile = () => {
           parsedUser.profilePicture = newProfilePicUrl;
 
           localStorage.setItem("user", JSON.stringify(parsedUser));
+          // Dispatch custom event to notify other components
+          window.dispatchEvent(new CustomEvent("userDataUpdated"));
         }
 
         window.location.reload();
