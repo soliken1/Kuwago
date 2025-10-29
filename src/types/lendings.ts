@@ -16,23 +16,23 @@ export interface Application {
 export interface LoanInfo {
   loanRequestID: string;
   uid: string;
-  maritalStatus: string;
-  highestEducation: string;
-  employmentInformation: string;
-  detailedAddress: string;
-  residentType: string;
-  loanType: string;
+  businessType: number;
+  businessTIN: string;
+  loanType: number;
   loanPurpose: string;
   loanAmount: number;
   loanStatus: "Pending" | "InProgress" | "Approved" | "Denied" | "Completed";
   createdAt: string;
   payableID?: string;
-  payable_id?: string;
-  payableId?: string;
   paymentType?: string;
+  maritalStatus?: string;
+  highestEducation?: string;
+  employmentInformation?: string;
+  detailedAddress?: string;
+  residentType?: string;
   firstName?: string;
   lastName?: string;
-  email: string;
+  email?: string;
 }
 
 export interface UserInfo {

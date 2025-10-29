@@ -8,6 +8,7 @@ import SelectedLoan from "./SelectedLoan";
 import { IoEyeOutline } from "react-icons/io5";
 import { LoanWithUserInfo } from "@/types/lendings";
 import notifyAcknowledgeLoan from "@/utils/notifyAcknowledgeLoan";
+import { getBusinessTypeLabel, getLoanTypeLabel } from "@/types/loanTypes";
 
 const statusColor = {
   Pending: "bg-yellow-100 text-yellow-700 border border-yellow-300",
@@ -203,10 +204,10 @@ export default function DashboardBody() {
                 Purpose
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Education
+                Business TIN
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Address
+                Business Type
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Status
@@ -251,16 +252,16 @@ export default function DashboardBody() {
                     ₱{loanInfo.loanAmount.toLocaleString()}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {loanInfo.loanType}
+                    {getLoanTypeLabel(loanInfo.loanType)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {loanInfo.loanPurpose}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {loanInfo.highestEducation}
+                    {loanInfo.businessTIN || "N/A"}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 max-w-xs truncate">
-                    {loanInfo.detailedAddress}
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {getBusinessTypeLabel(loanInfo.businessType)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
