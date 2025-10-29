@@ -20,7 +20,7 @@ export default function NewCreditScore({
   const [showAIModal, setShowAIModal] = useState(false);
   
   // Use fetched score or default
-  const score = creditScoreData?.score || 93;
+  const score = creditScoreData?.score || 'N/A';
   
   // Use category directly from API
   const status = creditScoreCategory?.category || "N/A";
@@ -63,7 +63,7 @@ export default function NewCreditScore({
                 Credit Score
               </h2>
               <p className="text-white/90 text-lg">
-                {loading ? "Loading..." : "Your current credit standing"}
+                Your current credit standing
               </p>
             </div>
             
@@ -95,7 +95,7 @@ export default function NewCreditScore({
             </div>
             <div className="px-6 py-2 bg-white/20 rounded-full">
               <span className="text-white font-medium text-lg">
-                {status}
+                {loading ? "..." : status}
               </span>
             </div>
           </div>
