@@ -4,12 +4,13 @@ import { useFetchAllLoans } from "@/hooks/lend/fetchAllLoans";
 import toast from "react-hot-toast";
 import { chatClient } from "@/utils/streamClient";
 import { useUpdateLoanStatus } from "@/hooks/lend/requestUpdateLoan";
+import useCheckDueSoon from "@/hooks/admin/useCheckDueSoon";
 import SelectedLoan from "./SelectedLoan";
 import { IoEyeOutline } from "react-icons/io5";
 import { LoanWithUserInfo } from "@/types/lendings";
 import notifyAcknowledgeLoan from "@/utils/notifyAcknowledgeLoan";
 import { getBusinessTypeLabel, getLoanTypeLabel } from "@/types/loanTypes";
-
+import { DueSoonData } from "@/types/payments";
 const statusColor = {
   Pending: "bg-yellow-100 text-yellow-700 border border-yellow-300",
   InProgress: "bg-blue-100 text-blue-700 border border-blue-300",
@@ -22,11 +23,14 @@ const ITEMS_PER_PAGE = 10;
 
 export default function DashboardBody() {
   const { updateLoanStatus } = useUpdateLoanStatus();
+  const { fetchDueSoon } = useCheckDueSoon();
+
   const [showModal, setShowModal] = useState(false);
   const [selectedLoan, setSelectedLoan] = useState<LoanWithUserInfo | null>(
     null
   );
   const [loans, setLoans] = useState<LoanWithUserInfo[]>([]);
+  const [dueSoon, setDueSoon] = useState<DueSoonData[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const { fetchAllLoans, loading } = useFetchAllLoans();
@@ -47,6 +51,21 @@ export default function DashboardBody() {
     };
     getLoans();
   }, []);
+
+  //await for loans to exist to avoid exessive load times for loan frontend screen, this will run on the background
+  useEffect(() => {
+    const getDueSoon = async () => {
+      try {
+        const data = await fetchDueSoon();
+        console.log(data);
+        setDueSoon(data);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    getDueSoon();
+  }, [loans]);
 
   useEffect(() => {
     const user = localStorage.getItem("user");
