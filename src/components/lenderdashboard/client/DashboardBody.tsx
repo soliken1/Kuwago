@@ -13,6 +13,11 @@ import notifyAcknowledgeLoan from "@/utils/notifyAcknowledgeLoan";
 import { getBusinessTypeLabel, getLoanTypeLabel } from "@/types/loanTypes";
 import { notifyDueSoon } from "@/utils/notifyDueSoon";
 import useGetLenderDetails from "@/hooks/users/useLenderDetails";
+import {
+  useSubscriptionCheckout,
+  useGetAvailablePlans,
+  useCheckSubscriptionActive,
+} from "@/hooks/payment/useSubscription";
 
 const statusColor = {
   Pending: "bg-yellow-100 text-yellow-700 border border-yellow-300",
@@ -34,11 +39,18 @@ export default function DashboardBody() {
     loading: lenderLoading,
   } = useGetLenderDetails();
 
+  // Subscription hooks
+  const { createCheckout, loading: checkoutLoading } =
+    useSubscriptionCheckout();
+  const { plans } = useGetAvailablePlans();
+  const { isActive, checkActive } = useCheckSubscriptionActive();
+
   const [showModal, setShowModal] = useState(false);
   const [showTrialModal, setShowTrialModal] = useState(false);
   const [selectedLoan, setSelectedLoan] = useState<LoanWithUserInfo | null>(
     null
   );
+  const [selectedPlan, setSelectedPlan] = useState("Monthly");
   const [loans, setLoans] = useState<LoanWithUserInfo[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -46,6 +58,7 @@ export default function DashboardBody() {
   const [storedUser, setStoredUser] = useState<{
     uid?: string;
     username?: string;
+    fullName?: string;
     email?: string;
   }>({});
   const [lenderDetails, setLenderDetails] = useState<{
@@ -74,7 +87,15 @@ export default function DashboardBody() {
 
   useEffect(() => {
     const user = localStorage.getItem("user");
-    if (user) setStoredUser(JSON.parse(user));
+    if (user) {
+      const parsedUser = JSON.parse(user);
+      setStoredUser(parsedUser);
+
+      // Check subscription status
+      if (parsedUser.uid) {
+        checkActive(parsedUser.uid);
+      }
+    }
   }, []);
 
   useEffect(() => {
@@ -211,6 +232,22 @@ export default function DashboardBody() {
     }
   };
 
+  const handleUpgrade = async () => {
+    if (!storedUser.uid) {
+      return;
+    }
+
+    if (!storedUser.fullName) {
+      return;
+    }
+
+    try {
+      await createCheckout(storedUser.uid, storedUser.fullName, selectedPlan);
+    } catch (error) {
+      toast.error("Failed to create checkout. Please try again.");
+    }
+  };
+
   const filteredLoans = loans.filter(({ userInfo }) => {
     const term = searchTerm.toLowerCase();
     return (
@@ -233,6 +270,12 @@ export default function DashboardBody() {
     const diffDays =
       (now.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24);
     return lenderDetails.subscriptionType === 0 && diffDays > 7;
+  };
+
+  const getPlanSavings = (planType: string) => {
+    if (planType === "Quarterly") return "₱300";
+    if (planType === "Yearly") return "₱1200";
+    return null;
   };
 
   return (
@@ -405,9 +448,30 @@ export default function DashboardBody() {
         </div>
       )}
 
+      {/* Subscription Trial Modal */}
       {showTrialModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-50">
-          <div className="bg-white rounded-2xl shadow-xl px-8 py-6 max-w-md w-full text-center relative animate-fadeIn">
+          <div className="bg-white rounded-2xl shadow-xl px-8 py-6 max-w-lg w-full relative animate-fadeIn">
+            {/* Close button */}
+            <button
+              onClick={() => setShowTrialModal(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+            >
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+
             {/* Icon */}
             <div className="flex justify-center mb-4">
               <div className="bg-[#e8f5f1] p-3 rounded-full">
@@ -429,33 +493,101 @@ export default function DashboardBody() {
             </div>
 
             {/* Text */}
-            <h3 className="text-xl font-semibold text-gray-800 mb-2">
+            <h3 className="text-xl font-semibold text-gray-800 mb-2 text-center">
               Trial Period Ended
             </h3>
-            <p className="text-gray-600 text-sm mb-6 leading-relaxed">
+            <p className="text-gray-600 text-sm mb-6 leading-relaxed text-center">
               Your 7-day free trial has ended. To continue accessing borrower
-              loan details and unlock full lender features, please upgrade your
+              loan details and unlock full lender features, please choose a
               plan.
             </p>
+
+            {/* Plan Selection */}
+            <div className="space-y-3 mb-6">
+              {plans.map((plan) => (
+                <button
+                  key={plan.planType}
+                  onClick={() => setSelectedPlan(plan.planType)}
+                  className={`w-full p-4 rounded-lg border-2 transition-all text-left ${
+                    selectedPlan === plan.planType
+                      ? "border-[#2c8068] bg-[#e8f5f1]"
+                      : "border-gray-200 hover:border-gray-300"
+                  }`}
+                >
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <div className="font-semibold text-gray-800">
+                        {plan.planType}
+                      </div>
+                      <div className="text-sm text-gray-600">
+                        {plan.durationMonths}{" "}
+                        {plan.durationMonths === 1 ? "month" : "months"}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-bold text-[#2c8068]">
+                        ₱{plan.amount.toLocaleString()}
+                      </div>
+                      {getPlanSavings(plan.planType) && (
+                        <div className="text-xs text-green-600">
+                          Save {getPlanSavings(plan.planType)}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
 
             {/* Buttons */}
             <div className="flex justify-center gap-3">
               <button
                 onClick={() => setShowTrialModal(false)}
-                className="px-5 py-2.5 rounded-lg text-gray-600 bg-gray-100 hover:bg-gray-200 transition"
+                disabled={checkoutLoading}
+                className="px-5 py-2.5 rounded-lg text-gray-600 bg-gray-100 hover:bg-gray-200 transition disabled:opacity-50"
               >
                 Later
               </button>
               <button
-                onClick={() => {
-                  setShowTrialModal(false);
-                  window.location.href = "/subscription";
-                }}
-                className="px-5 py-2.5 rounded-lg text-white bg-[#2c8068] hover:bg-[#246955] transition"
+                onClick={handleUpgrade}
+                disabled={checkoutLoading}
+                className="px-5 py-2.5 rounded-lg text-white bg-[#2c8068] hover:bg-[#246955] transition disabled:opacity-50 flex items-center gap-2"
               >
-                Upgrade Now
+                {checkoutLoading ? (
+                  <>
+                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                        fill="none"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      />
+                    </svg>
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    Upgrade Now - ₱
+                    {plans
+                      .find((p) => p.planType === selectedPlan)
+                      ?.amount.toLocaleString()}
+                  </>
+                )}
               </button>
             </div>
+
+            {/* Payment methods note */}
+            <p className="text-xs text-center text-gray-500 mt-4">
+              Secure payment via GCash, PayMaya, GrabPay, or Card
+            </p>
           </div>
         </div>
       )}
