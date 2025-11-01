@@ -3,9 +3,11 @@ import axios, { AxiosError } from "axios";
 import { useState } from "react";
 import { getCookie } from "cookies-next";
 
-interface LenderDetails {
+export interface LenderDetails {
   uid: string;
   principalAmount?: number;
+  termsOfPayment?: number[];
+  interestRates?: number[];
   subscriptionType?: number;
   gracePeriod?: number;
   lenderTIN?: string;
@@ -15,9 +17,9 @@ interface LenderDetails {
 }
 
 interface LenderDetailsResponse {
-  success?: string;
+  success?: boolean;
   message?: string;
-  statusCode?: string;
+  statusCode?: number;
   data?: LenderDetails;
 }
 
@@ -45,7 +47,9 @@ export default function useGetLenderDetails() {
         );
         setLendersData(response.data);
 
-        localStorage.setItem("lenderDetails", JSON.stringify(lendersData));
+        if (response.data?.data) {
+          localStorage.setItem("lenderDetails", JSON.stringify(response.data.data));
+        }
       } else {
         throw new Error("Token missing in login response.");
       }
