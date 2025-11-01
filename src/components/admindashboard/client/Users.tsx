@@ -1,9 +1,11 @@
 "use client";
 import React, { useEffect, useState } from "react";
+import axios from "axios";
+import { getCookie } from "cookies-next";
 import useGetAllUsers from "@/hooks/users/requestAllUsers";
 import RegisterModal from "./RegisterModal";
 import UserDetailsModal from "./UserDetailsModal";
-import useUpdateDocumentStatus from "@/hooks/users/useUpdateDocumentStatus";
+import useDisableUserAccount from "@/hooks/users/useDisableUserAccount";
 import toast from "react-hot-toast";
 
 const statusColor: { [key: string]: string } = {
@@ -14,6 +16,27 @@ const statusColor: { [key: string]: string } = {
   Deny: "bg-red-100 text-red-700 border border-red-300",
   Completed: "bg-gray-100 text-gray-700 border border-gray-300",
   Disable: "bg-slate-200 text-slate-800 border border-slate-400",
+  Disabled: "bg-slate-200 text-slate-800 border border-slate-400",
+};
+
+// Normalize status display values
+const normalizeStatus = (status: string | undefined | null): string => {
+  if (!status) return "Pending";
+  
+  const lowerStatus = status.toLowerCase().trim();
+  
+  // Map deny variations to "Denied"
+  if (lowerStatus === "deny" || lowerStatus === "denied") {
+    return "Denied";
+  }
+  
+  // Map disable variations to "Disabled"
+  if (lowerStatus === "disable" || lowerStatus === "disabled") {
+    return "Disabled";
+  }
+  
+  // Capitalize first letter of other statuses
+  return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
 };
 
 export default function Users() {
@@ -22,11 +45,49 @@ export default function Users() {
   const [isUserDetailsModalOpen, setIsUserDetailsModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [statusFilter, setStatusFilter] = useState<string>("All");
-  const { disableDocuments, loading: disableLoading } = useUpdateDocumentStatus();
+  const { disableUserAccount, loading: disableLoading } = useDisableUserAccount();
+  const [usersWithDocuments, setUsersWithDocuments] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     allUsers(); // Fetch users on mount
   }, []);
+
+  // Check documents for all users when user list is loaded
+  useEffect(() => {
+    const checkUsersDocuments = async () => {
+      if (allUsersData?.data && Array.isArray(allUsersData.data)) {
+        const token = getCookie("session_token");
+        if (!token) return;
+
+        const documentChecks = allUsersData.data.map(async (user) => {
+          try {
+            const response = await axios.get(
+              "/proxy/DocumentUpload/GetUserDocuments",
+              {
+                params: { uid: user.uid },
+                headers: { Authorization: `Bearer ${token}` },
+              }
+            );
+            
+            if (response.data.success && response.data.data) {
+              return user.uid;
+            }
+            return null;
+          } catch {
+            return null;
+          }
+        });
+
+        const results = await Promise.all(documentChecks);
+        const usersWithDocs = new Set(results.filter((uid): uid is string => uid !== null));
+        setUsersWithDocuments(usersWithDocs);
+      }
+    };
+
+    if (!loading && allUsersData?.data) {
+      checkUsersDocuments();
+    }
+  }, [allUsersData, loading]);
 
   const handleViewUser = (user: any) => {
     setSelectedUser(user);
@@ -36,7 +97,7 @@ export default function Users() {
   const handleDisableUser = async (user: any) => {
     if (window.confirm(`Are you sure you want to disable ${user.fullName || user.email}'s account?`)) {
       try {
-        await disableDocuments(user.uid);
+        await disableUserAccount(user.uid);
         toast.success("Account disabled successfully");
         allUsers(); // Refresh the users list
       } catch (error) {
@@ -180,7 +241,7 @@ export default function Users() {
                           statusColor[user.status || "Pending"] || statusColor.Pending
                         }`}
                       >
-                        {user.status || "N/A"}
+                        {normalizeStatus(user.status) || "N/A"}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -197,9 +258,9 @@ export default function Users() {
                         </button>
                         <button
                           onClick={() => handleDisableUser(user)}
-                          disabled={disableLoading}
+                          disabled={disableLoading || !usersWithDocuments.has(user.uid)}
                           className="text-red-600 hover:text-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                          title="Disable Account"
+                          title={!usersWithDocuments.has(user.uid) ? "No documents uploaded" : "Disable Account"}
                         >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
