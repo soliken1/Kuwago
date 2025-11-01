@@ -12,7 +12,11 @@ const statusColor = {
 };
 
 const statusStyle = {
-  Approved: { backgroundColor: '#f0f9f4', color: '#2d5a3d', border: '1px solid #85d4a4' }
+  Approved: {
+    backgroundColor: "#f0f9f4",
+    color: "#2d5a3d",
+    border: "1px solid #85d4a4",
+  },
 };
 
 interface Props {
@@ -106,7 +110,7 @@ export default function AppliedLendings({ onSelect }: Props) {
               className={`px-3 py-1 rounded-full text-sm font-medium ${
                 statusColor[app.loanStatus]
               }`}
-              style={app.loanStatus === 'Approved' ? statusStyle.Approved : {}}
+              style={app.loanStatus === "Approved" ? statusStyle.Approved : {}}
             >
               {app.loanStatus}
             </span>

@@ -4,11 +4,15 @@ import { useFetchAllLoans } from "@/hooks/lend/fetchAllLoans";
 import toast from "react-hot-toast";
 import { chatClient } from "@/utils/streamClient";
 import { useUpdateLoanStatus } from "@/hooks/lend/requestUpdateLoan";
+import useCheckDueSoon from "@/hooks/admin/useCheckDueSoon";
+import requestNotificationDueSoon from "@/hooks/admin/useMarkNotified";
 import SelectedLoan from "./SelectedLoan";
 import { IoEyeOutline } from "react-icons/io5";
 import { LoanWithUserInfo } from "@/types/lendings";
 import notifyAcknowledgeLoan from "@/utils/notifyAcknowledgeLoan";
 import { getBusinessTypeLabel, getLoanTypeLabel } from "@/types/loanTypes";
+import { notifyDueSoon } from "@/utils/notifyDueSoon";
+import useGetLenderDetails from "@/hooks/users/useLenderDetails";
 
 const statusColor = {
   Pending: "bg-yellow-100 text-yellow-700 border border-yellow-300",
@@ -22,7 +26,16 @@ const ITEMS_PER_PAGE = 10;
 
 export default function DashboardBody() {
   const { updateLoanStatus } = useUpdateLoanStatus();
+  const { markNotified } = requestNotificationDueSoon();
+  const { fetchDueSoon } = useCheckDueSoon();
+  const {
+    lenderUsers,
+    lendersData,
+    loading: lenderLoading,
+  } = useGetLenderDetails();
+
   const [showModal, setShowModal] = useState(false);
+  const [showTrialModal, setShowTrialModal] = useState(false);
   const [selectedLoan, setSelectedLoan] = useState<LoanWithUserInfo | null>(
     null
   );
@@ -34,6 +47,10 @@ export default function DashboardBody() {
     uid?: string;
     username?: string;
     email?: string;
+  }>({});
+  const [lenderDetails, setLenderDetails] = useState<{
+    subscriptionType?: number;
+    createdAt?: string;
   }>({});
 
   useEffect(() => {
@@ -49,9 +66,57 @@ export default function DashboardBody() {
   }, []);
 
   useEffect(() => {
+    const fetchLenderDetails = async () => {
+      await lenderUsers();
+    };
+    fetchLenderDetails();
+  }, []);
+
+  useEffect(() => {
     const user = localStorage.getItem("user");
     if (user) setStoredUser(JSON.parse(user));
   }, []);
+
+  useEffect(() => {
+    if (lendersData?.data) {
+      setLenderDetails(lendersData.data);
+      localStorage.setItem("lenderDetails", JSON.stringify(lendersData.data));
+    }
+  }, [lendersData]);
+
+  useEffect(() => {
+    const getDueSoon = async () => {
+      try {
+        const data = await fetchDueSoon();
+
+        for (const payable of data) {
+          if (!payable.notified) {
+            try {
+              await notifyDueSoon(
+                payable,
+                "https://kuwago.vercel.app/dashboard"
+              );
+
+              const dueDate = payable.nextPaymentDueDate
+                ? payable.nextPaymentDueDate.split("T")[0]
+                : "";
+
+              await markNotified(payable.payableID, dueDate);
+            } catch (err) {
+              console.error(
+                `❌ Failed to notify ${payable.borrowerInfo.email}:`,
+                err
+              );
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch due soon payables:", err);
+      }
+    };
+
+    getDueSoon();
+  }, [loans]);
 
   const openModal = (loan: LoanWithUserInfo) => {
     setSelectedLoan(loan);
@@ -160,6 +225,15 @@ export default function DashboardBody() {
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   );
+
+  const hasFreeTrialExpired = () => {
+    if (!lenderDetails.createdAt) return false;
+    const createdDate = new Date(lenderDetails.createdAt);
+    const now = new Date();
+    const diffDays =
+      (now.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24);
+    return lenderDetails.subscriptionType === 0 && diffDays > 7;
+  };
 
   return (
     <div className="bg-white rounded-2xl shadow-lg">
@@ -278,7 +352,13 @@ export default function DashboardBody() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-center">
                     <button
-                      onClick={() => openModal(loan)}
+                      onClick={() => {
+                        if (hasFreeTrialExpired()) {
+                          setShowTrialModal(true);
+                        } else {
+                          openModal(loan);
+                        }
+                      }}
                       className="text-gray-400 hover:text-gray-600 transition-colors"
                     >
                       <IoEyeOutline size={20} />
@@ -319,6 +399,61 @@ export default function DashboardBody() {
                 className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-200 transition-colors"
               >
                 Next
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showTrialModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-50">
+          <div className="bg-white rounded-2xl shadow-xl px-8 py-6 max-w-md w-full text-center relative animate-fadeIn">
+            {/* Icon */}
+            <div className="flex justify-center mb-4">
+              <div className="bg-[#e8f5f1] p-3 rounded-full">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={2}
+                  stroke="#2c8068"
+                  className="w-8 h-8"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+              </div>
+            </div>
+
+            {/* Text */}
+            <h3 className="text-xl font-semibold text-gray-800 mb-2">
+              Trial Period Ended
+            </h3>
+            <p className="text-gray-600 text-sm mb-6 leading-relaxed">
+              Your 7-day free trial has ended. To continue accessing borrower
+              loan details and unlock full lender features, please upgrade your
+              plan.
+            </p>
+
+            {/* Buttons */}
+            <div className="flex justify-center gap-3">
+              <button
+                onClick={() => setShowTrialModal(false)}
+                className="px-5 py-2.5 rounded-lg text-gray-600 bg-gray-100 hover:bg-gray-200 transition"
+              >
+                Later
+              </button>
+              <button
+                onClick={() => {
+                  setShowTrialModal(false);
+                  window.location.href = "/subscription";
+                }}
+                className="px-5 py-2.5 rounded-lg text-white bg-[#2c8068] hover:bg-[#246955] transition"
+              >
+                Upgrade Now
               </button>
             </div>
           </div>

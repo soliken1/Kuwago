@@ -7,6 +7,9 @@ import UploadIDandSelfieModal from "@/components/profile/client/UploadIDandSelfi
 import { getCookie } from "cookies-next";
 import UserListChat from "@/components/messaging/client/UserListChat";
 import { Application } from "@/types/lendings";
+import useCheckDueSoon from "@/hooks/admin/useCheckDueSoon";
+import { notifyDueSoon } from "@/utils/notifyDueSoon";
+import requestNotificationDueSoon from "@/hooks/admin/useMarkNotified";
 
 const DetailItem = ({
   label,
@@ -33,7 +36,15 @@ const DetailItem = ({
               ? "bg-gray-100 text-gray-700 border border-gray-300"
               : "bg-yellow-100 text-yellow-700 border border-yellow-300"
           }`}
-          style={value === "Approved" ? { backgroundColor: '#f0f9f4', color: '#2d5a3d', border: '1px solid #85d4a4' } : {}}
+          style={
+            value === "Approved"
+              ? {
+                  backgroundColor: "#f0f9f4",
+                  color: "#2d5a3d",
+                  border: "1px solid #85d4a4",
+                }
+              : {}
+          }
         >
           {value}
         </span>
@@ -45,7 +56,10 @@ const DetailItem = ({
 };
 
 export default function DashboardBody() {
+  const { fetchDueSoon } = useCheckDueSoon();
+  const { markNotified } = requestNotificationDueSoon();
   const { forceVerificationModal } = useIDSelfieUploaded();
+
   const [selectedApp, setSelectedApp] = useState<Application | null>(null);
   const [showModal, setShowModal] = useState(false);
 
@@ -55,6 +69,40 @@ export default function DashboardBody() {
       setShowModal(true);
     }
   }, [forceVerificationModal]);
+
+  useEffect(() => {
+    const getDueSoon = async () => {
+      try {
+        const data = await fetchDueSoon();
+
+        for (const payable of data) {
+          if (!payable.notified) {
+            try {
+              await notifyDueSoon(
+                payable,
+                "https://kuwago.vercel.app/dashboard"
+              );
+
+              const dueDate = payable.nextPaymentDueDate
+                ? payable.nextPaymentDueDate.split("T")[0]
+                : "";
+
+              await markNotified(payable.payableID, dueDate);
+            } catch (err) {
+              console.error(
+                `❌ Failed to notify ${payable.borrowerInfo.email}:`,
+                err
+              );
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch due soon payables:", err);
+      }
+    };
+
+    getDueSoon();
+  }, []);
 
   return (
     <div
@@ -82,7 +130,10 @@ export default function DashboardBody() {
 
             {/* Section 1: Overview */}
             <div className="flex items-center gap-2 mb-1">
-              <span className="inline-block w-2 h-5 rounded" style={{ backgroundColor: '#85d4a4' }} />
+              <span
+                className="inline-block w-2 h-5 rounded"
+                style={{ backgroundColor: "#85d4a4" }}
+              />
               <span className="poppins-semibold text-sm text-gray-700">
                 Overview
               </span>
