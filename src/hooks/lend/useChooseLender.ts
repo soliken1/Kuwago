@@ -2,20 +2,17 @@ import { useState } from "react";
 import { getCookie } from "cookies-next";
 import axios, { AxiosError } from "axios";
 
-interface LoanFormData {
-  businessType: number;
-  businessTIN: string;
-  loanType: number;
-  loanAmount: number;
-  loanPurpose: string;
+interface ChooseLenderPayload {
+  lenderUid: string;
+  loanRequestId: string;
 }
 
-export const useSubmitLoanRequest = () => {
+export const useChooseLender = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  const submitLoanRequest = async (formData: LoanFormData) => {
+  const chooseLender = async (payload: ChooseLenderPayload) => {
     setLoading(true);
     setError(null);
     setSuccess(false);
@@ -23,7 +20,7 @@ export const useSubmitLoanRequest = () => {
     try {
       const token = getCookie("session_token");
 
-      const response = await axios.post("/proxy/Loan/LoanRequest", formData, {
+      const response = await axios.post("/proxy/Loan/Choose-Lender", payload, {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
@@ -37,7 +34,7 @@ export const useSubmitLoanRequest = () => {
 
       if (axiosError.response && axiosError.response.data) {
         const message =
-          (axiosError.response.data as any).message || "Loan request failed.";
+          (axiosError.response.data as any).message || "Failed to choose lender.";
         setError(message);
       } else {
         setError(axiosError.message);
@@ -50,9 +47,10 @@ export const useSubmitLoanRequest = () => {
   };
 
   return {
-    submitLoanRequest,
+    chooseLender,
     loading,
     error,
     success,
   };
 };
+

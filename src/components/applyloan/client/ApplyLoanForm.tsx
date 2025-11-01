@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useSubmitLoanRequest } from "@/hooks/lend/requestLoan";
 import { BUSINESS_TYPE_LABELS, LOAN_TYPE_LABELS, LOAN_AMOUNT_VALUES, getLoanAmountLabel } from "@/types/loanTypes";
 import toast from "react-hot-toast";
+import LenderSelectionModal from "./LenderSelectionModal";
 
 const businessTypeOptions = Object.entries(BUSINESS_TYPE_LABELS).map(([value, label]) => ({
   label,
@@ -32,6 +33,10 @@ export default function ApplyLoanForm() {
     loanPurpose: "",
   });
 
+  const [showLenderModal, setShowLenderModal] = useState(false);
+  const [loanRequestId, setLoanRequestId] = useState<string>("");
+  const [recommendedLenders, setRecommendedLenders] = useState<any[]>([]);
+
   const handleChange = (key: keyof typeof formData, value: any) => {
     setFormData({ ...formData, [key]: value });
   };
@@ -53,9 +58,18 @@ export default function ApplyLoanForm() {
     }
 
     try {
-      const res = await submitLoanRequest(formData);
+      const response = await submitLoanRequest(formData);
       toast.success("Loan request submitted successfully!");
-      router.push("/dashboard");
+      
+      // Check if there are recommended lenders
+      if (response?.data?.recommendedLenders && response.data.recommendedLenders.length > 0) {
+        setLoanRequestId(response.data.loanInfo.loanRequestID);
+        setRecommendedLenders(response.data.recommendedLenders);
+        setShowLenderModal(true);
+      } else {
+        // No lenders recommended, navigate to dashboard
+        router.push("/dashboard");
+      }
     } catch (err) {
       console.error("Loan request failed:", err);
       toast.error("Failed to submit loan request. Please try again.");
@@ -203,6 +217,20 @@ export default function ApplyLoanForm() {
           </div>
         </form>
       </div>
+
+      {/* Lender Selection Modal */}
+      <LenderSelectionModal
+        isOpen={showLenderModal}
+        onClose={() => {
+          setShowLenderModal(false);
+          router.push("/dashboard");
+        }}
+        loanRequestId={loanRequestId}
+        recommendedLenders={recommendedLenders}
+        onSuccess={() => {
+          router.push("/dashboard");
+        }}
+      />
     </div>
   );
 }
