@@ -55,7 +55,7 @@ export default function SelectedLoan({
   );
   const [interestRate, setInterestRate] = useState<number>(0);
   const [termsOfMonths, setTermsOfMonths] = useState<number>(3);
-  const [paymentType, setPaymentType] = useState<number>(1);
+  const [paymentType, setPaymentType] = useState<number>(2);
   const [showPaymentModal, setShowPaymentModal] = useState<boolean>(false);
   const [paymentAmount, setPaymentAmount] = useState<number>(0);
   const [paymentNotes, setPaymentNotes] = useState<string>("");
@@ -344,8 +344,11 @@ export default function SelectedLoan({
                   <input
                     type="number"
                     className="w-full rounded-md border border-gray-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2c8068]"
-                    value={finalAmount}
-                    onChange={(e) => setFinalAmount(Number(e.target.value))}
+                    value={finalAmount === 0 ? "" : finalAmount}
+                    placeholder="0"
+                    onChange={(e) =>
+                      setFinalAmount(Number(e.target.value) || 0)
+                    }
                     min={0}
                   />
                 </div>
@@ -417,22 +420,8 @@ export default function SelectedLoan({
                   </label>
                   <div className="flex gap-2 mt-1">
                     <button
-                      className={`px-3 py-1 text-sm rounded-md transition-colors ${
-                        paymentType === 1
-                          ? "bg-[#2c8068] text-white"
-                          : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                      }`}
-                      onClick={() => setPaymentType(1)}
-                    >
-                      Cash
-                    </button>
-                    <button
-                      className={`px-3 py-1 text-sm rounded-md transition-colors ${
-                        paymentType === 2
-                          ? "bg-[#2c8068] text-white"
-                          : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                      }`}
-                      onClick={() => setPaymentType(2)}
+                      className="px-3 py-1 text-sm rounded-md transition-colors bg-[#2c8068] text-white"
+                      disabled
                     >
                       ECash
                     </button>
@@ -601,14 +590,6 @@ export default function SelectedLoan({
                     <span className="w-3 h-3 rounded-full bg-red-500"></span>
                     Unpaid Payments
                   </h3>
-                  {selectedLoan.loanInfo.paymentType === "Cash" && (
-                    <button
-                      onClick={() => setShowPaymentModal(true)}
-                      className="px-4 py-2 bg-[#2c8068] text-white rounded-lg hover:bg-[#1f5a4a] transition-colors text-sm font-medium"
-                    >
-                      Record Payment
-                    </button>
-                  )}
                 </div>
                 <div className="grid gap-3">
                   {scheduleLoading ? (
