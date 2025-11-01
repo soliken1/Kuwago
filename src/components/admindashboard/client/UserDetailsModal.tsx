@@ -2,8 +2,40 @@
 import React, { useEffect, useState } from "react";
 import { UserData } from "@/hooks/users/requestAllUsers";
 import useUserDocuments from "@/hooks/users/useUserDocuments";
-import useDisableUser from "@/hooks/users/useDisableUser";
+import useUpdateDocumentStatus from "@/hooks/users/useUpdateDocumentStatus";
+import useDisableUserAccount from "@/hooks/users/useDisableUserAccount";
 import toast from "react-hot-toast";
+
+const statusColor: { [key: string]: string } = {
+  Approved: "bg-green-100 text-green-700 border border-green-300",
+  Pending: "bg-yellow-100 text-yellow-700 border border-yellow-300",
+  InProgress: "bg-blue-100 text-blue-700 border border-blue-300",
+  Denied: "bg-red-100 text-red-700 border border-red-300",
+  Deny: "bg-red-100 text-red-700 border border-red-300",
+  Completed: "bg-gray-100 text-gray-700 border border-gray-300",
+  Disable: "bg-slate-200 text-slate-800 border border-slate-400",
+  Disabled: "bg-slate-200 text-slate-800 border border-slate-400",
+};
+
+// Normalize status display values
+const normalizeStatus = (status: string | undefined | null): string => {
+  if (!status) return "Pending";
+  
+  const lowerStatus = status.toLowerCase().trim();
+  
+  // Map deny variations to "Denied"
+  if (lowerStatus === "deny" || lowerStatus === "denied") {
+    return "Denied";
+  }
+  
+  // Map disable variations to "Disabled"
+  if (lowerStatus === "disable" || lowerStatus === "disabled") {
+    return "Disabled";
+  }
+  
+  // Capitalize first letter of other statuses
+  return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
+};
 
 interface UserDetailsModalProps {
   isOpen: boolean;
@@ -19,9 +51,11 @@ export default function UserDetailsModal({
   onUserDisabled,
 }: UserDetailsModalProps) {
   const { userDocuments, loading: documentsLoading, fetchUserDocuments } = useUserDocuments();
-  const { disableUser, approveUser, denyUser, loading: disableLoading } = useDisableUser();
+  const { approveDocuments, denyDocuments, loading: statusLoading } = useUpdateDocumentStatus();
+  const { disableUserAccount, loading: disableAccountLoading } = useDisableUserAccount();
   const [isApproving, setIsApproving] = useState(false);
   const [isDenying, setIsDenying] = useState(false);
+  const [isDisabling, setIsDisabling] = useState(false);
 
   useEffect(() => {
     if (isOpen && user?.uid) {
@@ -34,17 +68,13 @@ export default function UserDetailsModal({
     
     setIsApproving(true);
     try {
-      await approveUser({
-        uid: user.uid,
-        firstName: user.firstName || null,
-        lastName: user.lastName || null,
-        phoneNumber: user.phoneNumber || "",
-      });
-      toast.success("User approved successfully");
+      await approveDocuments(user.uid);
+      toast.success("Documents approved successfully");
+      fetchUserDocuments(user.uid); // Refresh documents
       onUserDisabled?.(); // Refresh the users list
       onClose();
     } catch (error) {
-      toast.error("Failed to approve user");
+      toast.error("Failed to approve documents");
     } finally {
       setIsApproving(false);
     }
@@ -55,17 +85,13 @@ export default function UserDetailsModal({
     
     setIsDenying(true);
     try {
-      await denyUser({
-        uid: user.uid,
-        firstName: user.firstName || null,
-        lastName: user.lastName || null,
-        phoneNumber: user.phoneNumber || "",
-      });
-      toast.success("User denied successfully");
+      await denyDocuments(user.uid);
+      toast.success("Documents denied successfully");
+      fetchUserDocuments(user.uid); // Refresh documents
       onUserDisabled?.(); // Refresh the users list
       onClose();
     } catch (error) {
-      toast.error("Failed to deny user");
+      toast.error("Failed to deny documents");
     } finally {
       setIsDenying(false);
     }
@@ -74,22 +100,35 @@ export default function UserDetailsModal({
   const handleDisableUser = async () => {
     if (!user) return;
     
+    setIsDisabling(true);
     try {
-      await disableUser({
-        uid: user.uid,
-        firstName: user.firstName || null,
-        lastName: user.lastName || null,
-        phoneNumber: user.phoneNumber || "",
-      });
-      toast.success("User account disabled successfully");
+      await disableUserAccount(user.uid);
+      toast.success("Account disabled successfully");
       onUserDisabled?.();
       onClose();
     } catch (error) {
-      toast.error("Failed to disable user account");
+      toast.error("Failed to disable account");
+    } finally {
+      setIsDisabling(false);
     }
   };
 
   if (!isOpen || !user) return null;
+
+  // Determine button states based on document and account status
+  const hasDocuments = userDocuments.length > 0;
+  const documentStatus = hasDocuments ? userDocuments[0]?.status : null;
+  const userAccountStatus = user.status?.toLowerCase();
+  const isAccountDisabled = userAccountStatus === "disabled" || userAccountStatus === "disable";
+  const isDocumentApproved = documentStatus === 1;
+  const isDocumentDenied = documentStatus === 2;
+  const isDocumentPending = documentStatus === 0;
+
+  // Button visibility and disabled states
+  const showActionButtons = !isAccountDisabled;
+  const canApprove = hasDocuments && isDocumentPending && !isAccountDisabled;
+  const canDeny = hasDocuments && isDocumentPending && !isAccountDisabled;
+  const canDisable = hasDocuments && !isAccountDisabled;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -169,8 +208,12 @@ export default function UserDetailsModal({
               </div>
               <div className="flex flex-col">
                 <span className="text-sm text-gray-500">Status</span>
-                <span className="mt-1 inline-block w-fit px-3 py-1 text-sm rounded-full font-medium bg-green-100 text-green-700 border border-green-300">
-                  {user.status || "Active"}
+                <span
+                  className={`mt-1 inline-block w-fit px-3 py-1 text-sm rounded-full font-medium ${
+                    statusColor[user.status || "Pending"] || statusColor.Pending
+                  }`}
+                >
+                  {normalizeStatus(user.status) || "Active"}
                 </span>
               </div>
               <div className="flex flex-col">
@@ -256,9 +299,26 @@ export default function UserDetailsModal({
                 {userDocuments.map((doc, index) => (
                   <div key={index} className="border border-gray-200 rounded-lg p-4">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium text-gray-600">
-                        Document Set {index + 1}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-gray-600">
+                          Document Set {index + 1}
+                        </span>
+                        {doc.status === 0 && (
+                          <span className="inline-flex px-2 py-0.5 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-700 border border-yellow-300">
+                            Pending Review
+                          </span>
+                        )}
+                        {doc.status === 1 && (
+                          <span className="inline-flex px-2 py-0.5 text-xs font-semibold rounded-full bg-green-100 text-green-700 border border-green-300">
+                            Approved
+                          </span>
+                        )}
+                        {doc.status === 2 && (
+                          <span className="inline-flex px-2 py-0.5 text-xs font-semibold rounded-full bg-red-100 text-red-700 border border-red-300">
+                            Denied
+                          </span>
+                        )}
+                      </div>
                       <span className="text-xs text-gray-500">
                         Uploaded: {new Date(doc.uploadedAtDate).toLocaleDateString()}
                       </span>
@@ -293,38 +353,56 @@ export default function UserDetailsModal({
                 ))}
               </div>
             ) : (
-              <p className="text-gray-500 text-center py-4">No documents uploaded</p>
+              <div className="text-center py-4">
+                <p className="text-gray-500 mb-2">No documents uploaded</p>
+                <p className="text-xs text-gray-400">User must upload documents before any actions can be taken.</p>
+              </div>
             )}
             </div>
+            
+            
           </div>
         </div>
 
         {/* Footer Actions */}
-        <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
-          <button
-            onClick={handleDisableUser}
-            disabled={disableLoading}
-            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {disableLoading ? "Disabling..." : "Disable Account"}
-          </button>
-          
-          <div className="flex space-x-3">
-            <button
-              onClick={handleDeny}
-              disabled={isDenying}
-              className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isDenying ? "Denying..." : "Deny"}
-            </button>
-            <button
-              onClick={handleApprove}
-              disabled={isApproving}
-              className="px-6 py-2 bg-[#2c8068] text-white rounded-lg hover:bg-[#1f5a4a] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isApproving ? "Approving..." : "Approve"}
-            </button>
-          </div>
+        <div className="px-6 py-4 border-t border-gray-200">
+          {isAccountDisabled ? (
+            <div className="flex items-center justify-center gap-2 bg-slate-100 border border-slate-300 rounded-lg p-4">
+              <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+              </svg>
+              <p className="text-sm font-medium text-slate-700">Account is disabled</p>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between flex-wrap gap-3">
+              <button
+                onClick={handleDisableUser}
+                disabled={isDisabling || disableAccountLoading || !canDisable}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isDisabling ? "Disabling..." : "Disable Account"}
+              </button>
+              
+              <div className="flex space-x-3">
+                <button
+                  onClick={handleDeny}
+                  disabled={isDenying || !canDeny || statusLoading}
+                  className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  title={!hasDocuments ? "No documents available" : isDocumentApproved || isDocumentDenied ? "Documents already processed" : ""}
+                >
+                  {isDenying ? "Denying..." : "Deny"}
+                </button>
+                <button
+                  onClick={handleApprove}
+                  disabled={isApproving || !canApprove || statusLoading}
+                  className="px-6 py-2 bg-[#2c8068] text-white rounded-lg hover:bg-[#1f5a4a] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  title={!hasDocuments ? "No documents available" : isDocumentApproved || isDocumentDenied ? "Documents already processed" : ""}
+                >
+                  {isApproving ? "Approving..." : "Approve"}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -3,11 +3,8 @@ import { getCookie } from "cookies-next";
 import axios, { AxiosError } from "axios";
 
 interface LoanFormData {
-  maritalStatus: number;
-  highestEducation: number;
-  employmentInformation: string;
-  detailedAddress: string;
-  residentType: number;
+  businessType: number;
+  businessTIN: string;
   loanType: number;
   loanAmount: number;
   loanPurpose: string;

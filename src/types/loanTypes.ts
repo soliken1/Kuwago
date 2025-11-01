@@ -20,8 +20,33 @@ export const LOAN_TYPE_LABELS = {
   9: "Other"
 } as const;
 
+export const LOAN_AMOUNT_VALUES = {
+  1000: 1000,
+  2000: 2000,
+  3000: 3000,
+  4000: 4000,
+  5000: 5000,
+  7500: 7500,
+  10000: 10000,
+  15000: 15000,
+  20000: 20000,
+  25000: 25000,
+  30000: 30000,
+  40000: 40000,
+  50000: 50000,
+  75000: 75000,
+  100000: 100000,
+  150000: 150000,
+  200000: 200000,
+  250000: 250000,
+  300000: 300000,
+  400000: 400000,
+  500000: 500000
+} as const;
+
 export type BusinessType = keyof typeof BUSINESS_TYPE_LABELS;
 export type LoanType = keyof typeof LOAN_TYPE_LABELS;
+export type LoanAmount = keyof typeof LOAN_AMOUNT_VALUES;
 
 // Helper functions for getting labels
 export const getBusinessTypeLabel = (type: number): string => {
@@ -30,4 +55,8 @@ export const getBusinessTypeLabel = (type: number): string => {
 
 export const getLoanTypeLabel = (type: number): string => {
   return LOAN_TYPE_LABELS[type as LoanType] || "Unknown";
+};
+
+export const getLoanAmountLabel = (amount: number): string => {
+  return `₱${amount.toLocaleString()}`;
 };

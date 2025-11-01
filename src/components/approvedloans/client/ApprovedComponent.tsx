@@ -21,6 +21,7 @@ interface ApprovedLoan {
   status: string;
   payableID: string;
   paymentType: string;
+  loanTerms: string;
 }
 
 const statusColor: { [key: string]: string } = {
@@ -218,6 +219,7 @@ export default function ApprovedComponent() {
             status: loan.status,
             payableID: loan.payableID,
             paymentType: loan.paymentType,
+            loanTerms: loan.loanTerms,
           }));
 
           setApprovedLoans(loans);
@@ -251,7 +253,7 @@ export default function ApprovedComponent() {
                 Loan Purpose
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Type
+                Loan Terms
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Amount
@@ -313,7 +315,7 @@ export default function ApprovedComponent() {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {getLoanTypeLabel(Number(loan.type))}
+                    {loan.loanTerms} months
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     ₱{loan.amount.toLocaleString()}

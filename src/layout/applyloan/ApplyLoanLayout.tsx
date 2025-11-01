@@ -40,12 +40,17 @@ export default function ApplyLoanLayout({ children }: ApplyLoanLayoutProps) {
               You can only apply for a new loan once your existing loan is
               completed or closed.
             </p>
-            <button
-              onClick={() => (window.location.href = "/dashboard")}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition"
-            >
-              Go to Dashboard
-            </button>
+            <div className="flex justify-center">
+              <button
+                onClick={() => (window.location.href = "/dashboard")}
+                className="flex items-center gap-2 px-6 py-2 rounded-lg text-white transition-colors"
+                style={{ backgroundColor: '#2c8068' }}
+                onMouseEnter={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#1f5a4a'}
+                onMouseLeave={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#2c8068'}
+              >
+                Go to Dashboard
+              </button>
+            </div>
           </div>
         </div>
       )}
