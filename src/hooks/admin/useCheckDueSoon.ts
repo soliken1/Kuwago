@@ -2,7 +2,7 @@
 import axios, { AxiosError } from "axios";
 import { useState } from "react";
 import { getCookie } from "cookies-next";
-import { DueSoonResponse, DueSoonData } from "@/types/payments";
+import { DueSoonData } from "@/types/payments";
 
 export default function useCheckDueSoon() {
   const [loading, setLoading] = useState<boolean>(false);
