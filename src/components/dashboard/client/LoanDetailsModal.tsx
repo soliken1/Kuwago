@@ -94,47 +94,6 @@ export default function LoanDetailsModal({ isOpen, onClose, application }: LoanD
               />
             </div>
           </div>
-
-          {/* Section 2: Personal Info */}
-          <div>
-            <div className="flex items-center gap-2 mb-3">
-              <span className="inline-block w-2 h-5 rounded bg-blue-400" />
-              <span className="font-semibold text-sm text-gray-700">
-                Personal Information
-              </span>
-            </div>
-            <div className="grid grid-cols-2 gap-4 bg-gray-50 rounded-lg p-4">
-              <DetailItem
-                label="Marital Status"
-                value={application.maritalStatus}
-              />
-              <DetailItem
-                label="Highest Education"
-                value={application.highestEducation}
-              />
-              <DetailItem
-                label="Resident Type"
-                value={application.residentType}
-              />
-            </div>
-          </div>
-
-          {/* Section 3: Employment & Address */}
-          <div>
-            <div className="flex items-center gap-2 mb-3">
-              <span className="inline-block w-2 h-5 rounded bg-purple-400" />
-              <span className="font-semibold text-sm text-gray-700">
-                Employment & Address
-              </span>
-            </div>
-            <div className="grid grid-cols-1 gap-4 bg-gray-50 rounded-lg p-4">
-              <DetailItem
-                label="Employment Info"
-                value={application.employmentInformation}
-              />
-              <DetailItem label="Address" value={application.detailedAddress} />
-            </div>
-          </div>
         </div>
 
         {/* Modal Footer */}
