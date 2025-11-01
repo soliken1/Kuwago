@@ -3,12 +3,18 @@ import toast from "react-hot-toast";
 import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import X from "../../../../assets/actions/X";
-import sendDocumentLink from "@/utils/document/send";
 import { LoanWithUserInfo } from "@/types/lendings";
-import { useFetchPaymentSummary, PaymentSummary } from "@/hooks/lend/fetchPaymentSummary";
-import { useFetchPaymentSchedule, PaymentSchedule } from "@/hooks/lend/fetchPaymentSchedule";
+import {
+  useFetchPaymentSummary,
+  PaymentSummary,
+} from "@/hooks/lend/fetchPaymentSummary";
+import {
+  useFetchPaymentSchedule,
+  PaymentSchedule,
+} from "@/hooks/lend/fetchPaymentSchedule";
 import { useRequestPayment, PaymentRequest } from "@/hooks/lend/requestPayment";
 import { getBusinessTypeLabel, getLoanTypeLabel } from "@/types/loanTypes";
+import createDocument from "@/utils/document/create";
 
 const statusColor = {
   Pending: "bg-yellow-100 text-yellow-700 border border-yellow-300",
@@ -53,13 +59,19 @@ export default function SelectedLoan({
   const [showPaymentModal, setShowPaymentModal] = useState<boolean>(false);
   const [paymentAmount, setPaymentAmount] = useState<number>(0);
   const [paymentNotes, setPaymentNotes] = useState<string>("");
-  const [showPaymentHistoryModal, setShowPaymentHistoryModal] = useState<boolean>(false);
-  
+  const [showPaymentHistoryModal, setShowPaymentHistoryModal] =
+    useState<boolean>(false);
+
   // Payment data states
-  const [paymentSummary, setPaymentSummary] = useState<PaymentSummary | null>(null);
-  const [paymentSchedule, setPaymentSchedule] = useState<PaymentSchedule | null>(null);
-  const { fetchPaymentSummary, loading: summaryLoading } = useFetchPaymentSummary();
-  const { fetchPaymentSchedule, loading: scheduleLoading } = useFetchPaymentSchedule();
+  const [paymentSummary, setPaymentSummary] = useState<PaymentSummary | null>(
+    null
+  );
+  const [paymentSchedule, setPaymentSchedule] =
+    useState<PaymentSchedule | null>(null);
+  const { fetchPaymentSummary, loading: summaryLoading } =
+    useFetchPaymentSummary();
+  const { fetchPaymentSchedule, loading: scheduleLoading } =
+    useFetchPaymentSchedule();
   const { submitPayment, loading: paymentLoading } = useRequestPayment();
   const hasFetchedPaymentData = useRef(false);
 
@@ -67,16 +79,17 @@ export default function SelectedLoan({
   useEffect(() => {
     const fetchPaymentData = async () => {
       if (
-        (selectedLoan.loanInfo.loanStatus === "Approved" || 
-         selectedLoan.loanInfo.loanStatus === "Completed") &&
+        (selectedLoan.loanInfo.loanStatus === "Approved" ||
+          selectedLoan.loanInfo.loanStatus === "Completed") &&
         !hasFetchedPaymentData.current
       ) {
         // Check for payableID in different possible locations
-        const payableID = selectedLoan.loanInfo.payableID || 
-                         selectedLoan.payableID ||
-                         selectedLoan.payable_id ||
-                         selectedLoan.payableId;
-        
+        const payableID =
+          selectedLoan.loanInfo.payableID ||
+          selectedLoan.payableID ||
+          selectedLoan.payable_id ||
+          selectedLoan.payableId;
+
         if (payableID) {
           hasFetchedPaymentData.current = true;
           try {
@@ -99,7 +112,12 @@ export default function SelectedLoan({
     };
 
     fetchPaymentData();
-  }, [selectedLoan.loanInfo.loanStatus, selectedLoan.loanInfo.payableID, selectedLoan.userInfo.uid]);
+  }, [
+    selectedLoan.loanInfo.loanStatus,
+    selectedLoan.loanInfo.payableID,
+    selectedLoan.userInfo.uid,
+  ]);
+
   const handleApprove = async () => {
     const confirm = window.confirm(
       `Are you sure you want to approve this loan with ₱${finalAmount}, an Interest of ${interestRate}%, Terms of Month of ${termsOfMonths} Months and a Payment Method of ${
@@ -119,56 +137,22 @@ export default function SelectedLoan({
         paymentType
       );
 
-      // 🟢 PandaDoc API details
-      const apiKey = "3412a8f0af977fc4b1b750173c3875d7ee58d26a";
-      const templateId = "QjGqLCwEvbvAWa4c9QFTfU";
+      // Create and send PandaDoc document
+      await createDocument(selectedLoan, storedUser);
 
-      const payload = {
-        name: "Loan Approval Test Document",
-        template_uuid: templateId,
-        recipients: [
-          {
-            email: selectedLoan.userInfo.email,
-            first_name: selectedLoan.loanInfo.firstName,
-            last_nname: selectedLoan.loanInfo.lastName,
-            role: "Borrower",
-          },
-          {
-            email: storedUser.email,
-            first_name: storedUser.fullname,
-            role: "Lender",
-          },
-        ],
-        tokens: [], // Optional if template uses token placeholders
-        fields: {}, // Optional if filling fields dynamically
-        metadata: {
-          loanId: selectedLoan.loanInfo.loanRequestID,
-        },
-        send_email: true,
-      };
-
-      const response = await axios.post(
-        "https://api.pandadoc.com/public/v1/documents",
-        payload,
-        {
-          headers: {
-            Authorization: `API-Key ${apiKey}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      const url = `https://app.pandadoc.com/a/#/documents/${response.data.uuid}`;
-      await sendDocumentLink(
-        storedUser.email || "",
-        storedUser.fullname || "",
-        url,
-        `Generated Document For ${selectedLoan.loanInfo.firstName} ${selectedLoan.loanInfo.lastName}`
-      );
       toast.success("Loan approved and document sent to recipients.");
       window.location.reload();
     } catch (error) {
-      toast.error("Loan approved but failed to send document.");
+      console.error("PandaDoc error:", error);
+
+      if (axios.isAxiosError(error)) {
+        const errorMessage = error.response?.data?.message || error.message;
+        toast.error(
+          `Loan approved but failed to send document: ${errorMessage}`
+        );
+      } else {
+        toast.error("Loan approved but failed to send document.");
+      }
     }
   };
 
@@ -205,21 +189,23 @@ export default function SelectedLoan({
         amountPaid: paymentAmount,
         paymentDate: new Date().toISOString(),
         notes: paymentNotes.trim() || "Payment recorded by lender",
-        paymentType: String(selectedLoan.loanInfo.paymentType || "Cash")
+        paymentType: String(selectedLoan.loanInfo.paymentType || "Cash"),
       };
 
       await submitPayment(paymentData);
-      
-      toast.success(`Payment of ₱${paymentAmount.toLocaleString()} recorded successfully`);
+
+      toast.success(
+        `Payment of ₱${paymentAmount.toLocaleString()} recorded successfully`
+      );
       setShowPaymentModal(false);
       setPaymentAmount(0);
       setPaymentNotes("");
-      
+
       // Refresh payment data
       hasFetchedPaymentData.current = false;
       setPaymentSummary(null);
       setPaymentSchedule(null);
-      
+
       // Trigger refetch of payment data
       const payableID = selectedLoan.loanInfo.payableID;
       if (payableID) {
@@ -271,7 +257,8 @@ export default function SelectedLoan({
               <div className="flex flex-col">
                 <span className="text-sm text-gray-500">Applicant</span>
                 <span className="mt-1 text-gray-800 font-medium">
-                  {selectedLoan.userInfo.firstName} {selectedLoan.userInfo.lastName}
+                  {selectedLoan.userInfo.firstName}{" "}
+                  {selectedLoan.userInfo.lastName}
                 </span>
               </div>
               <div className="flex flex-col">
@@ -300,8 +287,17 @@ export default function SelectedLoan({
               </div>
               <div className="flex flex-col">
                 <span className="text-sm text-gray-500">Status</span>
-                <span className={`mt-1 inline-block w-fit px-3 py-1 text-sm rounded-full font-medium ${statusColor[selectedLoan.loanInfo.loanStatus as keyof typeof statusColor] || statusColor.Pending}`}>
-                  {selectedLoan.loanInfo.loanStatus === "InProgress" ? "In Progress" : selectedLoan.loanInfo.loanStatus}
+                <span
+                  className={`mt-1 inline-block w-fit px-3 py-1 text-sm rounded-full font-medium ${
+                    statusColor[
+                      selectedLoan.loanInfo
+                        .loanStatus as keyof typeof statusColor
+                    ] || statusColor.Pending
+                  }`}
+                >
+                  {selectedLoan.loanInfo.loanStatus === "InProgress"
+                    ? "In Progress"
+                    : selectedLoan.loanInfo.loanStatus}
                 </span>
               </div>
             </div>
@@ -362,7 +358,9 @@ export default function SelectedLoan({
                     value={interestRate === 0 ? "" : interestRate}
                     placeholder="0"
                     className="w-full rounded-md border border-gray-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2c8068]"
-                    onChange={(e) => setInterestRate(Number(e.target.value) || 0)}
+                    onChange={(e) =>
+                      setInterestRate(Number(e.target.value) || 0)
+                    }
                     min={0}
                   />
                 </div>
@@ -373,9 +371,9 @@ export default function SelectedLoan({
                   <div className="flex gap-2 mt-1">
                     <button
                       className={`px-3 py-1 text-sm rounded-md transition-colors ${
-                        termsOfMonths === 3 
-                          ? 'bg-[#2c8068] text-white' 
-                          : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                        termsOfMonths === 3
+                          ? "bg-[#2c8068] text-white"
+                          : "bg-gray-200 text-gray-700 hover:bg-gray-300"
                       }`}
                       onClick={() => setTermsOfMonths(3)}
                     >
@@ -383,9 +381,9 @@ export default function SelectedLoan({
                     </button>
                     <button
                       className={`px-3 py-1 text-sm rounded-md transition-colors ${
-                        termsOfMonths === 6 
-                          ? 'bg-[#2c8068] text-white' 
-                          : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                        termsOfMonths === 6
+                          ? "bg-[#2c8068] text-white"
+                          : "bg-gray-200 text-gray-700 hover:bg-gray-300"
                       }`}
                       onClick={() => setTermsOfMonths(6)}
                     >
@@ -393,9 +391,9 @@ export default function SelectedLoan({
                     </button>
                     <button
                       className={`px-3 py-1 text-sm rounded-md transition-colors ${
-                        termsOfMonths === 9 
-                          ? 'bg-[#2c8068] text-white' 
-                          : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                        termsOfMonths === 9
+                          ? "bg-[#2c8068] text-white"
+                          : "bg-gray-200 text-gray-700 hover:bg-gray-300"
                       }`}
                       onClick={() => setTermsOfMonths(9)}
                     >
@@ -403,9 +401,9 @@ export default function SelectedLoan({
                     </button>
                     <button
                       className={`px-3 py-1 text-sm rounded-md transition-colors ${
-                        termsOfMonths === 12 
-                          ? 'bg-[#2c8068] text-white' 
-                          : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                        termsOfMonths === 12
+                          ? "bg-[#2c8068] text-white"
+                          : "bg-gray-200 text-gray-700 hover:bg-gray-300"
                       }`}
                       onClick={() => setTermsOfMonths(12)}
                     >
@@ -420,9 +418,9 @@ export default function SelectedLoan({
                   <div className="flex gap-2 mt-1">
                     <button
                       className={`px-3 py-1 text-sm rounded-md transition-colors ${
-                        paymentType === 1 
-                          ? 'bg-[#2c8068] text-white' 
-                          : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                        paymentType === 1
+                          ? "bg-[#2c8068] text-white"
+                          : "bg-gray-200 text-gray-700 hover:bg-gray-300"
                       }`}
                       onClick={() => setPaymentType(1)}
                     >
@@ -430,9 +428,9 @@ export default function SelectedLoan({
                     </button>
                     <button
                       className={`px-3 py-1 text-sm rounded-md transition-colors ${
-                        paymentType === 2 
-                          ? 'bg-[#2c8068] text-white' 
-                          : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                        paymentType === 2
+                          ? "bg-[#2c8068] text-white"
+                          : "bg-gray-200 text-gray-700 hover:bg-gray-300"
                       }`}
                       onClick={() => setPaymentType(2)}
                     >
@@ -445,7 +443,8 @@ export default function SelectedLoan({
           )}
 
           {/* Section 4: Payment Tracking (if Approved/Completed) */}
-          {(selectedLoan.loanInfo.loanStatus === "Approved" || selectedLoan.loanInfo.loanStatus === "Completed") && (
+          {(selectedLoan.loanInfo.loanStatus === "Approved" ||
+            selectedLoan.loanInfo.loanStatus === "Completed") && (
             <div>
               <div className="flex items-center gap-2 mb-3">
                 <span className="inline-block w-2 h-5 rounded bg-green-400" />
@@ -453,56 +452,52 @@ export default function SelectedLoan({
                   Payment Tracking
                 </span>
               </div>
-              
+
               {/* Loan Information Section */}
               <div className="mb-6">
                 <div className="grid grid-cols-2 gap-4 bg-gray-50 rounded-lg p-4">
                   <div className="flex flex-col">
                     <span className="text-sm text-gray-500">Loan Amount</span>
                     <span className="mt-1 text-gray-800 font-medium">
-                      {summaryLoading ? (
-                        "Loading..."
-                      ) : paymentSummary ? (
-                        `₱${paymentSummary.totalPayableAmount.toLocaleString()}`
-                      ) : (
-                        `₱${selectedLoan.loanInfo.loanAmount.toLocaleString()}`
-                      )}
+                      {summaryLoading
+                        ? "Loading..."
+                        : paymentSummary
+                        ? `₱${paymentSummary.totalPayableAmount.toLocaleString()}`
+                        : `₱${selectedLoan.loanInfo.loanAmount.toLocaleString()}`}
                     </span>
                   </div>
                   <div className="flex flex-col">
                     <span className="text-sm text-gray-500">Total Paid</span>
                     <span className="mt-1 text-gray-800 font-medium">
-                      {summaryLoading ? (
-                        "Loading..."
-                      ) : paymentSummary ? (
-                        `₱${paymentSummary.totalPaid.toLocaleString()}`
-                      ) : (
-                        "₱0.00"
-                      )}
+                      {summaryLoading
+                        ? "Loading..."
+                        : paymentSummary
+                        ? `₱${paymentSummary.totalPaid.toLocaleString()}`
+                        : "₱0.00"}
                     </span>
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-sm text-gray-500">Remaining Balance</span>
+                    <span className="text-sm text-gray-500">
+                      Remaining Balance
+                    </span>
                     <span className="mt-1 text-gray-800 font-medium">
-                      {summaryLoading ? (
-                        "Loading..."
-                      ) : paymentSummary ? (
-                        `₱${paymentSummary.remainingBalance.toLocaleString()}`
-                      ) : (
-                        `₱${selectedLoan.loanInfo.loanAmount.toLocaleString()}`
-                      )}
+                      {summaryLoading
+                        ? "Loading..."
+                        : paymentSummary
+                        ? `₱${paymentSummary.remainingBalance.toLocaleString()}`
+                        : `₱${selectedLoan.loanInfo.loanAmount.toLocaleString()}`}
                     </span>
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-sm text-gray-500">Monthly Payment</span>
+                    <span className="text-sm text-gray-500">
+                      Monthly Payment
+                    </span>
                     <span className="mt-1 text-gray-800 font-medium">
-                      {scheduleLoading ? (
-                        "Loading..."
-                      ) : paymentSchedule ? (
-                        `₱${paymentSchedule.monthlyPayment.toLocaleString()}`
-                      ) : (
-                        "N/A"
-                      )}
+                      {scheduleLoading
+                        ? "Loading..."
+                        : paymentSchedule
+                        ? `₱${paymentSchedule.monthlyPayment.toLocaleString()}`
+                        : "N/A"}
                     </span>
                   </div>
                   {/* <div className="flex flex-col">
@@ -530,29 +525,43 @@ export default function SelectedLoan({
                 </div>
                 <div className="grid gap-3">
                   {scheduleLoading ? (
-                    <div className="text-center text-gray-500 py-4">Loading payments...</div>
+                    <div className="text-center text-gray-500 py-4">
+                      Loading payments...
+                    </div>
                   ) : paymentSchedule && paymentSchedule.schedule ? (
                     (() => {
                       const paidPayments = paymentSchedule.schedule.filter(
-                        (item) => item.status === "Paid" || item.status === "Advance"
+                        (item) =>
+                          item.status === "Paid" || item.status === "Advance"
                       );
-                      
+
                       return paidPayments.length > 0 ? (
                         paidPayments.map((payment, index) => (
-                          <div key={`paid-${index}`} className="bg-green-50 border border-green-200 rounded-lg p-4">
+                          <div
+                            key={`paid-${index}`}
+                            className="bg-green-50 border border-green-200 rounded-lg p-4"
+                          >
                             <div className="flex justify-between items-center">
                               <div>
-                                <p className="text-sm text-green-600 font-medium">Due Date</p>
+                                <p className="text-sm text-green-600 font-medium">
+                                  Due Date
+                                </p>
                                 <p className="text-gray-800 font-semibold">
-                                  {new Date(payment.dueDate).toLocaleDateString("en-US", {
-                                    year: "numeric",
-                                    month: "long",
-                                    day: "numeric",
-                                  })}
+                                  {new Date(payment.dueDate).toLocaleDateString(
+                                    "en-US",
+                                    {
+                                      year: "numeric",
+                                      month: "long",
+                                      day: "numeric",
+                                    }
+                                  )}
                                 </p>
                                 {payment.paymentDate && (
                                   <p className="text-xs text-gray-500 mt-1">
-                                    Paid on: {new Date(payment.paymentDate).toLocaleDateString("en-US", {
+                                    Paid on:{" "}
+                                    {new Date(
+                                      payment.paymentDate
+                                    ).toLocaleDateString("en-US", {
                                       year: "numeric",
                                       month: "long",
                                       day: "numeric",
@@ -561,7 +570,9 @@ export default function SelectedLoan({
                                 )}
                               </div>
                               <div className="text-right">
-                                <p className="text-sm text-green-600 font-medium">Amount Due</p>
+                                <p className="text-sm text-green-600 font-medium">
+                                  Amount Due
+                                </p>
                                 <p className="text-green-700 font-bold text-lg">
                                   ₱{payment.actualPayment.toLocaleString()}
                                 </p>
@@ -570,11 +581,15 @@ export default function SelectedLoan({
                           </div>
                         ))
                       ) : (
-                        <div className="text-center text-gray-500 py-4">No payments made yet</div>
+                        <div className="text-center text-gray-500 py-4">
+                          No payments made yet
+                        </div>
                       );
                     })()
                   ) : (
-                    <div className="text-center text-gray-500 py-4">No payment schedule available</div>
+                    <div className="text-center text-gray-500 py-4">
+                      No payment schedule available
+                    </div>
                   )}
                 </div>
               </div>
@@ -597,25 +612,37 @@ export default function SelectedLoan({
                 </div>
                 <div className="grid gap-3">
                   {scheduleLoading ? (
-                    <div className="text-center text-gray-500 py-4">Loading schedule...</div>
+                    <div className="text-center text-gray-500 py-4">
+                      Loading schedule...
+                    </div>
                   ) : paymentSchedule && paymentSchedule.schedule ? (
                     (() => {
                       const unpaidPayments = paymentSchedule.schedule.filter(
-                        (item) => item.status === "Unpaid" || item.status === "Advance Applied"
+                        (item) =>
+                          item.status === "Unpaid" ||
+                          item.status === "Advance Applied"
                       );
-                      
+
                       return unpaidPayments.length > 0 ? (
                         unpaidPayments.map((payment, index) => (
-                          <div key={`unpaid-${index}`} className="bg-red-50 border border-red-200 rounded-lg p-4">
+                          <div
+                            key={`unpaid-${index}`}
+                            className="bg-red-50 border border-red-200 rounded-lg p-4"
+                          >
                             <div className="flex justify-between items-center">
                               <div>
-                                <p className="text-sm text-red-600 font-medium">Due Date</p>
+                                <p className="text-sm text-red-600 font-medium">
+                                  Due Date
+                                </p>
                                 <p className="text-gray-800 font-semibold">
-                                  {new Date(payment.dueDate).toLocaleDateString("en-US", {
-                                    year: "numeric",
-                                    month: "long",
-                                    day: "numeric",
-                                  })}
+                                  {new Date(payment.dueDate).toLocaleDateString(
+                                    "en-US",
+                                    {
+                                      year: "numeric",
+                                      month: "long",
+                                      day: "numeric",
+                                    }
+                                  )}
                                 </p>
                                 {payment.status === "Advance Applied" && (
                                   <p className="text-xs text-orange-600 mt-1 font-medium">
@@ -625,24 +652,30 @@ export default function SelectedLoan({
                               </div>
                               <div className="text-right">
                                 <p className="text-sm text-red-600 font-medium">
-                                  {payment.status === "Advance Applied" ? "Amount Applied" : "Amount Due"}
+                                  {payment.status === "Advance Applied"
+                                    ? "Amount Applied"
+                                    : "Amount Due"}
                                 </p>
                                 <p className="text-red-700 font-bold text-lg">
-                                  ₱{payment.status === "Advance Applied" 
-                                    ? payment.actualPayment.toLocaleString() 
-                                    : payment.requiredToPayEveryMonth.toLocaleString()
-                                  }
+                                  ₱
+                                  {payment.status === "Advance Applied"
+                                    ? payment.actualPayment.toLocaleString()
+                                    : payment.requiredToPayEveryMonth.toLocaleString()}
                                 </p>
                               </div>
                             </div>
                           </div>
                         ))
                       ) : (
-                        <div className="text-center text-gray-500 py-4">All payments completed!</div>
+                        <div className="text-center text-gray-500 py-4">
+                          All payments completed!
+                        </div>
                       );
                     })()
                   ) : (
-                    <div className="text-center text-gray-500 py-4">No payment schedule available</div>
+                    <div className="text-center text-gray-500 py-4">
+                      No payment schedule available
+                    </div>
                   )}
                 </div>
               </div>
@@ -658,7 +691,7 @@ export default function SelectedLoan({
           >
             Cancel
           </button>
-          
+
           {selectedLoan.loanInfo.loanStatus === "InProgress" && (
             <>
               <button
@@ -693,8 +726,10 @@ export default function SelectedLoan({
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full">
             <div className="p-6">
-              <h2 className="text-xl font-bold text-gray-800 mb-4">Record Payment</h2>
-              
+              <h2 className="text-xl font-bold text-gray-800 mb-4">
+                Record Payment
+              </h2>
+
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -705,12 +740,14 @@ export default function SelectedLoan({
                     value={paymentAmount === 0 ? "" : paymentAmount}
                     placeholder="Enter payment amount"
                     className="w-full rounded-md border border-gray-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#2c8068]"
-                    onChange={(e) => setPaymentAmount(Number(e.target.value) || 0)}
+                    onChange={(e) =>
+                      setPaymentAmount(Number(e.target.value) || 0)
+                    }
                     min={0}
                     step="0.01"
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Payment Notes (Optional)
@@ -724,7 +761,7 @@ export default function SelectedLoan({
                   />
                 </div>
               </div>
-              
+
               <div className="flex justify-end gap-3 mt-6">
                 <button
                   onClick={() => setShowPaymentModal(false)}
@@ -764,37 +801,49 @@ export default function SelectedLoan({
 
             {/* Payment History Modal Content */}
             <div className="p-6">
-
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
                   <span className="w-3 h-3 rounded-full bg-green-500"></span>
                   Payment Records
                 </h3>
-                
+
                 <div className="grid gap-4">
                   {summaryLoading ? (
-                    <div className="text-center text-gray-500 py-4">Loading payment history...</div>
+                    <div className="text-center text-gray-500 py-4">
+                      Loading payment history...
+                    </div>
                   ) : paymentSummary && paymentSummary.payments.length > 0 ? (
                     paymentSummary.payments.map((payment) => (
-                      <div key={payment.paymentID} className="bg-green-50 border border-green-200 rounded-lg p-4">
+                      <div
+                        key={payment.paymentID}
+                        className="bg-green-50 border border-green-200 rounded-lg p-4"
+                      >
                         <div className="flex justify-between items-start">
                           <div className="flex-1">
-                            <p className="text-sm text-green-600 font-medium">Payment Date</p>
+                            <p className="text-sm text-green-600 font-medium">
+                              Payment Date
+                            </p>
                             <p className="text-gray-800 font-semibold">
-                              {new Date(payment.paymentDate).toLocaleDateString("en-US", {
-                                year: "numeric",
-                                month: "long",
-                                day: "numeric",
-                              })}
+                              {new Date(payment.paymentDate).toLocaleDateString(
+                                "en-US",
+                                {
+                                  year: "numeric",
+                                  month: "long",
+                                  day: "numeric",
+                                }
+                              )}
                             </p>
                             {payment.notes && (
                               <p className="text-xs text-gray-600 mt-2">
-                                <span className="font-medium">Notes:</span> {payment.notes}
+                                <span className="font-medium">Notes:</span>{" "}
+                                {payment.notes}
                               </p>
                             )}
                           </div>
                           <div className="text-right">
-                            <p className="text-sm text-green-600 font-medium">Amount Paid</p>
+                            <p className="text-sm text-green-600 font-medium">
+                              Amount Paid
+                            </p>
                             <p className="text-green-700 font-bold text-lg">
                               ₱{payment.amountPaid.toLocaleString()}
                             </p>
@@ -803,7 +852,9 @@ export default function SelectedLoan({
                       </div>
                     ))
                   ) : (
-                    <div className="text-center text-gray-500 py-4">No payment history available</div>
+                    <div className="text-center text-gray-500 py-4">
+                      No payment history available
+                    </div>
                   )}
                 </div>
               </div>
