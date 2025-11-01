@@ -19,7 +19,7 @@ interface UserDocumentsResponse {
   success: boolean;
   message: string;
   statusCode: number;
-  data: UserDocument[];
+  data: UserDocument;
 }
 
 export default function useUserDocuments() {
@@ -40,6 +40,9 @@ export default function useUserDocuments() {
       const response = await axios.get<UserDocumentsResponse>(
         "/proxy/DocumentUpload/GetUserDocuments",
         {
+          params: {
+            uid: uid,
+          },
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -47,9 +50,8 @@ export default function useUserDocuments() {
       );
 
       if (response.data.success && response.data.data) {
-        // Filter documents by the provided uid
-        const filteredDocuments = response.data.data.filter(doc => doc.uid === uid);
-        setUserDocuments(filteredDocuments);
+        // Convert single document object to array for component compatibility
+        setUserDocuments([response.data.data]);
       } else {
         setUserDocuments([]);
       }

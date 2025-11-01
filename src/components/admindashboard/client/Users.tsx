@@ -3,15 +3,26 @@ import React, { useEffect, useState } from "react";
 import useGetAllUsers from "@/hooks/users/requestAllUsers";
 import RegisterModal from "./RegisterModal";
 import UserDetailsModal from "./UserDetailsModal";
-import useDisableUser from "@/hooks/users/useDisableUser";
+import useUpdateDocumentStatus from "@/hooks/users/useUpdateDocumentStatus";
 import toast from "react-hot-toast";
+
+const statusColor: { [key: string]: string } = {
+  Approved: "bg-green-100 text-green-700 border border-green-300",
+  Pending: "bg-yellow-100 text-yellow-700 border border-yellow-300",
+  InProgress: "bg-blue-100 text-blue-700 border border-blue-300",
+  Denied: "bg-red-100 text-red-700 border border-red-300",
+  Deny: "bg-red-100 text-red-700 border border-red-300",
+  Completed: "bg-gray-100 text-gray-700 border border-gray-300",
+  Disable: "bg-slate-200 text-slate-800 border border-slate-400",
+};
 
 export default function Users() {
   const { allUsers, allUsersData, error, loading } = useGetAllUsers();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isUserDetailsModalOpen, setIsUserDetailsModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any>(null);
-  const { disableUser, loading: disableLoading } = useDisableUser();
+  const [statusFilter, setStatusFilter] = useState<string>("All");
+  const { disableDocuments, loading: disableLoading } = useUpdateDocumentStatus();
 
   useEffect(() => {
     allUsers(); // Fetch users on mount
@@ -25,16 +36,11 @@ export default function Users() {
   const handleDisableUser = async (user: any) => {
     if (window.confirm(`Are you sure you want to disable ${user.fullName || user.email}'s account?`)) {
       try {
-        await disableUser({
-          uid: user.uid,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          phoneNumber: user.phoneNumber || "",
-        });
-        toast.success("User account disabled successfully");
+        await disableDocuments(user.uid);
+        toast.success("Account disabled successfully");
         allUsers(); // Refresh the users list
       } catch (error) {
-        toast.error("Failed to disable user account");
+        toast.error("Failed to disable account");
       }
     }
   };
@@ -43,12 +49,19 @@ export default function Users() {
     allUsers(); // Refresh the users list
   };
 
+  // Filter users based on selected status
+  const filteredUsers = Array.isArray(allUsersData?.data)
+    ? statusFilter === "All"
+      ? allUsersData.data
+      : allUsersData.data.filter((user) => user.status === statusFilter)
+    : [];
+
   return (
     <div className="py-8">
       <div className="bg-white rounded-2xl shadow-lg">
         {/* Table Header */}
         <div className="px-6 py-4 border-b border-gray-200">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="text-xl font-bold text-gray-800">Users Management</h2>
               <p className="text-gray-600 text-sm">Manage all platform users</p>
@@ -62,6 +75,26 @@ export default function Users() {
             >
               Register User
             </button>
+          </div>
+          
+          {/* Status Filter */}
+          <div className="flex items-center gap-3">
+            <label className="text-sm font-medium text-gray-700">Filter by Status:</label>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="px-4 py-2 border-2 border-[#2c8068] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2c8068] focus:ring-offset-1 text-sm bg-white text-gray-800 font-medium hover:border-[#1f5a4a] hover:bg-green-50 transition-all cursor-pointer shadow-sm"
+            >
+              <option value="All">All</option>
+              <option value="Pending">Pending</option>
+              <option value="Approved">Approved</option>
+              <option value="Denied">Denied</option>
+            </select>
+            {statusFilter !== "All" && (
+              <span className="text-sm text-[#2c8068] font-medium">
+                ({filteredUsers.length} {filteredUsers.length === 1 ? "user" : "users"})
+              </span>
+            )}
           </div>
         </div>
 
@@ -102,15 +135,18 @@ export default function Users() {
                   </td>
                 </tr>
               )}
-              {!loading && (!allUsersData?.data || !Array.isArray(allUsersData.data) || allUsersData.data.length === 0) && (
+              {!loading && filteredUsers.length === 0 && (
                 <tr>
                   <td colSpan={5} className="px-6 py-4 text-center text-gray-500">
-                    No users found.
+                    {statusFilter === "All" 
+                      ? "No users found."
+                      : `No users found with status "${statusFilter}".`
+                    }
                   </td>
                 </tr>
               )}
-              {Array.isArray(allUsersData?.data) &&
-                allUsersData.data.map((user) => (
+              {!loading &&
+                filteredUsers.map((user) => (
                   <tr key={user.uid} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
@@ -139,8 +175,12 @@ export default function Users() {
                       {user.role || "N/A"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-700 border border-green-300">
-                        Active
+                      <span
+                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                          statusColor[user.status || "Pending"] || statusColor.Pending
+                        }`}
+                      >
+                        {user.status || "N/A"}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">

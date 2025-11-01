@@ -2,8 +2,20 @@
 import React, { useEffect, useState } from "react";
 import { UserData } from "@/hooks/users/requestAllUsers";
 import useUserDocuments from "@/hooks/users/useUserDocuments";
-import useDisableUser from "@/hooks/users/useDisableUser";
+import useUpdateDocumentStatus from "@/hooks/users/useUpdateDocumentStatus";
+import useDisableUserAccount from "@/hooks/users/useDisableUserAccount";
 import toast from "react-hot-toast";
+
+const statusColor: { [key: string]: string } = {
+  Approved: "bg-green-100 text-green-700 border border-green-300",
+  Pending: "bg-yellow-100 text-yellow-700 border border-yellow-300",
+  InProgress: "bg-blue-100 text-blue-700 border border-blue-300",
+  Denied: "bg-red-100 text-red-700 border border-red-300",
+  Deny: "bg-red-100 text-red-700 border border-red-300",
+  Completed: "bg-gray-100 text-gray-700 border border-gray-300",
+  Disable: "bg-slate-200 text-slate-800 border border-slate-400",
+  Disabled: "bg-slate-200 text-slate-800 border border-slate-400",
+};
 
 interface UserDetailsModalProps {
   isOpen: boolean;
@@ -19,9 +31,11 @@ export default function UserDetailsModal({
   onUserDisabled,
 }: UserDetailsModalProps) {
   const { userDocuments, loading: documentsLoading, fetchUserDocuments } = useUserDocuments();
-  const { disableUser, approveUser, denyUser, loading: disableLoading } = useDisableUser();
+  const { approveDocuments, denyDocuments, loading: statusLoading } = useUpdateDocumentStatus();
+  const { disableUserAccount, loading: disableAccountLoading } = useDisableUserAccount();
   const [isApproving, setIsApproving] = useState(false);
   const [isDenying, setIsDenying] = useState(false);
+  const [isDisabling, setIsDisabling] = useState(false);
 
   useEffect(() => {
     if (isOpen && user?.uid) {
@@ -34,17 +48,13 @@ export default function UserDetailsModal({
     
     setIsApproving(true);
     try {
-      await approveUser({
-        uid: user.uid,
-        firstName: user.firstName || null,
-        lastName: user.lastName || null,
-        phoneNumber: user.phoneNumber || "",
-      });
-      toast.success("User approved successfully");
+      await approveDocuments(user.uid);
+      toast.success("Documents approved successfully");
+      fetchUserDocuments(user.uid); // Refresh documents
       onUserDisabled?.(); // Refresh the users list
       onClose();
     } catch (error) {
-      toast.error("Failed to approve user");
+      toast.error("Failed to approve documents");
     } finally {
       setIsApproving(false);
     }
@@ -55,17 +65,13 @@ export default function UserDetailsModal({
     
     setIsDenying(true);
     try {
-      await denyUser({
-        uid: user.uid,
-        firstName: user.firstName || null,
-        lastName: user.lastName || null,
-        phoneNumber: user.phoneNumber || "",
-      });
-      toast.success("User denied successfully");
+      await denyDocuments(user.uid);
+      toast.success("Documents denied successfully");
+      fetchUserDocuments(user.uid); // Refresh documents
       onUserDisabled?.(); // Refresh the users list
       onClose();
     } catch (error) {
-      toast.error("Failed to deny user");
+      toast.error("Failed to deny documents");
     } finally {
       setIsDenying(false);
     }
@@ -74,18 +80,16 @@ export default function UserDetailsModal({
   const handleDisableUser = async () => {
     if (!user) return;
     
+    setIsDisabling(true);
     try {
-      await disableUser({
-        uid: user.uid,
-        firstName: user.firstName || null,
-        lastName: user.lastName || null,
-        phoneNumber: user.phoneNumber || "",
-      });
-      toast.success("User account disabled successfully");
+      await disableUserAccount(user.uid);
+      toast.success("Account disabled successfully");
       onUserDisabled?.();
       onClose();
     } catch (error) {
-      toast.error("Failed to disable user account");
+      toast.error("Failed to disable account");
+    } finally {
+      setIsDisabling(false);
     }
   };
 
@@ -169,7 +173,11 @@ export default function UserDetailsModal({
               </div>
               <div className="flex flex-col">
                 <span className="text-sm text-gray-500">Status</span>
-                <span className="mt-1 inline-block w-fit px-3 py-1 text-sm rounded-full font-medium bg-green-100 text-green-700 border border-green-300">
+                <span
+                  className={`mt-1 inline-block w-fit px-3 py-1 text-sm rounded-full font-medium ${
+                    statusColor[user.status || "Pending"] || statusColor.Pending
+                  }`}
+                >
                   {user.status || "Active"}
                 </span>
               </div>
@@ -303,10 +311,10 @@ export default function UserDetailsModal({
         <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
           <button
             onClick={handleDisableUser}
-            disabled={disableLoading}
+            disabled={isDisabling || disableAccountLoading}
             className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {disableLoading ? "Disabling..." : "Disable Account"}
+            {isDisabling ? "Disabling..." : "Disable Account"}
           </button>
           
           <div className="flex space-x-3">
