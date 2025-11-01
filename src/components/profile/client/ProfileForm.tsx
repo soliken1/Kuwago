@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { FiEdit2, FiSave, FiX } from "react-icons/fi";
+import toast from "react-hot-toast";
 import { useProfile, UserProfile } from "@/hooks/users/useProfile";
 import useGetLenderDetails from "@/hooks/users/useLenderDetails";
 import useUpdateLenderDetails, { UpdateLenderDetailsPayload } from "@/hooks/users/useUpdateLenderDetails";
@@ -153,12 +154,12 @@ export default function ProfileForm() {
 
     if (newPassword || confirmPassword) {
       if (newPassword.length < 6) {
-        alert("Password must be at least 6 characters long.");
+        toast.error("Password must be at least 6 characters long.");
         return;
       }
 
       if (newPassword !== confirmPassword) {
-        alert("Passwords do not match.");
+        toast.error("Passwords do not match.");
         return;
       }
     }
@@ -180,10 +181,10 @@ export default function ProfileForm() {
 
       sendEmailWithLink(ownerEmail, ownerName, downloadURL, subject)
         .then(() => {
-          alert("Verification email sent to your new email address!");
+          toast.success("Verification email sent to your new email address!");
         })
         .catch((error) => {
-          alert(
+          toast.error(
             error?.response?.data?.message ||
               "Failed to send verification email. Please try again."
           );
@@ -192,6 +193,12 @@ export default function ProfileForm() {
     }
 
     if (response && (response === true || response.success)) {
+      // Check if profile picture was updated
+      if (formData.profilePicture instanceof File) {
+        toast.success("Profile picture uploaded successfully");
+      } else {
+        toast.success("Profile updated successfully");
+      }
       setIsEditing(false);
       // Reload user data after successful update
       fetchUserData();
@@ -209,15 +216,15 @@ export default function ProfileForm() {
       };
       const response = await updateLenderDetails(updatePayload);
       if (response && response.success) {
-        alert("Lender details updated successfully!");
+        toast.success("Lender details updated successfully!");
         lenderUsers(); // Refresh lender details
         // Exit edit mode after successful update
         setIsEditing(false);
       } else {
-        alert(response?.message || "Failed to update lender details");
+        toast.error(response?.message || "Failed to update lender details");
       }
     } catch (error) {
-      alert(updateLenderError || "Failed to update lender details");
+      toast.error(updateLenderError || "Failed to update lender details");
     }
   };
 
@@ -263,15 +270,15 @@ export default function ProfileForm() {
       };
       const response = await createLenderDetails(createPayload);
       if (response && response.success) {
-        alert("Lender details created successfully!");
+        toast.success("Lender details created successfully!");
         lenderUsers(); // Refresh lender details
         setIsCreatingLender(false);
         setIsEditing(false);
       } else {
-        alert(response?.message || "Failed to create lender details");
+        toast.error(response?.message || "Failed to create lender details");
       }
     } catch (error) {
-      alert(createLenderError || "Failed to create lender details");
+      toast.error(createLenderError || "Failed to create lender details");
     }
   };
 

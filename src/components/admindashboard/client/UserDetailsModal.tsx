@@ -5,6 +5,7 @@ import useUserDocuments from "@/hooks/users/useUserDocuments";
 import useUpdateDocumentStatus from "@/hooks/users/useUpdateDocumentStatus";
 import useDisableUserAccount from "@/hooks/users/useDisableUserAccount";
 import toast from "react-hot-toast";
+import CustomAlertModal from "@/components/profile/client/CustomAlertModal";
 
 const statusColor: { [key: string]: string } = {
   Approved: "bg-green-100 text-green-700 border border-green-300",
@@ -56,6 +57,7 @@ export default function UserDetailsModal({
   const [isApproving, setIsApproving] = useState(false);
   const [isDenying, setIsDenying] = useState(false);
   const [isDisabling, setIsDisabling] = useState(false);
+  const [showDisableConfirmModal, setShowDisableConfirmModal] = useState<boolean>(false);
 
   useEffect(() => {
     if (isOpen && user?.uid) {
@@ -97,9 +99,13 @@ export default function UserDetailsModal({
     }
   };
 
-  const handleDisableUser = async () => {
+  const handleDisableUser = () => {
+    setShowDisableConfirmModal(true);
+  };
+
+  const handleDisableUserConfirm = async () => {
     if (!user) return;
-    
+    setShowDisableConfirmModal(false);
     setIsDisabling(true);
     try {
       await disableUserAccount(user.uid);
@@ -405,6 +411,19 @@ export default function UserDetailsModal({
           )}
         </div>
       </div>
+
+      {/* Disable Account Confirmation Modal */}
+      <CustomAlertModal
+        isOpen={showDisableConfirmModal}
+        onClose={() => setShowDisableConfirmModal(false)}
+        title="Disable Account"
+        message={`Are you sure you want to disable ${user?.fullName || user?.email}'s account?`}
+        type="warning"
+        showCancel={true}
+        onConfirm={handleDisableUserConfirm}
+        confirmText="Disable"
+        cancelText="Cancel"
+      />
     </div>
   );
 }

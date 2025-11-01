@@ -15,6 +15,7 @@ import {
 import { useRequestPayment, PaymentRequest } from "@/hooks/lend/requestPayment";
 import { getBusinessTypeLabel, getLoanTypeLabel } from "@/types/loanTypes";
 import createDocument from "@/utils/document/create";
+import CustomAlertModal from "@/components/profile/client/CustomAlertModal";
 
 const statusColor = {
   Pending: "bg-yellow-100 text-yellow-700 border border-yellow-300",
@@ -60,6 +61,10 @@ export default function SelectedLoan({
   const [paymentAmount, setPaymentAmount] = useState<number>(0);
   const [paymentNotes, setPaymentNotes] = useState<string>("");
   const [showPaymentHistoryModal, setShowPaymentHistoryModal] =
+    useState<boolean>(false);
+  const [showApproveConfirmModal, setShowApproveConfirmModal] =
+    useState<boolean>(false);
+  const [showDenyConfirmModal, setShowDenyConfirmModal] =
     useState<boolean>(false);
 
   // Payment data states
@@ -118,14 +123,8 @@ export default function SelectedLoan({
     selectedLoan.userInfo.uid,
   ]);
 
-  const handleApprove = async () => {
-    const confirm = window.confirm(
-      `Are you sure you want to approve this loan with ₱${finalAmount}, an Interest of ${interestRate}%, Terms of Month of ${termsOfMonths} Months and a Payment Method of ${
-        paymentType === 1 ? "Cash" : "ECash"
-      }?`
-    );
-    if (!confirm) return;
-
+  const handleApproveConfirm = async () => {
+    setShowApproveConfirmModal(false);
     try {
       // Update status first
       updateLoanStatus(
@@ -156,9 +155,12 @@ export default function SelectedLoan({
     }
   };
 
-  const handleDeny = () => {
-    const confirm = window.confirm("Are you sure you want to deny this loan?");
-    if (!confirm) return;
+  const handleApprove = () => {
+    setShowApproveConfirmModal(true);
+  };
+
+  const handleDenyConfirm = () => {
+    setShowDenyConfirmModal(false);
     updateLoanStatus(
       selectedLoan.loanInfo.loanRequestID,
       "Denied",
@@ -169,6 +171,10 @@ export default function SelectedLoan({
     );
     window.location.reload();
     toast.error("Loan denied");
+  };
+
+  const handleDeny = () => {
+    setShowDenyConfirmModal(true);
   };
 
   const handlePaymentSubmit = async () => {
@@ -853,6 +859,34 @@ export default function SelectedLoan({
           </div>
         </div>
       )}
+
+      {/* Approve Loan Confirmation Modal */}
+      <CustomAlertModal
+        isOpen={showApproveConfirmModal}
+        onClose={() => setShowApproveConfirmModal(false)}
+        title="Approve Loan"
+        message={`Are you sure you want to approve this loan with ₱${finalAmount.toLocaleString()}, an Interest of ${interestRate}%, Terms of ${termsOfMonths} Months and a Payment Method of ${
+          paymentType === 1 ? "Cash" : "ECash"
+        }?`}
+        type="info"
+        showCancel={true}
+        onConfirm={handleApproveConfirm}
+        confirmText="Approve"
+        cancelText="Cancel"
+      />
+
+      {/* Deny Loan Confirmation Modal */}
+      <CustomAlertModal
+        isOpen={showDenyConfirmModal}
+        onClose={() => setShowDenyConfirmModal(false)}
+        title="Deny Loan"
+        message="Are you sure you want to deny this loan?"
+        type="warning"
+        showCancel={true}
+        onConfirm={handleDenyConfirm}
+        confirmText="Deny"
+        cancelText="Cancel"
+      />
     </div>
   );
 }

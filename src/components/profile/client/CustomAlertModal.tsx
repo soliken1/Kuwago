@@ -86,9 +86,9 @@ export default function CustomAlertModal({
         );
       case "info":
         return (
-          <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mb-6">
+          <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-6">
             <svg
-              className="w-10 h-10 text-blue-600"
+              className="w-10 h-10 text-green-600"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -131,7 +131,7 @@ export default function CustomAlertModal({
       case "warning":
         return { backgroundColor: "#d97706" };
       case "info":
-        return { backgroundColor: "#2563eb" };
+        return { backgroundColor: "#2c8068" };
       default:
         return { backgroundColor: "#2c8068" };
     }
@@ -146,7 +146,7 @@ export default function CustomAlertModal({
       case "warning":
         return "#b45309";
       case "info":
-        return "#1d4ed8";
+        return "#256b56";
       default:
         return "#256b56";
     }

@@ -7,6 +7,7 @@ import RegisterModal from "./RegisterModal";
 import UserDetailsModal from "./UserDetailsModal";
 import useDisableUserAccount from "@/hooks/users/useDisableUserAccount";
 import toast from "react-hot-toast";
+import CustomAlertModal from "@/components/profile/client/CustomAlertModal";
 
 const statusColor: { [key: string]: string } = {
   Approved: "bg-green-100 text-green-700 border border-green-300",
@@ -47,6 +48,8 @@ export default function Users() {
   const [statusFilter, setStatusFilter] = useState<string>("All");
   const { disableUserAccount, loading: disableLoading } = useDisableUserAccount();
   const [usersWithDocuments, setUsersWithDocuments] = useState<Set<string>>(new Set());
+  const [showDisableConfirmModal, setShowDisableConfirmModal] = useState<boolean>(false);
+  const [userToDisable, setUserToDisable] = useState<any>(null);
 
   useEffect(() => {
     allUsers(); // Fetch users on mount
@@ -94,15 +97,22 @@ export default function Users() {
     setIsUserDetailsModalOpen(true);
   };
 
-  const handleDisableUser = async (user: any) => {
-    if (window.confirm(`Are you sure you want to disable ${user.fullName || user.email}'s account?`)) {
-      try {
-        await disableUserAccount(user.uid);
-        toast.success("Account disabled successfully");
-        allUsers(); // Refresh the users list
-      } catch (error) {
-        toast.error("Failed to disable account");
-      }
+  const handleDisableUser = (user: any) => {
+    setUserToDisable(user);
+    setShowDisableConfirmModal(true);
+  };
+
+  const handleDisableUserConfirm = async () => {
+    if (!userToDisable) return;
+    setShowDisableConfirmModal(false);
+    try {
+      await disableUserAccount(userToDisable.uid);
+      toast.success("Account disabled successfully");
+      allUsers(); // Refresh the users list
+      setUserToDisable(null);
+    } catch (error) {
+      toast.error("Failed to disable account");
+      setUserToDisable(null);
     }
   };
 
@@ -285,6 +295,22 @@ export default function Users() {
         onClose={() => setIsUserDetailsModalOpen(false)}
         user={selectedUser}
         onUserDisabled={handleUserUpdated}
+      />
+
+      {/* Disable Account Confirmation Modal */}
+      <CustomAlertModal
+        isOpen={showDisableConfirmModal}
+        onClose={() => {
+          setShowDisableConfirmModal(false);
+          setUserToDisable(null);
+        }}
+        title="Disable Account"
+        message={`Are you sure you want to disable ${userToDisable?.fullName || userToDisable?.email}'s account?`}
+        type="warning"
+        showCancel={true}
+        onConfirm={handleDisableUserConfirm}
+        confirmText="Disable"
+        cancelText="Cancel"
       />
     </div>
   );
