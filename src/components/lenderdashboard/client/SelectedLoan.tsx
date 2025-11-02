@@ -15,7 +15,11 @@ import {
 import { useRequestPayment, PaymentRequest } from "@/hooks/lend/requestPayment";
 import { getBusinessTypeLabel, getLoanTypeLabel } from "@/types/loanTypes";
 import createDocument from "@/utils/document/create";
+<<<<<<< Updated upstream
 import CustomAlertModal from "@/components/profile/client/CustomAlertModal";
+=======
+import { StoredUser } from "@/types/templateTypes";
+>>>>>>> Stashed changes
 
 const statusColor = {
   Pending: "bg-yellow-100 text-yellow-700 border border-yellow-300",
@@ -36,12 +40,7 @@ interface Props {
     termsofMonths: number,
     paymentType: number
   ) => void;
-  storedUser: {
-    uid?: string;
-    username?: string;
-    email?: string;
-    fullname?: string;
-  };
+  storedUser: StoredUser;
 }
 
 export default function SelectedLoan({

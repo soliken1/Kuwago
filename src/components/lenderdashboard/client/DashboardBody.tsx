@@ -13,6 +13,7 @@ import notifyAcknowledgeLoan from "@/utils/notifyAcknowledgeLoan";
 import { getBusinessTypeLabel, getLoanTypeLabel } from "@/types/loanTypes";
 import { notifyDueSoon } from "@/utils/notifyDueSoon";
 import useGetLenderDetails from "@/hooks/users/useLenderDetails";
+import { StoredUser } from "@/types/templateTypes";
 import {
   useSubscriptionCheckout,
   useGetAvailablePlans,
@@ -55,12 +56,7 @@ export default function DashboardBody() {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const { fetchAllLoans, loading } = useFetchAllLoans();
-  const [storedUser, setStoredUser] = useState<{
-    uid?: string;
-    username?: string;
-    fullName?: string;
-    email?: string;
-  }>({});
+  const [storedUser, setStoredUser] = useState<StoredUser | null>(null);
   const [lenderDetails, setLenderDetails] = useState<{
     subscriptionType?: number;
     createdAt?: string;
@@ -150,7 +146,7 @@ export default function DashboardBody() {
   };
 
   const sendMessage = async () => {
-    if (!selectedLoan) return;
+    if (!selectedLoan || !storedUser) return; // Add null check
 
     const borrowerName =
       selectedLoan.loanInfo.firstName ||
@@ -161,8 +157,8 @@ export default function DashboardBody() {
       borrowerId: selectedLoan.loanInfo.uid,
       borrowerName: borrowerName,
       email: selectedLoan.userInfo.email,
-      lenderId: storedUser.uid,
-      lenderName: storedUser.username,
+      lenderId: storedUser.uid || "", // Add fallback
+      lenderName: storedUser.username || "", // Add fallback
       loanPurpose: selectedLoan.loanInfo.loanPurpose,
       loanAmount: selectedLoan.loanInfo.loanAmount,
       loanDate: new Date().toLocaleDateString("en-PH", {
@@ -232,8 +228,10 @@ export default function DashboardBody() {
     }
   };
 
+  // In handleUpgrade function:
   const handleUpgrade = async () => {
-    if (!storedUser.uid) {
+    if (!storedUser?.uid) {
+      // Use optional chaining
       return;
     }
 
@@ -593,7 +591,7 @@ export default function DashboardBody() {
       )}
 
       {/* Modal */}
-      {showModal && selectedLoan && (
+      {showModal && selectedLoan && storedUser && (
         <SelectedLoan
           selectedLoan={selectedLoan}
           sendMessage={sendMessage}

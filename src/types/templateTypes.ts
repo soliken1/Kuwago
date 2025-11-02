@@ -1,4 +1,4 @@
-interface LoanInfo {
+export interface LoanInfo {
   loanRequestID: string;
   firstName?: string;
   lastName?: string;
@@ -7,7 +7,7 @@ interface LoanInfo {
   loanPurpose: string;
 }
 
-interface UserInfo {
+export interface UserInfo {
   uid: string;
   firstName: string;
   lastName: string;
@@ -16,20 +16,23 @@ interface UserInfo {
   email: string;
 }
 
-interface SelectedLoan {
+export interface SelectedLoan {
   loanInfo: LoanInfo;
   userInfo: UserInfo;
 }
 
-interface StoredUser {
+export interface StoredUser {
+  uid?: string;
+  username?: string;
   email?: string;
   firstName?: string;
   company?: string;
   address: string;
   lastName?: string;
+  fullName?: string;
 }
 
-interface LoanData {
+export interface LoanData {
   day?: string;
   month?: string;
   year?: string;

@@ -47,7 +47,7 @@ const createDocument = async (
   firstDueDate.setMonth(firstDueDate.getMonth() + 1);
 
   const lastDueDate = new Date(today);
-  lastDueDate.setMonth(lastDueDate.getMonth());
+  lastDueDate.setMonth(lastDueDate.getMonth() + termsOfMonths);
 
   // Convert amount to text (you may want to use a number-to-words library)
   const amountText = convertNumberToWords(loanAmount);
@@ -72,6 +72,8 @@ const createDocument = async (
         email: storedUser.email || "",
         first_name: storedUser.firstName || storedUser.username || "Lender",
         last_name: storedUser.lastName || "",
+        company: storedUser.company || "",
+        street_address: storedUser.address || "",
         role: "Lender",
         signing_order: 1,
       },
@@ -79,6 +81,8 @@ const createDocument = async (
         email: userInfo.email,
         first_name: borrowerFirstName,
         last_name: borrowerLastName,
+        company: userInfo.company || "",
+        street_address: userInfo.address || "",
         role: "Borrower",
         signing_order: 2,
       },
@@ -86,11 +90,47 @@ const createDocument = async (
         email: "solitudebaruch@gmail.com",
         first_name: "Kenneth James",
         last_name: "Macas",
+        company: "The Kuwago Team",
+        street_address: "6000 Gov. M. Cuenco Ave, Cebu City, 6000 Cebu",
         role: "Admin",
         signing_order: 3,
       },
     ],
     tokens: [
+      // Lender tokens
+      {
+        name: "Lender.FirstName",
+        value: storedUser.firstName || storedUser.username || "Lender",
+      },
+      {
+        name: "Lender.LastName",
+        value: storedUser.lastName || "",
+      },
+      {
+        name: "Lender.Email",
+        value: storedUser.email || "",
+      },
+      {
+        name: "Lender.Company",
+        value: storedUser.company || "",
+      },
+      {
+        name: "Lender.StreetAddress",
+        value: storedUser.address || "",
+      },
+      {
+        name: "Lender.Day",
+        value: today.getDate().toString(),
+      },
+      {
+        name: "Lender.Month",
+        value: today.toLocaleDateString("en-US", { month: "long" }),
+      },
+      {
+        name: "Lender.Year",
+        value: today.getFullYear().toString(),
+      },
+      // Borrower tokens
       {
         name: "Borrower.FirstName",
         value: borrowerFirstName,
@@ -104,20 +144,67 @@ const createDocument = async (
         value: userInfo.email,
       },
       {
-        name: "Lender.FirstName",
-        value: storedUser.firstName || storedUser.username || "Lender",
+        name: "Borrower.Company",
+        value: userInfo.company || "",
       },
       {
-        name: "Lender.LastName",
-        value: storedUser.lastName || "",
+        name: "Borrower.StreetAddress",
+        value: userInfo.address || "",
       },
       {
-        name: "Lender.Email",
-        value: storedUser.email || "",
+        name: "Borrower.AmountText",
+        value: amountText,
+      },
+      {
+        name: "Borrower.Amount",
+        value: loanAmount.toLocaleString(),
+      },
+      {
+        name: "Borrower.Interest",
+        value: interestRate.toString(),
+      },
+      {
+        name: "Borrrower.MontlyAmount",
+        value: `₱${monthlyPayment.toLocaleString("en-US", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })}`,
+      },
+      {
+        name: "Borrower.Frequency",
+        value: paymentFrequency,
+      },
+      {
+        name: "Borrower.FirstDue",
+        value: formatDate(firstDueDate),
+      },
+      {
+        name: "Borrower.LastDue",
+        value: formatDate(lastDueDate),
+      },
+      {
+        name: "Borrower.Penalty",
+        value: "5%",
+      },
+      {
+        name: "Borrower.InterestIncrese",
+        value: "1%",
+      },
+      // Admin tokens
+      {
+        name: "Admin.FirstName",
+        value: "Kenneth James",
+      },
+      {
+        name: "Admin.LastName",
+        value: "Macas",
+      },
+      {
+        name: "Admin.Company",
+        value: "The Kuwago Team",
       },
     ],
     fields: {
-      // You can add form fields here if your template requires them
       borrower_signature: {
         value: "",
       },
@@ -127,52 +214,6 @@ const createDocument = async (
       admin_signature: {
         value: "",
       },
-    },
-    variables: {
-      // Loan date information
-      "Loan.Day": today.getDate().toString(),
-      "Loan.Month": today.toLocaleDateString("en-US", { month: "long" }),
-      "Loan.Year": today.getFullYear().toString(),
-      "Loan.Date": formatDate(today),
-
-      // Loan amount details
-      "Loan.Amount": `₱${loanAmount.toLocaleString()}`,
-      "Loan.AmountText": amountText,
-      "Loan.AmountNumeric": loanAmount.toString(),
-
-      // Interest and payment details
-      "Loan.Interest": `${interestRate}%`,
-      "Loan.InterestRate": interestRate.toString(),
-      "Loan.InterestAmount": `₱${interestAmount.toLocaleString()}`,
-      "Loan.TotalPayable": `₱${totalPayableAmount.toLocaleString()}`,
-      "Loan.MonthlyAmount": `₱${monthlyPayment.toLocaleString("en-US", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      })}`,
-      "Loan.MonthlyPayment": monthlyPayment.toFixed(2),
-
-      // Terms and schedule
-      "Loan.Terms": termsOfMonths.toString(),
-      "Loan.TermsText": termsOfMonths,
-      "Loan.Frequency": paymentFrequency,
-      "Loan.FirstDue": formatDate(firstDueDate),
-      "Loan.LastDue": formatDate(lastDueDate),
-
-      // Penalty information (you can adjust these based on your business rules)
-      "Loan.Penalty": "5%", // Default penalty rate
-      "Loan.PenaltyAmount": `₱${(monthlyPayment * 0.05).toLocaleString()}`,
-      "Loan.InterestIncrease": "1%", // Additional interest for late payment
-
-      // Loan purpose and type
-      "Loan.Purpose": loanInfo.loanPurpose,
-      "Loan.Type": getLoanTypeLabel(loanInfo.loanType),
-      "Loan.BusinessType": loanInfo.businessType
-        ? getBusinessTypeLabel(loanInfo.businessType)
-        : "N/A",
-      "Loan.BusinessTIN": loanInfo.businessTIN || "N/A",
-
-      // Payment type
-      "Loan.PaymentMethod": "E-Cash",
     },
     metadata: {
       loanRequestID: loanInfo.loanRequestID,
