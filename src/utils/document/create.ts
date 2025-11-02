@@ -69,21 +69,21 @@ const createDocument = async (
     template_uuid: templateId,
     recipients: [
       {
-        email: userInfo.email,
-        first_name: borrowerFirstName,
-        last_name: borrowerLastName,
-        role: "Borrower",
-        signing_order: 1,
-      },
-      {
         email: storedUser.email || "",
         first_name: storedUser.firstName || storedUser.username || "Lender",
         last_name: storedUser.lastName || "",
         role: "Lender",
+        signing_order: 1,
+      },
+      {
+        email: userInfo.email,
+        first_name: borrowerFirstName,
+        last_name: borrowerLastName,
+        role: "Borrower",
         signing_order: 2,
       },
       {
-        email: "kennethrex456@gmail.com",
+        email: "solitudebaruch@gmail.com",
         first_name: "Kenneth James",
         last_name: "Macas",
         role: "Admin",
