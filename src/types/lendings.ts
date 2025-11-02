@@ -33,6 +33,8 @@ export interface LoanInfo {
   firstName?: string;
   lastName?: string;
   email?: string;
+  interestRate?: number;
+  termsofMonths: string;
 }
 
 export interface UserInfo {
