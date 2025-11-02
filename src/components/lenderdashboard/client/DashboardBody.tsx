@@ -271,8 +271,8 @@ export default function DashboardBody() {
   };
 
   const getPlanSavings = (planType: string) => {
-    if (planType === "Quarterly") return "₱300";
-    if (planType === "Yearly") return "₱1200";
+    if (planType === "Quarterly") return "125";
+    if (planType === "Yearly") return "2000";
     return null;
   };
 
