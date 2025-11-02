@@ -42,6 +42,8 @@ export interface UserInfo {
   firstName: string;
   lastName: string;
   email: string;
+  company: string;
+  address: string;
 }
 
 export interface LoanWithUserInfo {
