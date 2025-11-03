@@ -8,13 +8,19 @@ interface NewCreditScoreProps {
   creditScoreCategory?: CreditScoreCategoryData | null;
   aiAssessment?: AIAssessmentData | null;
   loading?: boolean;
+  aiLoading?: boolean;
+  fetchAIAssessment?: (uid: string) => Promise<void>;
+  userId?: string;
 }
 
 export default function NewCreditScore({ 
   creditScoreData,
   creditScoreCategory,
   aiAssessment,
-  loading = false 
+  loading = false,
+  aiLoading = false,
+  fetchAIAssessment,
+  userId
 }: NewCreditScoreProps) {
   const [showModal, setShowModal] = useState(false);
   const [showAIModal, setShowAIModal] = useState(false);
@@ -39,9 +45,15 @@ export default function NewCreditScore({
     }
   };
 
-  const handleImproveScore = () => {
-    if (aiAssessment) {
+  const handleImproveScore = async () => {
+    if (!userId || !fetchAIAssessment) return;
+    
+    try {
+      await fetchAIAssessment(userId);
       setShowAIModal(true);
+    } catch (error) {
+      console.error("Failed to fetch AI assessment:", error);
+      // Optionally show an error message to the user
     }
   };
 
@@ -78,10 +90,10 @@ export default function NewCreditScore({
               </button>
                <button 
                  onClick={handleImproveScore}
-                 disabled={!aiAssessment || loading}
+                 disabled={!userId || !fetchAIAssessment || loading || aiLoading}
                  className="px-6 py-2 bg-white/10 text-white rounded-lg font-medium hover:bg-white/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                >
-                 Improve Score
+                 {aiLoading ? "Loading..." : "Improve Score"}
                </button>
             </div>
           </div>
@@ -242,12 +254,21 @@ export default function NewCreditScore({
                    <span className="w-3 h-3 rounded-full bg-gradient-to-r from-purple-500 to-blue-500"></span>
                    <span className="font-semibold text-lg text-gray-800">Personalized AI Analysis</span>
                  </div>
-                 <div 
-                   className="prose prose-lg max-w-none text-gray-700 leading-relaxed"
-                   dangerouslySetInnerHTML={{ 
-                     __html: `<p>${formatAISuggestion(aiAssessment.aiSuggestion)}</p>` 
-                   }}
-                 />
+                 <div className="space-y-4">
+                   {aiAssessment.aiSuggestion && aiAssessment.aiSuggestion.length > 0 ? (
+                     aiAssessment.aiSuggestion.map((suggestion, index) => (
+                       <div 
+                         key={index}
+                         className="prose prose-lg max-w-none text-gray-700 leading-relaxed bg-white/60 rounded-lg p-4 border border-purple-100"
+                         dangerouslySetInnerHTML={{ 
+                           __html: `<p>${formatAISuggestion(suggestion)}</p>` 
+                         }}
+                       />
+                     ))
+                   ) : (
+                     <p className="text-gray-500">No suggestions available.</p>
+                   )}
+                 </div>
                </div>
              </div>
 
