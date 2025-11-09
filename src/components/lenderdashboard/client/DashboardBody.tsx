@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { useFetchAllLoans } from "@/hooks/lend/fetchAllLoans";
+import { useFetchLenderLoans } from "@/hooks/lend/fetchLenderLoans";
 import toast from "react-hot-toast";
 import { chatClient } from "@/utils/streamClient";
 import { useUpdateLoanStatus } from "@/hooks/lend/requestUpdateLoan";
@@ -55,7 +55,7 @@ export default function DashboardBody() {
   const [loans, setLoans] = useState<LoanWithUserInfo[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const { fetchAllLoans, loading } = useFetchAllLoans();
+  const { fetchLenderLoans, loading } = useFetchLenderLoans();
   const [storedUser, setStoredUser] = useState<StoredUser | null>(null);
   const [lenderDetails, setLenderDetails] = useState<{
     subscriptionType?: number;
@@ -64,15 +64,17 @@ export default function DashboardBody() {
 
   useEffect(() => {
     const getLoans = async () => {
+      if (!storedUser?.uid) return;
+      
       try {
-        const data = await fetchAllLoans();
+        const data = await fetchLenderLoans(storedUser.uid);
         setLoans(data);
       } catch (err) {
         toast.error("Failed to fetch loan requests.");
       }
     };
     getLoans();
-  }, []);
+  }, [storedUser?.uid]);
 
   useEffect(() => {
     const fetchLenderDetails = async () => {

@@ -53,38 +53,49 @@ export default function NewAppliedLendings({ setUserLoans, onSelect }: Props) {
                 ? (typeof loan.loanAmount === "number" ? loan.loanAmount.toString() : String(loan.loanAmount))
                 : "0";
 
-            return {
-              loanRequestID: loan.loanRequestID,
-              uid: loan.uid,
-              maritalStatus: loan.maritalStatus ?? "Not provided",
-              highestEducation: loan.highestEducation ?? "Not provided",
-              employmentInformation: loan.employmentInformation ?? "Not provided",
-              residentType: loan.residentType ?? "Not provided",
-              detailedAddress: loan.detailedAddress ?? "Address not provided",
-              loanType: loanTypeStr,
-              loanPurpose: loan.loanPurpose ?? "Unknown",
-              loanAmount: loanAmountStr,
-              loanStatus:
-                loan.loanStatus === "Approved"
-                  ? "Approved"
-                  : loan.loanStatus === "Denied"
-                  ? "Denied"
-                  : loan.loanStatus === "Completed"
-                  ? "Completed"
-                  : loan.loanStatus === "InProgress"
-                  ? "InProgress"
-                  : "Pending",
-              createdAt: loan.createdAt
-                ? new Date(loan.createdAt).toLocaleDateString("en-PH", {
+            const maritalStatusStr: string = loan.maritalStatus ?? "Not provided";
+            const highestEducationStr: string = loan.highestEducation ?? "Not provided";
+            const employmentInformationStr: string = loan.employmentInformation ?? "Not provided";
+            const residentTypeStr: string = loan.residentType ?? "Not provided";
+            const detailedAddressStr: string = loan.detailedAddress ?? "Address not provided";
+            const loanPurposeStr: string = loan.loanPurpose ?? "Unknown";
+            
+            const loanStatusStr: "Pending" | "InProgress" | "Approved" | "Denied" | "Completed" =
+              loan.loanStatus === "Approved"
+                ? "Approved"
+                : loan.loanStatus === "Denied"
+                ? "Denied"
+                : loan.loanStatus === "Completed"
+                ? "Completed"
+                : loan.loanStatus === "InProgress"
+                ? "InProgress"
+                : "Pending";
+
+            const createdAtStr: string = loan.createdAt
+              ? new Date(loan.createdAt).toLocaleDateString("en-PH", {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })
+              : new Date().toLocaleDateString("en-PH", {
                     year: "numeric",
                     month: "long",
                     day: "numeric",
-                  })
-                : new Date().toLocaleDateString("en-PH", {
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                    }),
+                  });
+
+            return {
+              loanRequestID: loan.loanRequestID,
+              uid: loan.uid,
+              maritalStatus: maritalStatusStr,
+              highestEducation: highestEducationStr,
+              employmentInformation: employmentInformationStr,
+              residentType: residentTypeStr,
+              detailedAddress: detailedAddressStr,
+              loanType: loanTypeStr,
+              loanPurpose: loanPurposeStr,
+              loanAmount: loanAmountStr,
+              loanStatus: loanStatusStr,
+              createdAt: createdAtStr,
               lenderInfo: loan.lenderInfo,
               businessName: data.userInfo?.businessName,
               businessAddress: data.userInfo?.businessAddress,
