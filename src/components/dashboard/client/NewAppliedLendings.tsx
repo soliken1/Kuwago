@@ -86,6 +86,10 @@ export default function NewAppliedLendings({ setUserLoans, onSelect }: Props) {
                       day: "numeric",
                     }),
               lenderInfo: loan.lenderInfo,
+              businessName: data.userInfo?.businessName,
+              businessAddress: data.userInfo?.businessAddress,
+              businessTIN: loan.businessTIN,
+              businessType: loan.businessType,
             };
           });
 

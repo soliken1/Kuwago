@@ -21,6 +21,10 @@ export interface Application {
   loanStatus: "Pending" | "InProgress" | "Approved" | "Denied" | "Completed";
   createdAt: string;
   lenderInfo?: LenderInfo;
+  businessName?: string;
+  businessAddress?: string;
+  businessTIN?: string;
+  businessType?: number;
 }
 
 export interface LoanInfo {

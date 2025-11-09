@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { Application } from "@/types/lendings";
 import { IoClose } from "react-icons/io5";
+import { getBusinessTypeLabel, getLoanTypeLabel } from "@/types/loanTypes";
 
 interface LoanDetailsModalProps {
   isOpen: boolean;
@@ -98,7 +99,14 @@ export default function LoanDetailsModal({ isOpen, onClose, application }: LoanD
                 label="Loan Amount"
                 value={`₱${Number(application.loanAmount).toLocaleString()}`}
               />
-              <DetailItem label="Loan Type" value={application.loanType} />
+              <DetailItem 
+                label="Loan Type" 
+                value={
+                  typeof application.loanType === "string" && !isNaN(Number(application.loanType))
+                    ? getLoanTypeLabel(Number(application.loanType))
+                    : application.loanType
+                } 
+              />
               <DetailItem label="Status" value={application.loanStatus} badge />
               <DetailItem
                 label="Application Date"
@@ -107,7 +115,45 @@ export default function LoanDetailsModal({ isOpen, onClose, application }: LoanD
             </div>
           </div>
 
-          {/* Section 2: Lender Information */}
+          {/* Section 2: Borrower Details */}
+          {(application.businessName || application.businessAddress || application.businessTIN || application.businessType !== undefined) && (
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <span className="inline-block w-2 h-5 rounded bg-[#2c8068]" />
+                <span className="font-semibold text-sm text-gray-700">
+                  Borrower Details
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-4 bg-gray-50 rounded-lg p-4">
+                {application.businessName && (
+                  <DetailItem
+                    label="Business Name"
+                    value={application.businessName}
+                  />
+                )}
+                {application.businessAddress && (
+                  <DetailItem
+                    label="Business Address"
+                    value={application.businessAddress}
+                  />
+                )}
+                {application.businessTIN && (
+                  <DetailItem
+                    label="Business TIN"
+                    value={application.businessTIN}
+                  />
+                )}
+                {application.businessType !== undefined && (
+                  <DetailItem
+                    label="Business Type"
+                    value={getBusinessTypeLabel(application.businessType)}
+                  />
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Section 3: Lender Information */}
           {application.lenderInfo && (
             <div>
               <div className="flex items-center gap-2 mb-3">
