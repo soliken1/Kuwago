@@ -1,3 +1,12 @@
+export interface LenderInfo {
+  lenderFullName: string;
+  lenderProfilePicture: string | null;
+  lenderTIN: string;
+  interestRates: number[];
+  termsOfPayment: number[];
+  gracePeriod: string;
+}
+
 export interface Application {
   loanRequestID: string;
   uid: string;
@@ -11,6 +20,7 @@ export interface Application {
   loanAmount: string;
   loanStatus: "Pending" | "InProgress" | "Approved" | "Denied" | "Completed";
   createdAt: string;
+  lenderInfo?: LenderInfo;
 }
 
 export interface LoanInfo {

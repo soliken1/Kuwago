@@ -45,14 +45,14 @@ export default function NewAppliedLendings({ setUserLoans, onSelect }: Props) {
           const mappedLoans: Application[] = filteredLoans.map((loan) => ({
             loanRequestID: loan.loanRequestID,
             uid: loan.uid,
-            maritalStatus: loan.maritalStatus,
-            highestEducation: loan.highestEducation,
-            employmentInformation: loan.employmentInformation,
-            residentType: loan.residentType,
+            maritalStatus: loan.maritalStatus || "Not provided",
+            highestEducation: loan.highestEducation || "Not provided",
+            employmentInformation: loan.employmentInformation || "Not provided",
+            residentType: loan.residentType || "Not provided",
             detailedAddress: loan.detailedAddress || "Address not provided",
-            loanType: loan.loanType,
+            loanType: typeof loan.loanType === "number" ? loan.loanType.toString() : loan.loanType,
             loanPurpose: loan.loanPurpose || "Unknown",
-            loanAmount: loan.loanAmount,
+            loanAmount: typeof loan.loanAmount === "number" ? loan.loanAmount.toString() : loan.loanAmount,
             loanStatus:
               loan.loanStatus === "Approved"
                 ? "Approved"
@@ -68,6 +68,7 @@ export default function NewAppliedLendings({ setUserLoans, onSelect }: Props) {
               month: "long",
               day: "numeric",
             }),
+            lenderInfo: loan.lenderInfo,
           }));
 
           const hasActiveLoans = mappedLoans.some((loan) =>

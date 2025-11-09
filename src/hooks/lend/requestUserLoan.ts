@@ -2,19 +2,31 @@ import { useState } from "react";
 import { getCookie } from "cookies-next";
 import axios, { AxiosError } from "axios";
 
+interface LenderInfo {
+  lenderFullName: string;
+  lenderProfilePicture: string | null;
+  lenderTIN: string;
+  interestRates: number[];
+  termsOfPayment: number[];
+  gracePeriod: string;
+}
+
 interface LoanData {
   loanRequestID: string;
   uid: string;
-  maritalStatus: string;
-  highestEducation: string;
-  employmentInformation: string;
-  detailedAddress: string;
-  residentType: string;
-  loanType: string;
-  loanAmount: string;
+  businessTIN?: string;
+  businessType?: number;
+  maritalStatus?: string;
+  highestEducation?: string;
+  employmentInformation?: string;
+  detailedAddress?: string;
+  residentType?: string;
+  loanType: string | number;
+  loanAmount: string | number;
   loanPurpose: string;
   loanStatus: string;
   createdAt: string;
+  lenderInfo?: LenderInfo;
 }
 
 interface LoanResponse {
