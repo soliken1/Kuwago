@@ -14,6 +14,7 @@ import {
 import { Line, Bar } from "react-chartjs-2";
 import useLenderKPI from "@/hooks/lend/useLenderKPI";
 import { useUserData } from "@/hooks/users/useUserData";
+import useBorrowerPastDues from "@/hooks/lend/useBorrowerPastDues";
 
 // Register Chart.js components
 ChartJS.register(
@@ -47,6 +48,13 @@ export default function Dashboard() {
     error: revenueTrendError 
   } = useLenderKPI();
 
+  const { 
+    fetchBorrowerPastDues, 
+    pastDuesData, 
+    loading: pastDuesLoading, 
+    error: pastDuesError 
+  } = useBorrowerPastDues();
+
   // Separate period states for each chart
   const [userTrendPeriod, setUserTrendPeriod] = useState<PeriodType>("monthly");
   const [revenueTrendPeriod, setRevenueTrendPeriod] = useState<PeriodType>("monthly");
@@ -56,6 +64,7 @@ export default function Dashboard() {
     if (storedUser?.uid) {
       fetchUserTrend(storedUser.uid, userTrendPeriod);
       fetchRevenueTrend(storedUser.uid, revenueTrendPeriod);
+      fetchBorrowerPastDues();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storedUser?.uid]);
@@ -412,6 +421,68 @@ export default function Dashboard() {
             <Bar data={getRevenueChartData()} options={revenueChartOptions} />
           </div>
         </div>
+      </div>
+
+      {/* Default Users List */}
+      <div className="mt-6 bg-white p-6 rounded-lg shadow-md">
+        <h3 className="text-lg font-semibold mb-4">Default Users</h3>
+        {pastDuesLoading ? (
+          <div className="text-gray-500 py-4">Loading past due users...</div>
+        ) : pastDuesError ? (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <p className="text-red-600 text-sm">Error: {pastDuesError}</p>
+          </div>
+        ) : pastDuesData.length === 0 ? (
+          <div className="text-gray-500 py-4">No users with past due payments.</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Borrower Name
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Business Name
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Payment Per Month
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Overdue Schedules
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {pastDuesData.map((borrower, index) => (
+                  <tr key={index} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {borrower.borrowerFullName}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {borrower.businessName}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      ₱{borrower.paymentPerMonth.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-500">
+                      <div className="flex flex-wrap gap-2">
+                        {borrower.overdueSchedules.map((schedule, scheduleIndex) => (
+                          <span
+                            key={scheduleIndex}
+                            className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800"
+                          >
+                            {new Date(schedule).toLocaleDateString()}
+                          </span>
+                        ))}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );
