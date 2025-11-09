@@ -42,34 +42,52 @@ export default function NewAppliedLendings({ setUserLoans, onSelect }: Props) {
             (loan) => loan.loanStatus !== "Approved"
           );
 
-          const mappedLoans: Application[] = filteredLoans.map((loan) => ({
-            loanRequestID: loan.loanRequestID,
-            uid: loan.uid,
-            maritalStatus: loan.maritalStatus || "Not provided",
-            highestEducation: loan.highestEducation || "Not provided",
-            employmentInformation: loan.employmentInformation || "Not provided",
-            residentType: loan.residentType || "Not provided",
-            detailedAddress: loan.detailedAddress || "Address not provided",
-            loanType: typeof loan.loanType === "number" ? loan.loanType.toString() : loan.loanType,
-            loanPurpose: loan.loanPurpose || "Unknown",
-            loanAmount: typeof loan.loanAmount === "number" ? loan.loanAmount.toString() : loan.loanAmount,
-            loanStatus:
-              loan.loanStatus === "Approved"
-                ? "Approved"
-                : loan.loanStatus === "Denied"
-                ? "Denied"
-                : loan.loanStatus === "Completed"
-                ? "Completed"
-                : loan.loanStatus === "InProgress"
-                ? "InProgress"
-                : "Pending",
-            createdAt: new Date(loan.createdAt).toLocaleDateString("en-PH", {
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-            }),
-            lenderInfo: loan.lenderInfo,
-          }));
+          const mappedLoans: Application[] = filteredLoans.map((loan) => {
+            const loanTypeStr: string = 
+              loan.loanType !== undefined && loan.loanType !== null
+                ? (typeof loan.loanType === "number" ? loan.loanType.toString() : String(loan.loanType))
+                : "Not provided";
+            
+            const loanAmountStr: string = 
+              loan.loanAmount !== undefined && loan.loanAmount !== null
+                ? (typeof loan.loanAmount === "number" ? loan.loanAmount.toString() : String(loan.loanAmount))
+                : "0";
+
+            return {
+              loanRequestID: loan.loanRequestID,
+              uid: loan.uid,
+              maritalStatus: loan.maritalStatus ?? "Not provided",
+              highestEducation: loan.highestEducation ?? "Not provided",
+              employmentInformation: loan.employmentInformation ?? "Not provided",
+              residentType: loan.residentType ?? "Not provided",
+              detailedAddress: loan.detailedAddress ?? "Address not provided",
+              loanType: loanTypeStr,
+              loanPurpose: loan.loanPurpose ?? "Unknown",
+              loanAmount: loanAmountStr,
+              loanStatus:
+                loan.loanStatus === "Approved"
+                  ? "Approved"
+                  : loan.loanStatus === "Denied"
+                  ? "Denied"
+                  : loan.loanStatus === "Completed"
+                  ? "Completed"
+                  : loan.loanStatus === "InProgress"
+                  ? "InProgress"
+                  : "Pending",
+              createdAt: loan.createdAt
+                ? new Date(loan.createdAt).toLocaleDateString("en-PH", {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  })
+                : new Date().toLocaleDateString("en-PH", {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    }),
+              lenderInfo: loan.lenderInfo,
+            };
+          });
 
           const hasActiveLoans = mappedLoans.some((loan) =>
             ["Approved", "InProgress", "Pending"].includes(loan.loanStatus)
