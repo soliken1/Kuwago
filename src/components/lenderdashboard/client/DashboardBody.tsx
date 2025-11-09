@@ -172,8 +172,8 @@ export default function DashboardBody() {
       selectedLoan.loanInfo.loanRequestID,
       "InProgress",
       selectedLoan.loanInfo.loanAmount,
-      0,
-      0,
+      1,
+      1,
       0
     );
     window.location.reload();
@@ -271,8 +271,8 @@ export default function DashboardBody() {
   };
 
   const getPlanSavings = (planType: string) => {
-    if (planType === "Quarterly") return "125";
-    if (planType === "Yearly") return "2000";
+    if (planType === "Quarterly") return "₱300";
+    if (planType === "Yearly") return "₱1200";
     return null;
   };
 
