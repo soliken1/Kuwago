@@ -19,7 +19,8 @@ export interface CreditScoreCategoryData {
 }
 
 export interface AIAssessmentData {
-  aiSuggestion: string;
+  borrowerUID: string;
+  aiSuggestion: string[];
 }
 
 interface CreditScoreResponse {
@@ -44,14 +45,11 @@ interface AIAssessmentResponse {
 }
 
 export default function useCreditScore() {
-  const [creditScoreData, setCreditScoreData] =
-    useState<CreditScoreData | null>(null);
-  const [creditScoreCategory, setCreditScoreCategory] =
-    useState<CreditScoreCategoryData | null>(null);
-  const [aiAssessment, setAiAssessment] = useState<AIAssessmentData | null>(
-    null
-  );
+  const [creditScoreData, setCreditScoreData] = useState<CreditScoreData | null>(null);
+  const [creditScoreCategory, setCreditScoreCategory] = useState<CreditScoreCategoryData | null>(null);
+  const [aiAssessment, setAiAssessment] = useState<AIAssessmentData | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
+  const [aiLoading, setAiLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
   const fetchCreditScore = async (uid: string) => {
@@ -64,13 +62,16 @@ export default function useCreditScore() {
         throw new Error("Token missing in session.");
       }
 
-      // Fetch credit score data, category, and AI assessment in parallel
-      const [scoreResponse, categoryResponse, aiResponse] = await Promise.all([
-        axios.get<CreditScoreResponse>(`/proxy/Score/GetCreditScore/${uid}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }),
+      // Fetch credit score data and category in parallel (no AI assessment on initial load)
+      const [scoreResponse, categoryResponse] = await Promise.all([
+        axios.get<CreditScoreResponse>(
+          `/proxy/Score/GetCreditScore/${uid}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        ),
         axios.get<CreditScoreCategoryResponse>(
           `/proxy/Score/GetCreditScoreCategory/${uid}`,
           {
@@ -78,15 +79,7 @@ export default function useCreditScore() {
               Authorization: `Bearer ${token}`,
             },
           }
-        ),
-        axios.get<AIAssessmentResponse>(
-          `/proxy/AIAssessment/ImprovedScore/${uid}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        ),
+        )
       ]);
 
       if (scoreResponse.data && scoreResponse.data.data) {
@@ -97,33 +90,59 @@ export default function useCreditScore() {
         setCreditScoreCategory(categoryResponse.data.data);
       }
 
-      if (aiResponse.data && aiResponse.data.data) {
-        setAiAssessment(aiResponse.data.data);
-      }
-
       return {
         scoreData: scoreResponse.data?.data,
-        categoryData: categoryResponse.data?.data,
-        aiData: aiResponse.data?.data,
+        categoryData: categoryResponse.data?.data
       };
     } catch (error: unknown) {
       const err = error as AxiosError<{ message: string }>;
-      setError(
-        err.response?.data?.message ||
-          err.message ||
-          "Failed to fetch credit score"
-      );
+      setError(err.response?.data?.message || err.message || "Failed to fetch credit score");
     } finally {
       setLoading(false);
     }
   };
 
-  return {
-    fetchCreditScore,
-    creditScoreData,
-    creditScoreCategory,
-    aiAssessment,
-    loading,
-    error,
+  const fetchAIAssessment = async (uid: string) => {
+    setAiLoading(true);
+    setError(null);
+
+    try {
+      const token = getCookie("session_token");
+      if (!token) {
+        throw new Error("Token missing in session.");
+      }
+
+      const aiResponse = await axios.get<AIAssessmentResponse>(
+        `/proxy/AIAssessment/ImprovedScore/${uid}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (aiResponse.data && aiResponse.data.data) {
+        setAiAssessment(aiResponse.data.data);
+      }
+
+      return aiResponse.data?.data;
+    } catch (error: unknown) {
+      const err = error as AxiosError<{ message: string }>;
+      setError(err.response?.data?.message || err.message || "Failed to fetch AI assessment");
+      throw err;
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  return { 
+    fetchCreditScore, 
+    fetchAIAssessment,
+    creditScoreData, 
+    creditScoreCategory, 
+    aiAssessment, 
+    loading, 
+    aiLoading,
+    error 
   };
 }

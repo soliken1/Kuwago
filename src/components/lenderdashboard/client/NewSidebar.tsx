@@ -74,10 +74,16 @@ export default function NewSidebar() {
       <div className="flex-1 px-6 py-6">
         <div className="space-y-2">
           <Link
-            href="/lenderdashboard"
+            href="/lenderdashboard/dashboard"
             className="block px-4 py-3 text-white text-lg font-medium hover:bg-white/20 rounded-lg transition-colors"
           >
             Dashboard
+          </Link>
+          <Link
+            href="/lenderdashboard"
+            className="block px-4 py-3 text-white text-lg font-medium hover:bg-white/20 rounded-lg transition-colors"
+          >
+            All Loans
           </Link>
         </div>
       </div>

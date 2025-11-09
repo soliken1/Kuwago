@@ -16,10 +16,12 @@ import { Application } from "@/types/lendings";
 export default function DashboardLayout() {
   const {
     fetchCreditScore,
+    fetchAIAssessment,
     creditScoreData,
     creditScoreCategory,
     aiAssessment,
     loading,
+    aiLoading,
   } = useCreditScore();
   const { forceVerificationModal } = useIDSelfieUploaded();
   const { forceDocumentModal } = useCheckDocuments();
@@ -94,6 +96,9 @@ export default function DashboardLayout() {
             creditScoreCategory={creditScoreCategory}
             aiAssessment={aiAssessment}
             loading={loading}
+            aiLoading={aiLoading}
+            fetchAIAssessment={fetchAIAssessment}
+            userId={userData?.uid}
           />
 
           {/* Applied Lendings Table */}
