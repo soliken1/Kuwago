@@ -21,10 +21,6 @@ export const LOAN_TYPE_LABELS = {
 } as const;
 
 export const LOAN_AMOUNT_VALUES = {
-  1000: 1000,
-  2000: 2000,
-  3000: 3000,
-  4000: 4000,
   5000: 5000,
   7500: 7500,
   10000: 10000,
@@ -35,13 +31,7 @@ export const LOAN_AMOUNT_VALUES = {
   40000: 40000,
   50000: 50000,
   75000: 75000,
-  100000: 100000,
-  150000: 150000,
-  200000: 200000,
-  250000: 250000,
-  300000: 300000,
-  400000: 400000,
-  500000: 500000
+  100000: 100000
 } as const;
 
 export type BusinessType = keyof typeof BUSINESS_TYPE_LABELS;

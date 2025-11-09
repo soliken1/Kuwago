@@ -42,18 +42,25 @@ export default function NewAppliedLendings({ setUserLoans, onSelect }: Props) {
             (loan) => loan.loanStatus !== "Approved"
           );
 
-          const mappedLoans: Application[] = filteredLoans.map((loan) => ({
-            loanRequestID: loan.loanRequestID,
-            uid: loan.uid,
-            maritalStatus: loan.maritalStatus,
-            highestEducation: loan.highestEducation,
-            employmentInformation: loan.employmentInformation,
-            residentType: loan.residentType,
-            detailedAddress: loan.detailedAddress || "Address not provided",
-            loanType: loan.loanType,
-            loanPurpose: loan.loanPurpose || "Unknown",
-            loanAmount: loan.loanAmount,
-            loanStatus:
+          const mappedLoans: Application[] = filteredLoans.map((loan) => {
+            const loanTypeStr: string = 
+              loan.loanType !== undefined && loan.loanType !== null
+                ? (typeof loan.loanType === "number" ? loan.loanType.toString() : String(loan.loanType))
+                : "Not provided";
+            
+            const loanAmountStr: string = 
+              loan.loanAmount !== undefined && loan.loanAmount !== null
+                ? (typeof loan.loanAmount === "number" ? loan.loanAmount.toString() : String(loan.loanAmount))
+                : "0";
+
+            const maritalStatusStr: string = loan.maritalStatus ?? "Not provided";
+            const highestEducationStr: string = loan.highestEducation ?? "Not provided";
+            const employmentInformationStr: string = loan.employmentInformation ?? "Not provided";
+            const residentTypeStr: string = loan.residentType ?? "Not provided";
+            const detailedAddressStr: string = loan.detailedAddress ?? "Address not provided";
+            const loanPurposeStr: string = loan.loanPurpose ?? "Unknown";
+            
+            const loanStatusStr: "Pending" | "InProgress" | "Approved" | "Denied" | "Completed" =
               loan.loanStatus === "Approved"
                 ? "Approved"
                 : loan.loanStatus === "Denied"
@@ -62,13 +69,40 @@ export default function NewAppliedLendings({ setUserLoans, onSelect }: Props) {
                 ? "Completed"
                 : loan.loanStatus === "InProgress"
                 ? "InProgress"
-                : "Pending",
-            createdAt: new Date(loan.createdAt).toLocaleDateString("en-PH", {
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-            }),
-          }));
+                : "Pending";
+
+            const createdAtStr: string = loan.createdAt
+              ? new Date(loan.createdAt).toLocaleDateString("en-PH", {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })
+              : new Date().toLocaleDateString("en-PH", {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  });
+
+            return {
+              loanRequestID: loan.loanRequestID,
+              uid: loan.uid,
+              maritalStatus: maritalStatusStr,
+              highestEducation: highestEducationStr,
+              employmentInformation: employmentInformationStr,
+              residentType: residentTypeStr,
+              detailedAddress: detailedAddressStr,
+              loanType: loanTypeStr,
+              loanPurpose: loanPurposeStr,
+              loanAmount: loanAmountStr,
+              loanStatus: loanStatusStr,
+              createdAt: createdAtStr,
+              lenderInfo: loan.lenderInfo,
+              businessName: data.userInfo?.businessName,
+              businessAddress: data.userInfo?.businessAddress,
+              businessTIN: loan.businessTIN,
+              businessType: loan.businessType,
+            };
+          });
 
           const hasActiveLoans = mappedLoans.some((loan) =>
             ["Approved", "InProgress", "Pending"].includes(loan.loanStatus)
