@@ -124,8 +124,6 @@ export default function useCreditScore() {
       if (aiResponse.data && aiResponse.data.data) {
         setAiAssessment(aiResponse.data.data);
       }
-
-      return aiResponse.data?.data;
     } catch (error: unknown) {
       const err = error as AxiosError<{ message: string }>;
       setError(err.response?.data?.message || err.message || "Failed to fetch AI assessment");
