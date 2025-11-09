@@ -7,6 +7,8 @@ interface RecommendedLender {
   lenderUID: string;
   compatibilityScore: number;
   lenderTIN: string;
+  lenderFullName: string;
+  lenderProfilePicture: string;
   principalAmount: number;
   termsOfPayment: number[];
   interestRates: number[];
@@ -31,6 +33,7 @@ export default function LenderSelectionModal({
   onSuccess,
 }: LenderSelectionModalProps) {
   const [selectedLender, setSelectedLender] = useState<string | null>(null);
+  const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
   const { chooseLender, loading } = useChooseLender();
 
   if (!isOpen) return null;
@@ -137,37 +140,58 @@ export default function LenderSelectionModal({
                   >
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-center gap-3">
-                        <div
-                          className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                            isSelected ? "" : "bg-gray-200"
-                          }`}
-                          style={
-                            isSelected ? { backgroundColor: "#2c8068" } : {}
-                          }
-                        >
-                          {isSelected ? (
-                            <svg
-                              className="w-6 h-6 text-white"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M5 13l4 4L19 7"
+                        <div className="relative">
+                          <div
+                            className={`w-10 h-10 rounded-full flex items-center justify-center overflow-hidden ${
+                              !lender.lenderProfilePicture ? "bg-gray-200" : ""
+                            }`}
+                            style={
+                              isSelected && lender.lenderProfilePicture
+                                ? { border: "2px solid #2c8068" }
+                                : isSelected
+                                ? { backgroundColor: "#2c8068" }
+                                : {}
+                            }
+                          >
+                            {lender.lenderProfilePicture && !failedImages.has(lender.lenderUID) ? (
+                              <img
+                                src={lender.lenderProfilePicture}
+                                alt={lender.lenderFullName}
+                                className="w-full h-full object-cover"
+                                onError={() => {
+                                  setFailedImages((prev) => new Set(prev).add(lender.lenderUID));
+                                }}
                               />
-                            </svg>
-                          ) : (
-                            <span className="text-gray-600 font-bold">
-                              {index + 1}
-                            </span>
+                            ) : (
+                              <span className="text-gray-600 font-bold text-sm">
+                                {lender.lenderFullName.charAt(0).toUpperCase()}
+                              </span>
+                            )}
+                          </div>
+                          {isSelected && (
+                            <div
+                              className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center"
+                              style={{ backgroundColor: "#2c8068" }}
+                            >
+                              <svg
+                                className="w-3 h-3 text-white"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={3}
+                                  d="M5 13l4 4L19 7"
+                                />
+                              </svg>
+                            </div>
                           )}
                         </div>
                         <div>
                           <h3 className="text-lg font-semibold text-gray-900 poppins-semibold">
-                            Lender {index + 1}
+                            {lender.lenderFullName}
                           </h3>
                           <p className="text-sm text-gray-500">
                             TIN: {lender.lenderTIN}
