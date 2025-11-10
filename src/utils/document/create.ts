@@ -164,7 +164,7 @@ const createDocument = async (
         value: interestRate.toString(),
       },
       {
-        name: "Borrrower.MontlyAmount",
+        name: "Borrrower.MonthlyAmount",
         value: `₱${monthlyPayment.toLocaleString("en-US", {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,

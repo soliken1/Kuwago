@@ -29,6 +29,20 @@ const statusColor = {
   Denied: "bg-red-100 text-red-700 border border-red-300",
   Completed: "bg-gray-100 text-gray-700 border border-gray-300",
 };
+
+interface LenderDetails {
+  uid: string;
+  principalAmount: number;
+  termsOfPayment: number[];
+  interestRates: number[];
+  subscriptionType: number;
+  gracePeriod: number;
+  lenderTIN: string;
+  lenderInstitution: string;
+  lenderAddress: string;
+  createdAt: string;
+}
+
 interface Props {
   selectedLoan: LoanWithUserInfo;
   closeModal: () => void;
@@ -56,7 +70,6 @@ export default function SelectedLoan({
   );
   const [interestRate, setInterestRate] = useState<number>(0);
   const [termsOfMonths, setTermsOfMonths] = useState<number>(3);
-  const [paymentType, setPaymentType] = useState<number>(2);
   const [showPaymentModal, setShowPaymentModal] = useState<boolean>(false);
   const [paymentAmount, setPaymentAmount] = useState<number>(0);
   const [paymentNotes, setPaymentNotes] = useState<string>("");
@@ -66,6 +79,11 @@ export default function SelectedLoan({
     useState<boolean>(false);
   const [showDenyConfirmModal, setShowDenyConfirmModal] =
     useState<boolean>(false);
+
+  // Lender details from localStorage
+  const [lenderDetails, setLenderDetails] = useState<LenderDetails | null>(
+    null
+  );
 
   // Payment data states
   const [paymentSummary, setPaymentSummary] = useState<PaymentSummary | null>(
@@ -88,6 +106,27 @@ export default function SelectedLoan({
     useFetchAIAssessment();
   const hasFetchedAIAssessment = useRef(false);
 
+  // Load lender details from localStorage
+  useEffect(() => {
+    try {
+      const storedLenderDetails = localStorage.getItem("lenderDetails");
+      if (storedLenderDetails) {
+        const parsedDetails: LenderDetails = JSON.parse(storedLenderDetails);
+        setLenderDetails(parsedDetails);
+
+        // Set default values if available
+        if (parsedDetails.interestRates.length > 0) {
+          setInterestRate(parsedDetails.interestRates[0]);
+        }
+        if (parsedDetails.termsOfPayment.length > 0) {
+          setTermsOfMonths(parsedDetails.termsOfPayment[0]);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to load lender details from localStorage:", error);
+    }
+  }, []);
+
   // Fetch payment data when loan is Approved or Completed
   useEffect(() => {
     const fetchPaymentData = async () => {
@@ -96,7 +135,6 @@ export default function SelectedLoan({
           selectedLoan.loanInfo.loanStatus === "Completed") &&
         !hasFetchedPaymentData.current
       ) {
-        // Check for payableID in different possible locations
         const payableID =
           selectedLoan.loanInfo.payableID ||
           selectedLoan.payableID ||
@@ -106,11 +144,9 @@ export default function SelectedLoan({
         if (payableID) {
           hasFetchedPaymentData.current = true;
           try {
-            // Fetch payment summary
             const summary = await fetchPaymentSummary(payableID);
             setPaymentSummary(summary);
 
-            // Fetch payment schedule
             const schedule = await fetchPaymentSchedule(
               selectedLoan.userInfo.uid,
               payableID
@@ -118,7 +154,7 @@ export default function SelectedLoan({
             setPaymentSchedule(schedule);
           } catch (error) {
             toast.error("Failed to load payment information");
-            hasFetchedPaymentData.current = false; // Reset on error to allow retry
+            hasFetchedPaymentData.current = false;
           }
         }
       }
@@ -140,13 +176,11 @@ export default function SelectedLoan({
       ) {
         hasFetchedAIAssessment.current = true;
         try {
-          const assessment = await fetchAIAssessment(
-            selectedLoan.userInfo.uid
-          );
+          const assessment = await fetchAIAssessment(selectedLoan.userInfo.uid);
           setAiAssessment(assessment);
         } catch (error) {
           toast.error("Failed to load AI assessment");
-          hasFetchedAIAssessment.current = false; // Reset on error to allow retry
+          hasFetchedAIAssessment.current = false;
         }
       }
     };
@@ -157,17 +191,15 @@ export default function SelectedLoan({
   const handleApproveConfirm = async () => {
     setShowApproveConfirmModal(false);
     try {
-      // Update status first
       updateLoanStatus(
         selectedLoan.loanInfo.loanRequestID,
         "Approved",
         finalAmount,
         interestRate,
         termsOfMonths,
-        paymentType
+        1
       );
 
-      // Create and send PandaDoc document
       await createDocument(selectedLoan, storedUser);
 
       toast.success("Loan approved and document sent to recipients.");
@@ -226,7 +258,7 @@ export default function SelectedLoan({
         amountPaid: paymentAmount,
         paymentDate: new Date().toISOString(),
         notes: paymentNotes.trim() || "Payment recorded by lender",
-        paymentType: String(selectedLoan.loanInfo.paymentType || "Cash"),
+        paymentType: "ECash",
       };
 
       await submitPayment(paymentData);
@@ -238,12 +270,10 @@ export default function SelectedLoan({
       setPaymentAmount(0);
       setPaymentNotes("");
 
-      // Refresh payment data
       hasFetchedPaymentData.current = false;
       setPaymentSummary(null);
       setPaymentSchedule(null);
 
-      // Trigger refetch of payment data
       const payableID = selectedLoan.loanInfo.payableID;
       if (payableID) {
         try {
@@ -393,76 +423,34 @@ export default function SelectedLoan({
                   <label className="block text-sm font-medium mb-1">
                     Interest Rate (%)
                   </label>
-                  <input
-                    type="number"
-                    value={interestRate === 0 ? "" : interestRate}
-                    placeholder="0"
-                    className="w-full rounded-md border border-gray-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2c8068]"
-                    onChange={(e) =>
-                      setInterestRate(Number(e.target.value) || 0)
-                    }
-                    min={0}
-                  />
+                  <select
+                    value={interestRate}
+                    onChange={(e) => setInterestRate(Number(e.target.value))}
+                    className="w-full rounded-md border border-gray-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2c8068] bg-white"
+                  >
+                    <option value={0}>Select Interest Rate</option>
+                    {lenderDetails?.interestRates.map((rate) => (
+                      <option key={rate} value={rate}>
+                        {rate}%
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div className="flex flex-col">
                   <label className="block text-sm font-medium mb-1">
                     Terms of Months
                   </label>
-                  <div className="flex gap-2 mt-1">
-                    <button
-                      className={`px-3 py-1 text-sm rounded-md transition-colors ${
-                        termsOfMonths === 3
-                          ? "bg-[#2c8068] text-white"
-                          : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                      }`}
-                      onClick={() => setTermsOfMonths(3)}
-                    >
-                      3 Months
-                    </button>
-                    <button
-                      className={`px-3 py-1 text-sm rounded-md transition-colors ${
-                        termsOfMonths === 6
-                          ? "bg-[#2c8068] text-white"
-                          : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                      }`}
-                      onClick={() => setTermsOfMonths(6)}
-                    >
-                      6 Months
-                    </button>
-                    <button
-                      className={`px-3 py-1 text-sm rounded-md transition-colors ${
-                        termsOfMonths === 9
-                          ? "bg-[#2c8068] text-white"
-                          : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                      }`}
-                      onClick={() => setTermsOfMonths(9)}
-                    >
-                      9 Months
-                    </button>
-                    <button
-                      className={`px-3 py-1 text-sm rounded-md transition-colors ${
-                        termsOfMonths === 12
-                          ? "bg-[#2c8068] text-white"
-                          : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                      }`}
-                      onClick={() => setTermsOfMonths(12)}
-                    >
-                      12 Months
-                    </button>
-                  </div>
-                </div>
-                <div className="flex flex-col">
-                  <label className="block text-sm font-medium mb-1">
-                    Payment Type
-                  </label>
-                  <div className="flex gap-2 mt-1">
-                    <button
-                      className="px-3 py-1 text-sm rounded-md transition-colors bg-[#2c8068] text-white"
-                      disabled
-                    >
-                      ECash
-                    </button>
-                  </div>
+                  <select
+                    value={termsOfMonths}
+                    onChange={(e) => setTermsOfMonths(Number(e.target.value))}
+                    className="w-full rounded-md border border-gray-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2c8068] bg-white"
+                  >
+                    {lenderDetails?.termsOfPayment.map((term) => (
+                      <option key={term} value={term}>
+                        {term} {term === 1 ? "Month" : "Months"}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
             </div>
@@ -639,12 +627,6 @@ export default function SelectedLoan({
                         : "N/A"}
                     </span>
                   </div>
-                  {/* <div className="flex flex-col">
-                    <span className="text-sm text-gray-500">Payment Type</span>
-                    <span className="mt-1 text-gray-800 font-medium">
-                      {selectedLoan.loanInfo.paymentType || "N/A"}
-                    </span>
-                  </div> */}
                 </div>
               </div>
 
@@ -1009,9 +991,7 @@ export default function SelectedLoan({
         isOpen={showApproveConfirmModal}
         onClose={() => setShowApproveConfirmModal(false)}
         title="Approve Loan"
-        message={`Are you sure you want to approve this loan with ₱${finalAmount.toLocaleString()}, an Interest of ${interestRate}%, Terms of ${termsOfMonths} Months and a Payment Method of ${
-          paymentType === 1 ? "Cash" : "ECash"
-        }?`}
+        message={`Are you sure you want to approve this loan with ₱${finalAmount.toLocaleString()}, an Interest of ${interestRate}%, and a Terms of ${termsOfMonths} Months?`}
         type="info"
         showCancel={true}
         onConfirm={handleApproveConfirm}
