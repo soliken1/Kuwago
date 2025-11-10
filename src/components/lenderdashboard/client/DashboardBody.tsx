@@ -170,13 +170,10 @@ export default function DashboardBody() {
       }),
     });
 
+    // Only pass loanRequestID and updatedLoanStatus when changing from "Pending" to "InProgress"
     await updateLoanStatus(
       selectedLoan.loanInfo.loanRequestID,
-      "InProgress",
-      selectedLoan.loanInfo.loanAmount,
-      1,
-      1,
-      0
+      "InProgress"
     );
     window.location.reload();
     closeModal();
