@@ -10,10 +10,10 @@ export const useUpdateLoanStatus = () => {
   const updateLoanStatus = async (
     loanRequestID: string,
     updatedLoanStatus: string,
-    updatedLoanAmount: number,
-    interestRate: number,
-    termsOfMonths: number,
-    paymentType: number
+    updatedLoanAmount?: number,
+    interestRate?: number,
+    termsOfMonths?: number,
+    paymentType?: number
   ) => {
     setLoading(true);
     setError(null);
@@ -22,14 +22,31 @@ export const useUpdateLoanStatus = () => {
     try {
       const token = getCookie("session_token");
 
-      const payload = {
+      const payload: {
+        loanRequestID: string;
+        updatedLoanStatus: string;
+        updatedLoanAmount?: number;
+        interestRate?: number;
+        termsOfMonths?: number;
+        paymentType?: number;
+      } = {
         loanRequestID,
         updatedLoanStatus,
-        updatedLoanAmount,
-        interestRate,
-        termsOfMonths,
-        paymentType,
       };
+
+      // Only include optional fields if they are provided
+      if (updatedLoanAmount !== undefined) {
+        payload.updatedLoanAmount = updatedLoanAmount;
+      }
+      if (interestRate !== undefined) {
+        payload.interestRate = interestRate;
+      }
+      if (termsOfMonths !== undefined) {
+        payload.termsOfMonths = termsOfMonths;
+      }
+      if (paymentType !== undefined) {
+        payload.paymentType = paymentType;
+      }
 
       console.log(payload);
 
