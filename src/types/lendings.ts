@@ -56,8 +56,10 @@ export interface UserInfo {
   firstName: string;
   lastName: string;
   email: string;
-  company: string;
-  address: string;
+  lenderInstitution: string;
+  lenderAddress: string;
+  businessAddress: string;
+  businessName: string;
 }
 
 export interface LoanWithUserInfo {

@@ -11,8 +11,8 @@ export interface UserInfo {
   uid: string;
   firstName: string;
   lastName: string;
-  company: string;
-  address: string;
+  lenderInstitution: string;
+  lenderAddress: string;
   email: string;
 }
 
@@ -26,8 +26,8 @@ export interface StoredUser {
   username?: string;
   email?: string;
   firstName?: string;
-  company?: string;
-  address: string;
+  lenderInstitution?: string;
+  lenderAddress: string;
   lastName?: string;
   fullName?: string;
 }

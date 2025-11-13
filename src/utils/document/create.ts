@@ -1,21 +1,12 @@
 import axios from "axios";
 import { LoanWithUserInfo } from "@/types/lendings";
-
-interface StoredUser {
-  uid?: string;
-  username?: string;
-  fullName?: string;
-  email?: string;
-  firstName?: string;
-  lastName?: string;
-  company?: string;
-  address?: string;
-}
+import { StoredUser } from "@/types/templateTypes";
 
 const createDocument = async (
   selectedLoan: LoanWithUserInfo,
   storedUser: StoredUser
 ) => {
+  console.log(storedUser);
   const apiKey = process.env.PANDADOC_API_KEY;
   const templateId = process.env.PANDADOC_TEMPLATE_ID;
 
@@ -72,8 +63,8 @@ const createDocument = async (
         email: storedUser.email || "",
         first_name: storedUser.firstName || storedUser.username || "Lender",
         last_name: storedUser.lastName || "",
-        company: storedUser.company || "",
-        street_address: storedUser.address || "",
+        company: storedUser.lenderInstitution || "",
+        street_address: storedUser.lenderAddress || "",
         role: "Lender",
         signing_order: 1,
       },
@@ -81,8 +72,8 @@ const createDocument = async (
         email: userInfo.email,
         first_name: borrowerFirstName,
         last_name: borrowerLastName,
-        company: userInfo.company || "",
-        street_address: userInfo.address || "",
+        company: userInfo.businessName || "",
+        street_address: userInfo.businessAddress || "",
         role: "Borrower",
         signing_order: 2,
       },
@@ -112,11 +103,11 @@ const createDocument = async (
       },
       {
         name: "Lender.Company",
-        value: storedUser.company || "",
+        value: storedUser.lenderInstitution || "",
       },
       {
         name: "Lender.StreetAddress",
-        value: storedUser.address || "",
+        value: storedUser.lenderAddress || "",
       },
       {
         name: "Lender.Day",
@@ -145,11 +136,11 @@ const createDocument = async (
       },
       {
         name: "Borrower.Company",
-        value: userInfo.company || "",
+        value: userInfo.businessName || "",
       },
       {
         name: "Borrower.StreetAddress",
-        value: userInfo.address || "",
+        value: userInfo.businessAddress || "",
       },
       {
         name: "Borrower.AmountText",
@@ -377,7 +368,7 @@ function convertNumberToWords(num: number): string {
     words += ones[num] + " ";
   }
 
-  return words.trim() + " Pesos";
+  return words.trim() + "";
 }
 
 // Helper function to get loan type label
